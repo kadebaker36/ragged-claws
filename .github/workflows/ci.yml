@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: ${{ matrix.os }} / Python 3.12
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Sync locked environment
+        run: uv sync --frozen
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Run Ruff
+        run: uv run ruff check .
+
+      - name: Run mypy
+        run: uv run mypy src tests
+
+      - name: Smoke-test CLI
+        run: uv run ragged-claws version
