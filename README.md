@@ -64,3 +64,18 @@ It is not intended to become an options day-trading platform.
 - `docs/09-adversarial-architecture-review.md`
 
 See `AGENTS.md` before making implementation changes. The adversarial review hardens integration and point-in-time assumptions that must be honored during M0/M1 implementation.
+
+## Development
+
+Ragged Claws targets Python 3.12 and uses
+[`uv`](https://docs.astral.sh/uv/) for dependency and environment management.
+
+```text
+uv sync --frozen
+uv run pytest
+uv run ruff check .
+uv run mypy src tests
+uv run ragged-claws version
+```
+
+The same checks run in GitHub Actions on Ubuntu and Windows with Python 3.12.

@@ -1,0 +1,41 @@
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and build artifacts
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Local databases and caches
+*.db
+*.db-*
+*.duckdb
+*.duckdb.*
+*.sqlite
+*.sqlite3
+
+# Local data. Repository documentation is the only tracked data/ content.
+data/*
+!data/README.md
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
