@@ -1,10 +1,10 @@
 # Ragged Claws — Data Source Register
 
-**Status:** Draft v0.1  
+**Status:** Draft v0.2  
 **As of:** 2026-09-17  
-**Purpose:** Define the role, interface, cost posture, point-in-time risk, and implementation priority of external data sources.
+**Purpose:** Define the role, interface, cost posture, temporal risk, licensing posture, and implementation priority of external data sources.
 
-> Prices, quotas, licensing terms, and product access can change. Re-verify vendor terms immediately before implementation or subscription changes.
+> Prices, quotas, licensing terms, schemas, and product access can change. Re-verify vendor terms immediately before implementation, subscription changes, or commercialization.
 
 ## 1. Source classification
 
@@ -26,37 +26,52 @@ Sources used to identify connections, resolve entities, discover context, or gen
 
 A Tier 3 relationship does not by itself establish motive, legality, or investment value.
 
-## 2. Bootstrap source register
+## 2. Temporal-quality dimensions
 
-| Source | Tier | Primary V0 role | Interfaces | Current cost posture | Point-in-time / methodological concern | Priority |
+The previous PIT-A/B/C shorthand is not sufficient by itself. Each source/field should be evaluated on at least four separate dimensions:
+
+1. **Event-time quality** — how precisely do we know when the underlying event occurred?
+2. **Public-time quality** — how precisely do we know when the market could first have observed it?
+3. **Historical reconstructability** — can we reconstruct the source state as it existed at historical time T?
+4. **Lineage independence** — is this independent information or a normalized copy of another source event?
+
+A source can be excellent on one dimension and weak on another.
+
+Example: USAspending can provide authoritative award transaction data while still having a nontrivial delay between `action_date` and publication on the site.
+
+## 3. Bootstrap source register
+
+| Source | Tier | Primary V0 role | Interfaces | Current cost posture | Temporal / methodological concern | Priority |
 |---|---|---|---|---|---|---|
-| **SEC / EDGAR** | 1 | Form 3/4/5 insider events; filings; issuer identifiers; later 13F/fundamentals | API, filings, bulk datasets, feeds/RSS | Free | Must use filing/public timestamp, not underlying transaction date; flattened quarterly datasets are not a substitute for live filing timestamps | **V0 core** |
-| **Quiver Quantitative** | 2 | Normalized political trades/holdings, government contracts, lobbying, donors, Trump trades, off-exchange context; agent-native research | REST API, MCP | **$30/mo Hobbyist** currently; noncommercial rights | Vendor normalization/classification must remain separable from our features; verify historical timestamps and licensing | **V0 paid core** |
-| **LittleSis** | 3 | Entity resolution and relationship graph: people, organizations, boards, employment, family/business links | API, bulk dataset | Free; API currently requires no key | Database curation time may differ from when relationship was publicly knowable; dated relationships preferred for historical features | **V0 core** |
-| **USAspending** | 1 | Federal awards, transactions, recipients, agencies, IDVs, spending trends | REST API | Free; current endpoints require no auth | Award publication/transaction timing must be distinguished from effective performance dates; recipient-to-public-company resolution is nontrivial | **V0 core** |
-| **GLEIF** | 1/utility | Legal-entity resolution; LEIs; direct/ultimate corporate relationships where reported | API, bulk/golden-copy data | Free | Coverage is incomplete for entities without LEIs or reported parents; ownership relationships need effective dates | **V0 utility** |
-| **OpenFIGI** | utility | Security identifier resolution and canonical mapping between tickers/identifiers | REST API | Free; unauthenticated use has lower rate limits, free keys increase throughput | Tickers change; map to stable instrument/issuer identifiers with effective dates | **V0 utility** |
-| **Market-price provider / Alpaca** | 1/2 utility | Price history, benchmark returns, later paper trading | API, MCP/CLI/skills | Free entry/paper capabilities available; paid data optional later | Exchange coverage differs by plan; research must document exact feed used | **V0/V1 core utility** |
-| **GovInfo** | 1 | Official bills, hearings, Congressional Record, reports, Federal Register/CFR context, presidential documents | API, RSS, bulk, **MCP public preview** | Free public access | Policy relevance is contextual; avoid converting legislative proximity into a directional trade without testing | **V1 enrichment** |
-| **LobbyView** | 2/research | Historical lobbying reports, clients, bills, issues, lobbying text and relationships | REST API, datasets | Free/research-oriented; API currently rate limited | Useful for backtests; currentness and normalized client identity must be checked | **V0/V1 research** |
-| **SAM.gov Opportunities** | 1 | Upstream procurement demand and contract opportunity notices | REST API | Free account/API key; quotas apply | An opportunity is not an award and does not identify the eventual winner; use as industry/demand context | **V1 research** |
-| **Federal Register / Regulations.gov** | 1 | Proposed/final rules, agency notices, dockets, comments | API/web | Free public data | Regulatory events can affect whole sectors; company attribution must be explicit and timestamp-safe | **V1 research** |
-| **CourtListener / RECAP** | 2/primary-adjacent | Dockets, decisions, PACER-derived material, legal alerts, court-event context | REST API, MCP, webhooks, bulk/member services | Some APIs/occasional MCP access available; advanced access/webhooks may require membership or agreement | Filing date, docket availability, and later document acquisition are different timestamps; cost/access should be verified before dependence | **V1 selective** |
-| **FRED / ALFRED** | 1 | Macro/regime controls with vintage-correct historical values | API | Free key | Use ALFRED real-time periods for backtests; today's revised macro history can introduce look-ahead bias | **V1 controls** |
-| **ICIJ Offshore Leaks** | 3 | Entity/officer/intermediary/address reconciliation; offshore relationship enrichment | Reconciliation API, bulk CSV/graph | Free dataset; open-data licensing with attribution/share-alike obligations | Match ≠ wrongdoing; fuzzy matches require confidence and human/primary verification before material use | **V1 selective** |
-| **OpenSanctions** | 3 | PEP/entity matching, sanctions/watchlist relationships, identity enrichment | API, bulk | Bulk data free for noncommercial use; API access/licensing varies by use case | Regulatory/watchlist presence must not become a moral score; licensing matters if project ever becomes commercial | **Later/selective** |
-| **Unusual Whales — public/retail surfaces** | 2 | Reference model, manual verification, targeted political/insider/market enrichment | Web platform; retail tools | Free/retail access varies | Browser extraction is brittle; preserve exact source/capture time; do not scrape at commercial-feed scale | **V0 bridge** |
-| **Unusual Whales — API Basic** | 2 | Premium normalized feed: congressional/insider events, dark pool, real-time options/equities, derived indicators, MCP/skills | REST API, websocket, MCP/skills | **$150/mo currently** ($125/mo annual equivalent) | Two-year standard historical lookback may limit long backtests; market microstructure can tempt scope drift | **Upgrade target** |
-| **Firecrawl** | utility | Cheap structured web extraction for narrow agent tasks | API/CLI/MCP/browser tools | Free plan currently includes 1,000 credits/mo | Extraction output is not authoritative evidence; respect source ToS and avoid replacing supported APIs with scraping | **V0 utility** |
-| **Clarence** | internal agent | Low-frequency targeted enrichment and delta capture where APIs are unavailable/uneconomic | Browser/agent workflow | Token/agent cost | Must return structured records, not narrative; never silently become ground truth | **V0 bridge** |
+| **SEC / EDGAR** | 1 | Form 4 insider events; filings; issuer identifiers; later 13F/fundamentals | API/files, filings, bulk datasets, feeds/RSS | Free | Preserve exact EDGAR acceptance time when available; transaction date is not public time; nightly index date is not a substitute | **V0 core** |
+| **Quiver Quantitative** | 2 | Normalized political trades/holdings, government contracts, lobbying, donors, Trump trades, off-exchange context; agent-native research | REST API, MCP | **$30/mo Hobbyist** currently; noncommercial rights | Vendor dates need endpoint-specific semantics; vendor performance fields may contain future information; normalized copies are not independent convergence | **V0 paid core** |
+| **LittleSis** | 3 | Entity resolution and relationship graph: people, organizations, boards, employment, family/business links | API, bulk dataset | Free; API currently requires no key; database licensed CC BY-SA 4.0 | Effective dates may predate database curation/our historical knowledge; partial dates occur; current graph cannot silently leak backward | **V0 core** |
+| **USAspending** | 1 | Federal awards, transactions, recipients, agencies, IDVs, spending trends | REST API | Free; current endpoints require no auth | `action_date` is not guaranteed public date; source systems can report days/weeks later and some DOD/USACE procurement reporting can be delayed much longer | **V0 core, PIT-cautious** |
+| **GLEIF** | 1/utility | Legal-entity resolution; LEIs; direct/ultimate corporate relationships where reported | API, bulk/golden-copy data | Free | Coverage incomplete; ownership relationships need effective dates and knowledge-time treatment | **V0 utility** |
+| **OpenFIGI** | utility | Security identifier resolution among instrument/share-class/composite identifiers | REST API | Free; unauthenticated use has lower rate limits, free keys increase throughput | FIGI variants have different semantics; tickers change; identifier type must be preserved | **V0 utility** |
+| **Market-price provider / Alpaca** | 1/2 utility | Price history, benchmark returns, later paper trading | API, MCP/CLI/skills | Free Basic/paper capabilities available; paid data optional later | Basic historical equity coverage begins in 2016; live Basic equities are IEX-only; adjustment and symbol-mapping modes must be explicit | **V0/V1 core utility** |
+| **GovInfo** | 1 | Official bills, hearings, Congressional Record, reports, Federal Register/CFR context, presidential documents | API, RSS, bulk, MCP public preview | Free public access | Policy relevance is contextual; preserve document/publication timing | **V1 enrichment** |
+| **LobbyView** | 2/research | Historical lobbying reports, clients, bills, issues, lobbying text and relationships | REST API, datasets | Free/research-oriented; API rate limits apply | Useful for backtests; currentness and normalized client identity must be checked; source lineage may overlap LDA/Quiver | **V0/V1 research** |
+| **SAM.gov Opportunities** | 1 | Upstream procurement demand and contract opportunity notices | REST API | Free account/API key; quotas apply | Opportunity is not award and does not identify eventual winner; use as demand/industry context | **V1 research** |
+| **Federal Register / Regulations.gov** | 1 | Proposed/final rules, agency notices, dockets, comments | API/web | Free public data | Sector/company attribution must be explicit and timestamp-safe | **V1 research** |
+| **CourtListener / RECAP** | 2/primary-adjacent | Dockets, decisions, PACER-derived material, legal alerts, court-event context | REST API, MCP, webhooks, member/bulk services | Access tiers vary; verify before dependence | Filing date, public availability, and later document acquisition can be different times | **V1 selective** |
+| **FRED / ALFRED** | 1 | Macro/regime controls with vintage-correct historical values | API | Free key | Use ALFRED real-time vintages; today's revised history can create look-ahead | **V1 controls** |
+| **ICIJ Offshore Leaks** | 3 | Entity/officer/intermediary/address reconciliation; offshore relationship enrichment | Reconciliation API, bulk CSV/graph | Open data; attribution/share-alike terms apply | Match ≠ wrongdoing; fuzzy matches require confidence and verification | **V1 selective** |
+| **OpenSanctions** | 3 | PEP/entity matching, sanctions/watchlist relationships, identity enrichment | API, bulk | Licensing varies by use case; verify before use | Watchlist/PEP presence is context, not moral score; commercialization/licensing matters | **Later/selective** |
+| **Unusual Whales — public/retail surfaces** | 2 | Reference model, manual verification, targeted enrichment where terms allow | Web platform; retail tools | Free/retail access varies | Browser extraction is brittle and must comply with source terms; no assumption that automation is permitted | **V0 reference/bridge** |
+| **Unusual Whales — API Basic** | 2 | Premium normalized feed: congressional/insider events, dark pool, real-time options/equities, derived indicators, MCP/skills | REST API, websocket, MCP/skills | **$150/mo currently** | Current Basic: two-year lookback, 40,000 requests/day; personal-use/no redistribution; market-microstructure scope drift risk | **Upgrade target** |
+| **Firecrawl** | utility | Structured web extraction for narrow agent tasks where target-source terms permit it | API/CLI/MCP/browser tools | Free allowance varies; verify before use | Capability is not permission; extracted output is not authoritative evidence | **V0 utility, conditional** |
+| **Clarence** | internal agent | Low-frequency targeted enrichment and delta capture where permitted | Browser/agent workflow | Token/agent cost | Must return structured records, preserve source/capture time, and never silently become ground truth | **V0 bridge** |
 
-## 3. Current verified access notes
+## 4. Current verified access notes
 
 ### SEC / EDGAR
 
-The SEC publishes flattened insider-transaction datasets derived from Forms 3, 4, and 5. The current archive spans January 2006 through June 2026 and is updated quarterly.
+The SEC supports scripted access subject to its published fair-access rules. The current published ceiling is 10 requests/second and automated clients should send a declared User-Agent with contact information.
 
-For current-event research, Ragged Claws should ingest filing-level data rather than waiting for quarterly flattened datasets.
+For ownership filings, Ragged Claws should retain the exact EDGAR `ACCEPTANCE-DATETIME` from the complete submission header where available. SEC guidance distinguishes acceptance time from the filed-as-of date, and filings can appear on sec.gov shortly after EDGAR acceptance rather than at the nightly index time.
+
+M1 scope should begin with Form 4, Table I, non-derivative open-market `P` and `S` transaction rows. Other ownership transaction codes can be preserved in raw/staging data and added deliberately later.
 
 ### Quiver Hobbyist
 
@@ -74,21 +89,35 @@ The plan currently lists:
 - Donald Trump stock trades
 - 10 of 18 Quiver MCP tools
 
-The plan explicitly lacks commercial-use rights.
+The plan explicitly lacks commercial-use rights. The same API key is used for REST and MCP access.
 
 Ragged Claws V0 is personal/noncommercial research, so the limitation is acceptable for the bootstrap phase. Reassess licensing before any external productization.
 
+Important adapter rule: Quiver datasets can expose provider-derived fields such as `ExcessReturn`, `PriceChange`, and `SPYChange`. These are post-event performance fields and must never enter point-in-time feature snapshots. Quarantine them as vendor-derived metadata or discard them from canonical research features.
+
+Do not assume an ownership-detail field such as self/spouse exists for every Quiver endpoint until the subscribed endpoint schema is verified. Preserve such distinctions when supplied; do not invent them when absent.
+
 ### LittleSis
 
-The API currently requires no API key or authentication, although rate limiting may apply. LittleSis also makes its full dataset available in bulk.
+The current API documentation states that no API key/authentication is required, although requests may be rate-limited. API responses identify the database data license as **CC BY-SA 4.0**.
+
+LittleSis exposes entity/relationship effective dates and `updated_at`, but `updated_at` is a database curation timestamp, not necessarily the original public-knowledge time of the relationship.
+
+LittleSis can also contain partial dates such as `1856-00-00`. Preserve source precision rather than forcing these values into a full `datetime.date`.
 
 Treat LittleSis as graph infrastructure, not a trading recommendation engine.
 
 ### USAspending
 
-Current USAspending API documentation states that endpoints do not require authorization.
+USAspending updates after its nightly pipeline, but the upstream reporting deadline varies by source system.
 
-Use deterministic endpoints for durable ingestion. Agent/LLM-style search, if used, should be an exploration aid rather than the canonical data path.
+For example, contract data can be submitted to FPDS within several business days of the transaction and then published downstream; DOD/USACE procurement submission can be delayed substantially longer. Financial-assistance reporting has its own lag rules.
+
+Therefore:
+
+- `action_date` is an event/effective date, not automatically a public timestamp;
+- forward collectors should record `first_seen_at` from our own snapshots;
+- historical USAspending events should not be used as exact PIT features unless a defensible publication/availability time is reconstructed.
 
 ### GLEIF
 
@@ -98,15 +127,29 @@ Use GLEIF to strengthen legal-entity resolution, not to assume complete ownershi
 
 ### OpenFIGI
 
-OpenFIGI's API is free and public. Unauthenticated requests have lower rate limits; a free API key increases throughput.
+OpenFIGI's API is free and public. Current documentation distinguishes instrument `figi`, `shareClassFIGI`, and `compositeFIGI` and publishes separate mapping/search rate limits.
 
-Use FIGI/security identifiers to avoid treating ticker strings as permanent identities.
+Ragged Claws must preserve which FIGI type was returned. Do not place all three into one undifferentiated identifier field.
+
+Use identifiers to resolve security/share-class/listing semantics; do not treat ticker strings as permanent identity.
+
+### Alpaca market data
+
+Current Basic equity market-data access is free and provides historical U.S. stock/ETF data **since 2016**. Live Basic equities data is IEX-only rather than the full consolidated market.
+
+Historical bars expose explicit adjustment modes including raw, split, dividend, spin-off, and all, plus an `asof` mechanism for historical symbol/name changes.
+
+Implications:
+
+- if Alpaca Basic is the M1 price provider, the first backtest window is explicitly 2016-present;
+- adjustment mode must be requested/documented explicitly;
+- outcome and benchmark calculations must use the same convention;
+- historical symbol mapping does not eliminate the need for our own stable security/listing model;
+- missing/delisted coverage must be audited rather than assumed complete.
 
 ### GovInfo
 
-GovInfo's official MCP server entered public preview in January 2026. GovInfo also provides traditional API, RSS, and bulk interfaces.
-
-This makes GovInfo a particularly good example of the four-interface strategy: deterministic retrieval for data, MCP for contextual agent research.
+GovInfo offers official API/RSS/bulk access and an MCP public preview. It is a good example of the four-interface strategy: deterministic retrieval for durable data, agentic retrieval for contextual research.
 
 ### FRED / ALFRED
 
@@ -116,9 +159,7 @@ Any macro features used in a backtest should prefer vintage-correct data rather 
 
 ### ICIJ Offshore Leaks
 
-ICIJ's Offshore Leaks database contains more than 810,000 offshore companies, foundations, and trusts and provides a reconciliation API designed for matching external entity records.
-
-The downloadable database is graph-structured and available under open-data licensing terms.
+ICIJ's Offshore Leaks database provides entity/officer/intermediary/address relationship data and reconciliation/bulk interfaces.
 
 Use cases for Ragged Claws:
 
@@ -132,15 +173,13 @@ Non-use case:
 
 ### CourtListener
 
-CourtListener currently exposes REST APIs, an MCP connector, and event-driven webhook functionality. Many APIs can be explored openly; broader/advanced access is tied to Free Law Project membership/commercial arrangements.
-
-Do not make V0 dependent on paid CourtListener features until legal-event data has demonstrated incremental value.
+CourtListener exposes REST/agent/event-driven capabilities with access conditions that can vary by feature. Do not make V0 dependent on paid/member-only functionality until legal-event data demonstrates incremental value.
 
 ### Unusual Whales API
 
-Current API Basic pricing is $150/month, or $125/month when billed annually.
+Current API Basic pricing is $150/month.
 
-The current plan advertises:
+The current Basic plan advertises:
 
 - real-time options flow
 - real-time Nasdaq equities data
@@ -148,69 +187,87 @@ The current plan advertises:
 - dark-pool data
 - derived market indicators
 - two-year historical lookback
-- 80,000 requests/day
+- **40,000 requests/day**
 - MCP support
 - agent skills
 - websocket streaming for selected feeds
 
+The API is currently described as personal-use with redistribution prohibited.
+
 This remains the intended premium-data upgrade once Ragged Claws earns it.
 
-### Firecrawl
+### Firecrawl / browser extraction
 
-The current free plan advertises 1,000 credits per month.
+A web-extraction tool can reduce agent overhead, but it does not override the target site's terms.
 
-Its V0 purpose is narrow: reduce the token and browser-navigation cost of agent enrichment. It should not become a shadow replacement for an available supported API.
+Browser/automation fallback must be evaluated source by source. When automated access is not permitted, use manual enrichment or the source's supported API/MCP interface.
 
-## 4. Point-in-time risk classes
+## 5. Point-in-time risk patterns
 
-Each source should be tagged with a point-in-time risk class.
+### Native precise public event
 
-### PIT-A — native timestamped event
+The source provides a defensible public filing/publication timestamp.
 
-Source provides a clear historical public filing/publication timestamp.
+Example: SEC filing acceptance timestamp.
 
-Examples:
+Preferred for direct event backtesting.
 
-- SEC filing
-- government award transaction
-- court filing
+### Effective date known; knowledge time uncertain
 
-These are preferred for direct backtesting.
-
-### PIT-B — effective dates known, discovery time uncertain
-
-The relationship/event has historical dates, but the current database may have learned or curated it later.
+The source says when a relationship/event was effective, but current data do not establish when the market could have known the fact.
 
 Examples:
 
-- LittleSis relationships
-- some ICIJ relationships
-- manually curated network data
+- many LittleSis relationships;
+- current curated network datasets;
+- historical USAspending records when first-public availability cannot be reconstructed.
 
-Use carefully in historical features.
+Use for context/entity resolution or apply a conservative rule; do not silently treat effective date as public date.
 
-### PIT-C — current snapshot only
+### Current snapshot only
 
-Source may tell us what is true now without allowing reconstruction of what was knowable then.
+The source may tell us what is true now without allowing a historical state reconstruction.
 
-Do not use directly in historical predictive models unless historical snapshots can be reconstructed.
+Do not use directly in historical predictive features unless historical snapshots can be reconstructed.
 
-## 5. Licensing / retention rules
+## 6. Source lineage and duplicate evidence
+
+Every source observation should identify, where practical:
+
+- provider/source;
+- source-native record ID;
+- underlying primary-source family;
+- raw snapshot hash/version;
+- public time quality;
+- observed/retrieved time.
+
+A normalized vendor observation is not automatically independent evidence.
+
+Examples:
+
+- SEC Form 4 + Quiver's normalization of the same Form 4 = one underlying disclosure family;
+- USAspending + Quiver's normalized record of the same award = potentially one underlying procurement event;
+- multiple providers can corroborate parsing without increasing convergence count.
+
+## 7. Licensing / retention rules
 
 1. Never commit credentials or API keys to Git.
-2. Do not commit raw commercial/vendor data unless the license explicitly allows it.
-3. Store source adapters, schemas, derived features, and reproducible aggregate outputs in Git.
-4. Preserve source attribution required by open-data licenses.
-5. Keep a machine-readable record of source license/terms version where practical.
-6. Before any commercialization, re-audit every noncommercial or share-alike dependency.
-7. Vendor data should be replaceable without rewriting the research engine.
+2. Do not commit raw commercial/vendor data unless the license explicitly allows redistribution.
+3. For restricted vendors, Git fixtures should be synthetic and contain invented values while preserving schema shape.
+4. Store source adapters, schemas, derived features, methodology, and permitted aggregate outputs in Git.
+5. Preserve attribution/share-alike obligations required by open-data licenses.
+6. Keep a machine-readable record of source license/terms review date where practical.
+7. Before any commercialization, re-audit every noncommercial, personal-use, or share-alike dependency.
+8. Vendor data should be replaceable without rewriting the research engine.
+9. Browser/scraper use is allowed only where the target source permits automated access.
 
-## 6. Prioritization test for new sources
+## 8. Prioritization test for new sources
 
 A new source enters the roadmap only if it improves at least one of:
 
 - event coverage
-- timestamp quality
+- public-timestamp quality
+- historical reconstructability
 - entity resolution
 - relationship quality
 - economic context
@@ -220,6 +277,6 @@ A new source enters the roadmap only if it improves at least one of:
 
 And it must have a plausible path to answering:
 
-> What incremental information does this source provide after the data we already have?
+> What incremental information does this source provide after the data we already have, and is it independent of the source families we already count?
 
 Interesting is not sufficient.
