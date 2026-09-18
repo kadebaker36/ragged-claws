@@ -1,0 +1,15 @@
+{
+  "fixture_notice": "Invented normalized-vendor-like data for tests only",
+  "normalized_record_id": "synthetic-political-disclosure-1",
+  "underlying_public_source_family": "public.political_disclosure",
+  "published_date": "2024-05-07",
+  "actor_name": "Jordan Example",
+  "issuer_name": "Example Robotics Corporation",
+  "amount_range": {
+    "raw": "$1,001-$5,000",
+    "lower": "1001",
+    "upper": "5000",
+    "currency": "USD"
+  },
+  "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

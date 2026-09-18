@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "TemporalPrecision": {
+      "description": "Precision actually supported by the source value.",
+      "enum": [
+        "unknown",
+        "year",
+        "month",
+        "day",
+        "minute",
+        "second"
+      ],
+      "title": "TemporalPrecision",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A date-like source value with only its defensible components populated.",
+  "properties": {
+    "day": {
+      "anyOf": [
+        {
+          "maximum": 31,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Day"
+    },
+    "month": {
+      "anyOf": [
+        {
+          "maximum": 12,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Month"
+    },
+    "precision": {
+      "$ref": "#/$defs/TemporalPrecision"
+    },
+    "raw_value": {
+      "minLength": 1,
+      "title": "Raw Value",
+      "type": "string"
+    },
+    "year": {
+      "anyOf": [
+        {
+          "maximum": 9999,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Year"
+    }
+  },
+  "required": [
+    "raw_value",
+    "precision"
+  ],
+  "title": "PartialDate",
+  "type": "object"
+}

@@ -1,0 +1,10 @@
+{
+  "fixture_notice": "Invented relationship-database-like data for tests only",
+  "relationship_record_id": "synthetic-relationship-1",
+  "source_person_id": "person-100",
+  "target_organization_id": "organization-200",
+  "relationship_type": "director_of",
+  "start_date": "1856-00-00",
+  "record_updated_at": "2024-06-01T12:00:00Z",
+  "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+}

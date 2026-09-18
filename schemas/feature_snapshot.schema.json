@@ -1,0 +1,260 @@
+{
+  "$defs": {
+    "FeatureValue": {
+      "additionalProperties": false,
+      "description": "One source-linked scalar feature; no historical filtering is performed here.",
+      "properties": {
+        "feature_value_id": {
+          "format": "uuid",
+          "title": "Feature Value Id",
+          "type": "string"
+        },
+        "known_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TemporalValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_observation_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Source Observation Ids",
+          "type": "array"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "feature_value_id",
+        "name",
+        "value",
+        "source_observation_ids"
+      ],
+      "title": "FeatureValue",
+      "type": "object"
+    },
+    "PartialDate": {
+      "additionalProperties": false,
+      "description": "A date-like source value with only its defensible components populated.",
+      "properties": {
+        "day": {
+          "anyOf": [
+            {
+              "maximum": 31,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Day"
+        },
+        "month": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Month"
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 9999,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "PartialDate",
+      "type": "object"
+    },
+    "TemporalPrecision": {
+      "description": "Precision actually supported by the source value.",
+      "enum": [
+        "unknown",
+        "year",
+        "month",
+        "day",
+        "minute",
+        "second"
+      ],
+      "title": "TemporalPrecision",
+      "type": "string"
+    },
+    "TemporalValue": {
+      "additionalProperties": false,
+      "description": "A raw temporal value represented as a partial date or aware timestamp.",
+      "properties": {
+        "partial_date": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "source_timezone": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Timezone"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "TemporalValue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Immutable representation of features selected at a stated decision time.",
+  "properties": {
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "feature_snapshot_id": {
+      "format": "uuid",
+      "title": "Feature Snapshot Id",
+      "type": "string"
+    },
+    "feature_version": {
+      "minLength": 1,
+      "title": "Feature Version",
+      "type": "string"
+    },
+    "features": {
+      "items": {
+        "$ref": "#/$defs/FeatureValue"
+      },
+      "title": "Features",
+      "type": "array"
+    },
+    "provenance_id": {
+      "format": "uuid",
+      "title": "Provenance Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "snapshot_at": {
+      "format": "date-time",
+      "title": "Snapshot At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "feature_snapshot_id",
+    "event_id",
+    "snapshot_at",
+    "feature_version",
+    "features",
+    "provenance_id"
+  ],
+  "title": "FeatureSnapshot",
+  "type": "object"
+}

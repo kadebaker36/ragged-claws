@@ -1,0 +1,328 @@
+{
+  "$defs": {
+    "ContentHash": {
+      "additionalProperties": false,
+      "description": "Hash of the immutable raw object that produced an observation.",
+      "properties": {
+        "algorithm": {
+          "const": "sha256",
+          "default": "sha256",
+          "title": "Algorithm",
+          "type": "string"
+        },
+        "value": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "ContentHash",
+      "type": "object"
+    },
+    "ObservationRole": {
+      "description": "How an observation relates to its underlying information source.",
+      "enum": [
+        "primary_source",
+        "vendor_normalized",
+        "enrichment",
+        "synthetic"
+      ],
+      "title": "ObservationRole",
+      "type": "string"
+    },
+    "PartialDate": {
+      "additionalProperties": false,
+      "description": "A date-like source value with only its defensible components populated.",
+      "properties": {
+        "day": {
+          "anyOf": [
+            {
+              "maximum": 31,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Day"
+        },
+        "month": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Month"
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 9999,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "PartialDate",
+      "type": "object"
+    },
+    "RetentionClass": {
+      "description": "Repository-safe retention classification for captured material.",
+      "enum": [
+        "public",
+        "restricted",
+        "internal",
+        "unknown"
+      ],
+      "title": "RetentionClass",
+      "type": "string"
+    },
+    "SourceLineage": {
+      "additionalProperties": false,
+      "description": "Immediate source family and, when known, its underlying primary family.",
+      "properties": {
+        "observation_role": {
+          "$ref": "#/$defs/ObservationRole"
+        },
+        "source_family": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Source Family",
+          "type": "string"
+        },
+        "underlying_source_family": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Underlying Source Family"
+        }
+      },
+      "required": [
+        "source_family",
+        "observation_role"
+      ],
+      "title": "SourceLineage",
+      "type": "object"
+    },
+    "TemporalPrecision": {
+      "description": "Precision actually supported by the source value.",
+      "enum": [
+        "unknown",
+        "year",
+        "month",
+        "day",
+        "minute",
+        "second"
+      ],
+      "title": "TemporalPrecision",
+      "type": "string"
+    },
+    "TemporalValue": {
+      "additionalProperties": false,
+      "description": "A raw temporal value represented as a partial date or aware timestamp.",
+      "properties": {
+        "partial_date": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "source_timezone": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Timezone"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "TemporalValue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One captured source-native observation, distinct from a canonical event.",
+  "properties": {
+    "adapter_version": {
+      "minLength": 1,
+      "title": "Adapter Version",
+      "type": "string"
+    },
+    "license_name": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "License Name"
+    },
+    "lineage": {
+      "$ref": "#/$defs/SourceLineage"
+    },
+    "observed_at": {
+      "format": "date-time",
+      "title": "Observed At",
+      "type": "string"
+    },
+    "parser_version": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parser Version"
+    },
+    "provider_namespace": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Provider Namespace",
+      "type": "string"
+    },
+    "public_time": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TemporalValue"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "raw_content_hash": {
+      "$ref": "#/$defs/ContentHash"
+    },
+    "retention_class": {
+      "$ref": "#/$defs/RetentionClass"
+    },
+    "retrieved_at": {
+      "format": "date-time",
+      "title": "Retrieved At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_locator": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Locator"
+    },
+    "source_native_id": {
+      "minLength": 1,
+      "title": "Source Native Id",
+      "type": "string"
+    },
+    "source_observation_id": {
+      "format": "uuid",
+      "title": "Source Observation Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_observation_id",
+    "provider_namespace",
+    "source_native_id",
+    "lineage",
+    "retrieved_at",
+    "observed_at",
+    "raw_content_hash",
+    "adapter_version",
+    "retention_class"
+  ],
+  "title": "SourceObservation",
+  "type": "object"
+}

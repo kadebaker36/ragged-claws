@@ -1,0 +1,67 @@
+{
+  "$defs": {
+    "EventAttributeType": {
+      "description": "Runtime type of a normalized, source-independent event attribute.",
+      "enum": [
+        "code",
+        "text",
+        "boolean",
+        "integer",
+        "decimal"
+      ],
+      "title": "EventAttributeType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A typed normalized event attribute, optionally retaining its raw source code.",
+  "properties": {
+    "name": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Name",
+      "type": "string"
+    },
+    "raw_value": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raw Value"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Value"
+    },
+    "value_type": {
+      "$ref": "#/$defs/EventAttributeType"
+    }
+  },
+  "required": [
+    "name",
+    "value_type",
+    "value"
+  ],
+  "title": "EventAttribute",
+  "type": "object"
+}
