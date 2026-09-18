@@ -76,6 +76,7 @@ uv run pytest
 uv run ruff check .
 uv run mypy src tests
 uv run ragged-claws version
+uv run python -m ragged_claws.schema_generation --check
 ```
 
 The same checks run in GitHub Actions on Ubuntu and Windows with Python 3.12.

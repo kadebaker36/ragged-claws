@@ -9,6 +9,7 @@ description = "Public-information investment research infrastructure"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "pydantic>=2.11,<3",
     "typer>=0.16,<1",
 ]
 
@@ -31,6 +32,7 @@ strict = true
 files = ["src", "tests"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = ["tests"]
 
 [tool.ruff]

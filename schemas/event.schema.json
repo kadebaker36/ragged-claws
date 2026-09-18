@@ -1,0 +1,432 @@
+{
+  "$defs": {
+    "DisclosedRange": {
+      "additionalProperties": false,
+      "description": "A disclosed range that preserves raw text and never invents a midpoint.",
+      "properties": {
+        "currency": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
+        },
+        "disclosed_range_id": {
+          "format": "uuid",
+          "title": "Disclosed Range Id",
+          "type": "string"
+        },
+        "lower_bound": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower Bound"
+        },
+        "parser_version": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parser Version"
+        },
+        "raw_text": {
+          "minLength": 1,
+          "title": "Raw Text",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper Bound"
+        }
+      },
+      "required": [
+        "disclosed_range_id",
+        "raw_text"
+      ],
+      "title": "DisclosedRange",
+      "type": "object"
+    },
+    "FinancialValue": {
+      "additionalProperties": false,
+      "description": "An exact numeric value whose kind determines currency/unit requirements.",
+      "properties": {
+        "currency": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
+        },
+        "financial_value_id": {
+          "format": "uuid",
+          "title": "Financial Value Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/FinancialValueKind"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "financial_value_id",
+        "kind",
+        "value"
+      ],
+      "title": "FinancialValue",
+      "type": "object"
+    },
+    "FinancialValueKind": {
+      "enum": [
+        "monetary_amount",
+        "unit_price",
+        "quantity",
+        "percentage"
+      ],
+      "title": "FinancialValueKind",
+      "type": "string"
+    },
+    "PartialDate": {
+      "additionalProperties": false,
+      "description": "A date-like source value with only its defensible components populated.",
+      "properties": {
+        "day": {
+          "anyOf": [
+            {
+              "maximum": 31,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Day"
+        },
+        "month": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Month"
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 9999,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "PartialDate",
+      "type": "object"
+    },
+    "TemporalPrecision": {
+      "description": "Precision actually supported by the source value.",
+      "enum": [
+        "unknown",
+        "year",
+        "month",
+        "day",
+        "minute",
+        "second"
+      ],
+      "title": "TemporalPrecision",
+      "type": "string"
+    },
+    "TemporalValue": {
+      "additionalProperties": false,
+      "description": "A raw temporal value represented as a partial date or aware timestamp.",
+      "properties": {
+        "partial_date": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "source_timezone": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Timezone"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "TemporalValue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One canonical event, independent of the observations that reported it.",
+  "properties": {
+    "actionable_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actionable At"
+    },
+    "actor_entity_ids": {
+      "default": [],
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Actor Entity Ids",
+      "type": "array"
+    },
+    "disclosed_ranges": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DisclosedRange"
+      },
+      "title": "Disclosed Ranges",
+      "type": "array"
+    },
+    "event_evidence_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Event Evidence Ids",
+      "type": "array"
+    },
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Event Type",
+      "type": "string"
+    },
+    "financial_values": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FinancialValue"
+      },
+      "title": "Financial Values",
+      "type": "array"
+    },
+    "issuer_entity_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Issuer Entity Id"
+    },
+    "listing_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Listing Id"
+    },
+    "occurrence_time": {
+      "$ref": "#/$defs/TemporalValue"
+    },
+    "provenance_id": {
+      "format": "uuid",
+      "title": "Provenance Id",
+      "type": "string"
+    },
+    "public_time": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TemporalValue"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "security_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Security Id"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "occurrence_time",
+    "event_evidence_ids",
+    "provenance_id"
+  ],
+  "title": "Event",
+  "type": "object"
+}

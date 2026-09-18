@@ -1,0 +1,20 @@
+{
+  "fixture_notice": "Invented SEC-like data for tests only",
+  "accession_number": "0000000000-24-000001",
+  "accepted_at": "2024-05-06T16:42:15-04:00",
+  "transaction_date": "2024-05-03",
+  "issuer": {
+    "cik": "0000000001",
+    "name": "Example Robotics Corporation"
+  },
+  "reporting_owner": {
+    "cik": "0000000002",
+    "name": "Alex Example"
+  },
+  "transaction": {
+    "code": "P",
+    "shares": "125.000",
+    "price": "42.10"
+  },
+  "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

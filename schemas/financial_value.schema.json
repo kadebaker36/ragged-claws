@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "FinancialValueKind": {
+      "enum": [
+        "monetary_amount",
+        "unit_price",
+        "quantity",
+        "percentage"
+      ],
+      "title": "FinancialValueKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An exact numeric value whose kind determines currency/unit requirements.",
+  "properties": {
+    "currency": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Z]{3}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Currency"
+    },
+    "financial_value_id": {
+      "format": "uuid",
+      "title": "Financial Value Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/FinancialValueKind"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Unit"
+    },
+    "value": {
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Value",
+      "type": "string"
+    }
+  },
+  "required": [
+    "financial_value_id",
+    "kind",
+    "value"
+  ],
+  "title": "FinancialValue",
+  "type": "object"
+}

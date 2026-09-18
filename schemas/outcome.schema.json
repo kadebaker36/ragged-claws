@@ -1,0 +1,232 @@
+{
+  "$defs": {
+    "OutcomeStatus": {
+      "enum": [
+        "complete",
+        "right_censored",
+        "missing_price",
+        "unresolved_security",
+        "terminal_delisted",
+        "excluded"
+      ],
+      "title": "OutcomeStatus",
+      "type": "string"
+    },
+    "PriceAdjustment": {
+      "enum": [
+        "raw",
+        "split",
+        "dividend",
+        "spinoff",
+        "all",
+        "other"
+      ],
+      "title": "PriceAdjustment",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Forward-result representation; this model performs no return calculation.",
+  "properties": {
+    "actionable_at": {
+      "format": "date-time",
+      "title": "Actionable At",
+      "type": "string"
+    },
+    "benchmark_listing_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Benchmark Listing Id"
+    },
+    "benchmark_return": {
+      "anyOf": [
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Benchmark Return"
+    },
+    "entry_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Entry At"
+    },
+    "entry_price": {
+      "anyOf": [
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Entry Price"
+    },
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "excess_return": {
+      "anyOf": [
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Excess Return"
+    },
+    "exclusion_reason": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Exclusion Reason"
+    },
+    "exit_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Exit At"
+    },
+    "exit_price": {
+      "anyOf": [
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Exit Price"
+    },
+    "horizon_sessions": {
+      "exclusiveMinimum": 0,
+      "title": "Horizon Sessions",
+      "type": "integer"
+    },
+    "listing_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Listing Id"
+    },
+    "outcome_id": {
+      "format": "uuid",
+      "title": "Outcome Id",
+      "type": "string"
+    },
+    "price_adjustment": {
+      "$ref": "#/$defs/PriceAdjustment"
+    },
+    "price_source_observation_ids": {
+      "default": [],
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Price Source Observation Ids",
+      "type": "array"
+    },
+    "provenance_id": {
+      "format": "uuid",
+      "title": "Provenance Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "security_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Security Id"
+    },
+    "security_return": {
+      "anyOf": [
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Security Return"
+    },
+    "status": {
+      "$ref": "#/$defs/OutcomeStatus"
+    }
+  },
+  "required": [
+    "outcome_id",
+    "event_id",
+    "actionable_at",
+    "horizon_sessions",
+    "status",
+    "price_adjustment",
+    "provenance_id"
+  ],
+  "title": "Outcome",
+  "type": "object"
+}

@@ -42,5 +42,8 @@ jobs:
       - name: Run mypy
         run: uv run mypy src tests
 
+      - name: Check generated schemas
+        run: uv run python -m ragged_claws.schema_generation --check
+
       - name: Smoke-test CLI
         run: uv run ragged-claws version
