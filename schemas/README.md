@@ -24,3 +24,6 @@ They are not derived from names, aliases, normalized text, or ticker symbols.
 records were derived from observations. `EventEvidence` associates one canonical event with one or
 more observations that support it; multiple observations therefore need not become duplicate
 events.
+
+`FinancialValue` and `DisclosedRange` are pure values nested under `Event`. Their semantic `name`
+states what each value represents, while the containing Event supplies evidence and provenance.

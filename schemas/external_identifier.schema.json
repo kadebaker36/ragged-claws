@@ -179,6 +179,19 @@
       ],
       "default": null
     },
+    "market_scope": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Market Scope"
+    },
     "namespace": {
       "anyOf": [
         {

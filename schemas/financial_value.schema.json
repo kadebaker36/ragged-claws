@@ -12,7 +12,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "An exact numeric value whose kind determines currency/unit requirements.",
+  "description": "An Event-owned exact value with a source-independent semantic role.\n\nFinancial values are pure values nested under Event. They inherit the Event's\nevidence and provenance rather than carrying independent lineage.",
   "properties": {
     "currency": {
       "anyOf": [
@@ -27,18 +27,13 @@
       "default": null,
       "title": "Currency"
     },
-    "financial_value_id": {
-      "format": "uuid",
-      "title": "Financial Value Id",
-      "type": "string"
-    },
     "kind": {
       "$ref": "#/$defs/FinancialValueKind"
     },
-    "schema_version": {
-      "const": "1.0.0",
-      "default": "1.0.0",
-      "title": "Schema Version",
+    "name": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Name",
       "type": "string"
     },
     "unit": {
@@ -61,7 +56,7 @@
     }
   },
   "required": [
-    "financial_value_id",
+    "name",
     "kind",
     "value"
   ],

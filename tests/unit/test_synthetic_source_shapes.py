@@ -11,7 +11,10 @@ from ragged_claws.models import (
     ContentHash,
     DisclosedRange,
     Event,
+    EventAttribute,
+    EventAttributeType,
     EventEvidence,
+    EventPartyReference,
     FinancialValue,
     FinancialValueKind,
     ObservationRole,
@@ -46,8 +49,10 @@ class SecParty(TypedDict):
 
 class SecTransaction(TypedDict):
     code: str
+    ownership_mode: str
     shares: str
     price: str
+    post_transaction_shares: str
 
 
 class SecFixture(TypedDict):
@@ -138,7 +143,10 @@ def test_sec_shaped_fixture_maps_to_observation_event_and_exact_values() -> None
     event = Event(
         event_id=EVENT_ID,
         event_type="insider_transaction",
-        actor_entity_ids=(PERSON_ID,),
+        actors=(EventPartyReference(entity_id=PERSON_ID, role="reporting_owner"),),
+        economic_units=(
+            EventPartyReference(entity_id=PERSON_ID, role="beneficial_owner"),
+        ),
         issuer_entity_id=ISSUER_ID,
         occurrence_time=TemporalValue(
             raw_value=payload["transaction_date"],
@@ -154,17 +162,37 @@ def test_sec_shaped_fixture_maps_to_observation_event_and_exact_values() -> None
         public_time=public_time,
         financial_values=(
             FinancialValue(
-                financial_value_id=UUID("71000000-0000-4000-8000-000000000001"),
+                name="transaction_shares",
                 kind=FinancialValueKind.QUANTITY,
                 value=Decimal(payload["transaction"]["shares"]),
                 unit="shares",
             ),
             FinancialValue(
-                financial_value_id=UUID("71000000-0000-4000-8000-000000000002"),
+                name="transaction_price",
                 kind=FinancialValueKind.UNIT_PRICE,
                 value=Decimal(payload["transaction"]["price"]),
                 currency="USD",
                 unit="share",
+            ),
+            FinancialValue(
+                name="post_transaction_shares",
+                kind=FinancialValueKind.QUANTITY,
+                value=Decimal(payload["transaction"]["post_transaction_shares"]),
+                unit="shares",
+            ),
+        ),
+        attributes=(
+            EventAttribute(
+                name="transaction_code",
+                value_type=EventAttributeType.CODE,
+                value="purchase",
+                raw_value=payload["transaction"]["code"],
+            ),
+            EventAttribute(
+                name="ownership_mode",
+                value_type=EventAttributeType.CODE,
+                value="direct",
+                raw_value=payload["transaction"]["ownership_mode"],
             ),
         ),
         event_evidence_ids=(evidence.event_evidence_id,),
@@ -172,6 +200,18 @@ def test_sec_shaped_fixture_maps_to_observation_event_and_exact_values() -> None
     )
 
     assert event.financial_values[0].value == Decimal("125.000")
+    assert event.financial_values[0].name == "transaction_shares"
+    assert event.financial_values[2].name == "post_transaction_shares"
+    assert event.actors[0].entity_id == PERSON_ID
+    assert event.economic_units[0].entity_id == PERSON_ID
+    assert {attribute.name: attribute.value for attribute in event.attributes} == {
+        "transaction_code": "purchase",
+        "ownership_mode": "direct",
+    }
+    assert event.attributes[0].raw_value == "P"
+    assert event.attributes[1].raw_value == "D"
+    assert event.event_evidence_ids == (evidence.event_evidence_id,)
+    assert evidence.provenance_id == provenance.provenance_id
     assert event.public_time == observation.public_time
     assert payload["fixture_notice"].startswith("Invented")
 
@@ -209,7 +249,7 @@ def test_quiver_shaped_fixture_preserves_underlying_public_lineage_and_range() -
         license_name="synthetic-test-data",
     )
     disclosed_range = DisclosedRange(
-        disclosed_range_id=UUID("71000000-0000-4000-8000-000000000003"),
+        name="transaction_value_range",
         raw_text=payload["amount_range"]["raw"],
         lower_bound=Decimal(payload["amount_range"]["lower"]),
         upper_bound=Decimal(payload["amount_range"]["upper"]),

@@ -41,6 +41,8 @@ def identifier(
     subject_id: UUID,
     identifier_type: ExternalIdentifierType,
     value: str,
+    *,
+    market_scope: str | None = None,
 ) -> ExternalIdentifier:
     return ExternalIdentifier(
         external_identifier_id=identifier_id,
@@ -48,6 +50,7 @@ def identifier(
         subject_id=subject_id,
         identifier_type=identifier_type,
         value=value,
+        market_scope=market_scope,
         source_observation_id=OBSERVATION_ID,
         provenance_id=PROVENANCE_ID,
         observed_at=OBSERVED_AT,
@@ -81,19 +84,20 @@ def test_entity_security_and_multiple_listings_remain_distinct() -> None:
     )
     class_a_id = SECURITY_ID
     class_b_id = UUID("20000000-0000-4000-8000-000000000002")
-    instrument_figi = identifier(
-        UUID("40000000-0000-4000-8000-000000000002"),
-        IdentifierSubjectType.SECURITY,
-        class_a_id,
-        ExternalIdentifierType.FIGI_INSTRUMENT,
-        "BBG000000001",
-    )
     share_class_figi = identifier(
-        UUID("40000000-0000-4000-8000-000000000003"),
+        UUID("40000000-0000-4000-8000-000000000002"),
         IdentifierSubjectType.SECURITY,
         class_a_id,
         ExternalIdentifierType.FIGI_SHARE_CLASS,
         "BBG000000002",
+    )
+    composite_figi = identifier(
+        UUID("40000000-0000-4000-8000-000000000003"),
+        IdentifierSubjectType.SECURITY,
+        class_a_id,
+        ExternalIdentifierType.FIGI_COMPOSITE,
+        "BBG000000003",
+        market_scope="US",
     )
     class_a = Security(
         security_id=class_a_id,
@@ -101,7 +105,7 @@ def test_entity_security_and_multiple_listings_remain_distinct() -> None:
         security_type=SecurityType.COMMON_STOCK,
         display_name="Example Robotics Class A Common Stock",
         share_class="Class A",
-        external_identifiers=(instrument_figi, share_class_figi),
+        external_identifiers=(share_class_figi, composite_figi),
         provenance_id=PROVENANCE_ID,
     )
     class_b = Security(
@@ -122,6 +126,13 @@ def test_entity_security_and_multiple_listings_remain_distinct() -> None:
         ),
         provenance_id=PROVENANCE_ID,
     )
+    venue_figi = identifier(
+        UUID("40000000-0000-4000-8000-000000000004"),
+        IdentifierSubjectType.LISTING,
+        LISTING_ID,
+        ExternalIdentifierType.FIGI_INSTRUMENT,
+        "BBG000000004",
+    )
     current_listing = Listing(
         listing_id=LISTING_ID,
         security_id=class_a.security_id,
@@ -130,6 +141,7 @@ def test_entity_security_and_multiple_listings_remain_distinct() -> None:
         effective_from=partial_temporal(
             "2020-01-02", TemporalPrecision.DAY, year=2020, month=1, day=2
         ),
+        external_identifiers=(venue_figi,),
         provenance_id=PROVENANCE_ID,
     )
 
@@ -138,30 +150,65 @@ def test_entity_security_and_multiple_listings_remain_distinct() -> None:
     assert historical_listing.security_id == current_listing.security_id == class_a.security_id
     assert {historical_listing.symbol, current_listing.symbol} == {"OLDX", "EXRA"}
     assert {item.identifier_type for item in class_a.external_identifiers} == {
-        ExternalIdentifierType.FIGI_INSTRUMENT,
         ExternalIdentifierType.FIGI_SHARE_CLASS,
+        ExternalIdentifierType.FIGI_COMPOSITE,
     }
+    assert current_listing.external_identifiers[0].identifier_type is (
+        ExternalIdentifierType.FIGI_INSTRUMENT
+    )
+    assert composite_figi.market_scope == "US"
     assert "symbol" not in Security.model_json_schema()["properties"]
 
 
-def test_composite_figi_type_is_not_conflated_with_other_figi_types() -> None:
-    composite = identifier(
-        UUID("40000000-0000-4000-8000-000000000004"),
-        IdentifierSubjectType.LISTING,
-        LISTING_ID,
-        ExternalIdentifierType.FIGI_COMPOSITE,
-        "BBG000000003",
-    )
+@pytest.mark.parametrize(
+    ("identifier_type", "subject_type", "subject_id", "market_scope"),
+    [
+        (ExternalIdentifierType.SEC_CIK, IdentifierSubjectType.SECURITY, SECURITY_ID, None),
+        (ExternalIdentifierType.LEI, IdentifierSubjectType.LISTING, LISTING_ID, None),
+        (ExternalIdentifierType.FIGI_SHARE_CLASS, IdentifierSubjectType.ENTITY, ISSUER_ID, None),
+        (ExternalIdentifierType.FIGI_INSTRUMENT, IdentifierSubjectType.ENTITY, ISSUER_ID, None),
+        (
+            ExternalIdentifierType.FIGI_COMPOSITE,
+            IdentifierSubjectType.LISTING,
+            LISTING_ID,
+            "US",
+        ),
+    ],
+)
+def test_invalid_identifier_subject_mappings_fail_loudly(
+    identifier_type: ExternalIdentifierType,
+    subject_type: IdentifierSubjectType,
+    subject_id: UUID,
+    market_scope: str | None,
+) -> None:
+    with pytest.raises(ValidationError, match="cannot identify"):
+        identifier(
+            UUID("40000000-0000-4000-8000-000000000010"),
+            subject_type,
+            subject_id,
+            identifier_type,
+            "INVALIDSUBJ1",
+            market_scope=market_scope,
+        )
 
-    assert composite.identifier_type is ExternalIdentifierType.FIGI_COMPOSITE
+
+def test_composite_figi_requires_market_scope() -> None:
+    with pytest.raises(ValidationError, match="requires market_scope"):
+        identifier(
+            UUID("40000000-0000-4000-8000-000000000011"),
+            IdentifierSubjectType.SECURITY,
+            SECURITY_ID,
+            ExternalIdentifierType.FIGI_COMPOSITE,
+            "BBG000000011",
+        )
 
 
 def test_identifier_subject_mismatch_and_ambiguous_namespace_fail() -> None:
     mismatched = identifier(
-        UUID("40000000-0000-4000-8000-000000000005"),
+        UUID("40000000-0000-4000-8000-000000000012"),
         IdentifierSubjectType.SECURITY,
         UUID("20000000-0000-4000-8000-000000000099"),
-        ExternalIdentifierType.FIGI_INSTRUMENT,
+        ExternalIdentifierType.FIGI_SHARE_CLASS,
         "BBG000000099",
     )
     with pytest.raises(ValidationError, match="must match"):
@@ -176,7 +223,7 @@ def test_identifier_subject_mismatch_and_ambiguous_namespace_fail() -> None:
 
     with pytest.raises(ValidationError, match="explicit namespace"):
         ExternalIdentifier(
-            external_identifier_id=UUID("40000000-0000-4000-8000-000000000006"),
+            external_identifier_id=UUID("40000000-0000-4000-8000-000000000013"),
             subject_type=IdentifierSubjectType.ENTITY,
             subject_id=ISSUER_ID,
             identifier_type=ExternalIdentifierType.OTHER,

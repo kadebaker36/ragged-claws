@@ -88,6 +88,7 @@ class ExternalIdentifier(VersionedModel):
     identifier_type: ExternalIdentifierType
     value: NonEmptyStr
     namespace: Slug | None = None
+    market_scope: NonEmptyStr | None = None
     source_observation_id: UUID
     provenance_id: UUID
     valid_from: TemporalValue | None = None
@@ -101,6 +102,31 @@ class ExternalIdentifier(VersionedModel):
             raise ValueError("OTHER identifiers require an explicit namespace")
         if self.identifier_type is not ExternalIdentifierType.OTHER and self.namespace is not None:
             raise ValueError("known identifier types must not override their namespace")
+
+        allowed_subjects: dict[ExternalIdentifierType, set[IdentifierSubjectType]] = {
+            ExternalIdentifierType.SEC_CIK: {IdentifierSubjectType.ENTITY},
+            ExternalIdentifierType.LEI: {IdentifierSubjectType.ENTITY},
+            ExternalIdentifierType.FIGI_SHARE_CLASS: {IdentifierSubjectType.SECURITY},
+            ExternalIdentifierType.FIGI_COMPOSITE: {IdentifierSubjectType.SECURITY},
+            ExternalIdentifierType.FIGI_INSTRUMENT: {IdentifierSubjectType.LISTING},
+            ExternalIdentifierType.ISIN: {IdentifierSubjectType.SECURITY},
+            ExternalIdentifierType.CUSIP: {IdentifierSubjectType.SECURITY},
+            ExternalIdentifierType.SEDOL: {
+                IdentifierSubjectType.SECURITY,
+                IdentifierSubjectType.LISTING,
+            },
+            ExternalIdentifierType.OTHER: set(IdentifierSubjectType),
+        }
+        if self.subject_type not in allowed_subjects[self.identifier_type]:
+            raise ValueError(
+                f"{self.identifier_type.value} cannot identify {self.subject_type.value}"
+            )
+
+        if self.identifier_type is ExternalIdentifierType.FIGI_COMPOSITE:
+            if self.market_scope is None:
+                raise ValueError("composite FIGI requires market_scope")
+        elif self.market_scope is not None:
+            raise ValueError("market_scope is only valid for composite FIGI")
         return self
 
 

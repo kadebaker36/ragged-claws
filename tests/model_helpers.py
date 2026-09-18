@@ -7,7 +7,9 @@ from ragged_claws.models import (
     ContentHash,
     DerivationKind,
     ObservationRole,
+    OutcomeMethodology,
     PartialDate,
+    PriceAdjustment,
     Provenance,
     RetentionClass,
     SourceLineage,
@@ -25,6 +27,7 @@ PERSON_ID = UUID("10000000-0000-4000-8000-000000000002")
 SECURITY_ID = UUID("20000000-0000-4000-8000-000000000001")
 LISTING_ID = UUID("30000000-0000-4000-8000-000000000001")
 OBSERVED_AT = datetime(2024, 5, 6, 21, 0, tzinfo=UTC)
+METHODOLOGY_ID = UUID("99999999-9999-4999-8999-999999999999")
 
 
 def partial_temporal(
@@ -87,4 +90,19 @@ def provenance(*observation_ids: UUID) -> Provenance:
         derivation_kind=DerivationKind.SYNTHETIC_TEST,
         derived_at=OBSERVED_AT,
         transform_version="test-mapping/1",
+    )
+
+
+def outcome_methodology(
+    price_source_observation_ids: tuple[UUID, ...] = (OBSERVATION_ID,),
+) -> OutcomeMethodology:
+    return OutcomeMethodology(
+        methodology_id=METHODOLOGY_ID,
+        methodology_version="outcome-method/1",
+        calendar_id="xnas_sessions",
+        calendar_version="calendar/1",
+        entry_convention="actionable_open",
+        exit_convention="session_close",
+        price_adjustment=PriceAdjustment.ALL,
+        price_source_observation_ids=price_source_observation_ids,
     )

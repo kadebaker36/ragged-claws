@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "description": "An entity participating in an event in a stated semantic role.",
+  "properties": {
+    "entity_id": {
+      "format": "uuid",
+      "title": "Entity Id",
+      "type": "string"
+    },
+    "role": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "required": [
+    "entity_id",
+    "role"
+  ],
+  "title": "EventPartyReference",
+  "type": "object"
+}

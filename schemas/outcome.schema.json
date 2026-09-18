@@ -1,5 +1,73 @@
 {
   "$defs": {
+    "OutcomeMethodology": {
+      "additionalProperties": false,
+      "description": "Versioned conventions and source lineage used to construct an Outcome.\n\nThis value records methodology only; it does not implement calendar or return logic.",
+      "properties": {
+        "calendar_id": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Calendar Id",
+          "type": "string"
+        },
+        "calendar_version": {
+          "minLength": 1,
+          "title": "Calendar Version",
+          "type": "string"
+        },
+        "entry_convention": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Entry Convention",
+          "type": "string"
+        },
+        "exit_convention": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Exit Convention",
+          "type": "string"
+        },
+        "methodology_id": {
+          "format": "uuid",
+          "title": "Methodology Id",
+          "type": "string"
+        },
+        "methodology_version": {
+          "minLength": 1,
+          "title": "Methodology Version",
+          "type": "string"
+        },
+        "price_adjustment": {
+          "$ref": "#/$defs/PriceAdjustment"
+        },
+        "price_source_observation_ids": {
+          "default": [],
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Price Source Observation Ids",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "methodology_id",
+        "methodology_version",
+        "calendar_id",
+        "calendar_version",
+        "entry_convention",
+        "exit_convention",
+        "price_adjustment"
+      ],
+      "title": "OutcomeMethodology",
+      "type": "object"
+    },
     "OutcomeStatus": {
       "enum": [
         "complete",
@@ -160,22 +228,13 @@
       "default": null,
       "title": "Listing Id"
     },
+    "methodology": {
+      "$ref": "#/$defs/OutcomeMethodology"
+    },
     "outcome_id": {
       "format": "uuid",
       "title": "Outcome Id",
       "type": "string"
-    },
-    "price_adjustment": {
-      "$ref": "#/$defs/PriceAdjustment"
-    },
-    "price_source_observation_ids": {
-      "default": [],
-      "items": {
-        "format": "uuid",
-        "type": "string"
-      },
-      "title": "Price Source Observation Ids",
-      "type": "array"
     },
     "provenance_id": {
       "format": "uuid",
@@ -224,7 +283,7 @@
     "actionable_at",
     "horizon_sessions",
     "status",
-    "price_adjustment",
+    "methodology",
     "provenance_id"
   ],
   "title": "Outcome",

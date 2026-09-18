@@ -1,6 +1,6 @@
 {
   "additionalProperties": false,
-  "description": "A disclosed range that preserves raw text and never invents a midpoint.",
+  "description": "An Event-owned semantic range that never invents a midpoint.\n\nDisclosed ranges are pure values nested under Event. They inherit the Event's\nevidence and provenance; parser_version records only the parsing method.",
   "properties": {
     "currency": {
       "anyOf": [
@@ -15,11 +15,6 @@
       "default": null,
       "title": "Currency"
     },
-    "disclosed_range_id": {
-      "format": "uuid",
-      "title": "Disclosed Range Id",
-      "type": "string"
-    },
     "lower_bound": {
       "anyOf": [
         {
@@ -32,6 +27,12 @@
       ],
       "default": null,
       "title": "Lower Bound"
+    },
+    "name": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Name",
+      "type": "string"
     },
     "parser_version": {
       "anyOf": [
@@ -49,12 +50,6 @@
     "raw_text": {
       "minLength": 1,
       "title": "Raw Text",
-      "type": "string"
-    },
-    "schema_version": {
-      "const": "1.0.0",
-      "default": "1.0.0",
-      "title": "Schema Version",
       "type": "string"
     },
     "unit": {
@@ -85,7 +80,7 @@
     }
   },
   "required": [
-    "disclosed_range_id",
+    "name",
     "raw_text"
   ],
   "title": "DisclosedRange",

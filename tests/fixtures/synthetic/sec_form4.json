@@ -13,8 +13,10 @@
   },
   "transaction": {
     "code": "P",
+    "ownership_mode": "D",
     "shares": "125.000",
-    "price": "42.10"
+    "price": "42.10",
+    "post_transaction_shares": "875.000"
   },
   "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 }

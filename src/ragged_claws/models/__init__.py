@@ -1,6 +1,11 @@
 """Authoritative canonical Pydantic models for Ragged Claws."""
 
-from ragged_claws.models.events import Event
+from ragged_claws.models.events import (
+    Event,
+    EventAttribute,
+    EventAttributeType,
+    EventPartyReference,
+)
 from ragged_claws.models.evidence import (
     ContentHash,
     DerivationKind,
@@ -31,6 +36,7 @@ from ragged_claws.models.research import (
     FeatureSnapshot,
     FeatureValue,
     Outcome,
+    OutcomeMethodology,
     OutcomeStatus,
     PriceAdjustment,
 )
@@ -45,7 +51,10 @@ __all__ = [
     "EntityAlias",
     "EntityType",
     "Event",
+    "EventAttribute",
+    "EventAttributeType",
     "EventEvidence",
+    "EventPartyReference",
     "ExternalIdentifier",
     "ExternalIdentifierType",
     "FeatureSnapshot",
@@ -56,6 +65,7 @@ __all__ = [
     "Listing",
     "ObservationRole",
     "Outcome",
+    "OutcomeMethodology",
     "OutcomeStatus",
     "PartialDate",
     "PriceAdjustment",
