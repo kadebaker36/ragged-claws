@@ -19,6 +19,7 @@ from ragged_claws.models import (
     FinancialValue,
     FinancialValueKind,
     Outcome,
+    OutcomeMethodology,
     OutcomeStatus,
     TemporalPrecision,
 )
@@ -142,6 +143,51 @@ def test_event_serialization_preserves_separate_identity_and_evidence_links() ->
         )
 
 
+@pytest.mark.parametrize(
+    ("value_type", "value"),
+    [
+        (EventAttributeType.CODE, "P"),
+        (EventAttributeType.TEXT, "1.25"),
+        (EventAttributeType.BOOLEAN, True),
+        (EventAttributeType.INTEGER, 1),
+        (EventAttributeType.DECIMAL, Decimal("1.2500")),
+    ],
+)
+def test_event_attribute_types_roundtrip_without_semantic_coercion(
+    value_type: EventAttributeType,
+    value: str | bool | int | Decimal,
+) -> None:
+    attribute = EventAttribute(name="test_attribute", value_type=value_type, value=value)
+
+    assert type(attribute.value) is type(value)
+
+    restored = EventAttribute.model_validate_json(attribute.model_dump_json())
+
+    assert restored == attribute
+    assert type(restored.value) is type(value)
+    if isinstance(value, Decimal):
+        assert isinstance(restored.value, Decimal)
+        assert restored.value.as_tuple() == value.as_tuple()
+
+
+@pytest.mark.parametrize(
+    ("value_type", "value"),
+    [
+        (EventAttributeType.CODE, 1),
+        (EventAttributeType.TEXT, Decimal("1.25")),
+        (EventAttributeType.BOOLEAN, 1),
+        (EventAttributeType.INTEGER, True),
+        (EventAttributeType.DECIMAL, "1.25"),
+    ],
+)
+def test_event_attribute_rejects_mismatched_runtime_types(
+    value_type: EventAttributeType,
+    value: str | bool | int | Decimal,
+) -> None:
+    with pytest.raises(ValidationError, match="attribute requires"):
+        EventAttribute(name="test_attribute", value_type=value_type, value=value)
+
+
 def test_feature_snapshot_is_representational_and_rejects_float_values() -> None:
     feature = FeatureValue(
         feature_value_id=UUID("80000000-0000-4000-8000-000000000001"),
@@ -196,6 +242,11 @@ def test_outcome_validates_complete_and_incomplete_representations() -> None:
 
     assert Outcome.model_validate_json(complete.model_dump_json()) == complete
 
+    complete_without_price_sources = complete.model_dump()
+    complete_without_price_sources["methodology"] = outcome_methodology(())
+    with pytest.raises(ValidationError, match="price state requires price source observations"):
+        Outcome.model_validate(complete_without_price_sources)
+
     right_censored = Outcome(
         outcome_id=UUID("90000000-0000-4000-8000-000000000002"),
         event_id=EVENT_ID,
@@ -228,6 +279,53 @@ def test_outcome_validates_complete_and_incomplete_representations() -> None:
     assert Outcome.model_validate_json(right_censored.model_dump_json()) == right_censored
     assert terminal.entry_price == Decimal("42.10")
     assert terminal.benchmark_listing_id is not None
+
+
+@pytest.mark.parametrize(
+    "status",
+    [OutcomeStatus.RIGHT_CENSORED, OutcomeStatus.TERMINAL_DELISTED],
+)
+def test_partial_outcome_prices_require_source_provenance(status: OutcomeStatus) -> None:
+    actionable_at = datetime(2024, 5, 7, 13, 30, tzinfo=UTC)
+
+    def build_outcome(methodology: OutcomeMethodology) -> Outcome:
+        return Outcome(
+            outcome_id=UUID("90000000-0000-4000-8000-000000000006"),
+            event_id=EVENT_ID,
+            security_id=SECURITY_ID,
+            listing_id=LISTING_ID,
+            actionable_at=actionable_at,
+            entry_at=actionable_at,
+            entry_price=Decimal("42.10"),
+            benchmark_listing_id=UUID("30000000-0000-4000-8000-000000000099"),
+            horizon_sessions=120,
+            status=status,
+            methodology=methodology,
+            provenance_id=PROVENANCE_ID,
+        )
+
+    with_provenance = build_outcome(outcome_methodology())
+    assert with_provenance.entry_price == Decimal("42.10")
+
+    with pytest.raises(ValidationError, match="price state requires price source observations"):
+        build_outcome(outcome_methodology(()))
+
+
+def test_outcome_without_observed_prices_does_not_invent_price_provenance() -> None:
+    outcome = Outcome(
+        outcome_id=UUID("90000000-0000-4000-8000-000000000007"),
+        event_id=EVENT_ID,
+        security_id=SECURITY_ID,
+        listing_id=LISTING_ID,
+        actionable_at=datetime(2024, 5, 7, 13, 30, tzinfo=UTC),
+        benchmark_listing_id=UUID("30000000-0000-4000-8000-000000000099"),
+        horizon_sessions=20,
+        status=OutcomeStatus.MISSING_PRICE,
+        methodology=outcome_methodology(()),
+        provenance_id=PROVENANCE_ID,
+    )
+
+    assert outcome.methodology.price_source_observation_ids == ()
 
 
 def test_incomplete_outcome_rejects_completed_return_fields() -> None:

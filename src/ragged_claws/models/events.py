@@ -1,11 +1,11 @@
 """Canonical economic event representation."""
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 from typing import Self
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, ValidationInfo, field_validator, model_validator
 
 from ragged_claws.models.base import CanonicalModel, NonEmptyStr, Slug, VersionedModel
 from ragged_claws.models.financial import DisclosedRange, FinancialValue
@@ -36,6 +36,18 @@ class EventAttribute(CanonicalModel):
     value_type: EventAttributeType
     value: str | bool | int | Decimal
     raw_value: NonEmptyStr | None = None
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def restore_decimal_from_json(cls, value: object, info: ValidationInfo) -> object:
+        if info.mode != "json" or info.data.get("value_type") is not EventAttributeType.DECIMAL:
+            return value
+        if not isinstance(value, str):
+            raise ValueError("decimal JSON attribute requires an exact string encoding")
+        try:
+            return Decimal(value)
+        except InvalidOperation:
+            raise ValueError("decimal JSON attribute requires a valid Decimal") from None
 
     @model_validator(mode="after")
     def validate_value_type(self) -> Self:

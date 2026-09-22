@@ -116,8 +116,6 @@ class Outcome(VersionedModel):
             )
             if any(value is None for value in required_complete_fields):
                 raise ValueError("complete outcomes require entry, exit, and return fields")
-            if not self.methodology.price_source_observation_ids:
-                raise ValueError("complete outcomes require price source observations")
         elif any(value is not None for value in completion_fields):
             raise ValueError("incomplete outcomes cannot contain completed return fields")
 
@@ -127,6 +125,10 @@ class Outcome(VersionedModel):
             raise ValueError("entry_at and entry_price must be provided together")
         if (self.exit_at is None) != (self.exit_price is None):
             raise ValueError("exit_at and exit_price must be provided together")
+        if (
+            self.entry_price is not None or self.exit_price is not None
+        ) and not self.methodology.price_source_observation_ids:
+            raise ValueError("observed price state requires price source observations")
         if self.status is not OutcomeStatus.COMPLETE and (
             self.exit_at is not None or self.exit_price is not None
         ):
