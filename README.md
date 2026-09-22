@@ -50,6 +50,8 @@ The system should observe continuously and act selectively.
 
 It is not intended to become an options day-trading platform.
 
+Bootstrap infrastructure is deliberately lean: GitHub is the code/control plane, GitHub Actions is the preferred ephemeral CI/scheduled-compute layer, and Cloudflare R2 is the preferred durable object-storage target before a permanent server is justified.
+
 ## Documentation
 
 - `docs/00-project-charter.md`
@@ -63,6 +65,8 @@ It is not intended to become an options day-trading platform.
 - `docs/08-implementation-roadmap.md`
 - `docs/09-adversarial-architecture-review.md`
 - `docs/10-temporal-and-point-in-time-rules.md`
+- `docs/11-storage-and-idempotency.md`
+- `docs/12-runtime-and-deployment-strategy.md`
 
 See `AGENTS.md` before making implementation changes. The adversarial review hardens integration and point-in-time assumptions that must be honored during M0/M1 implementation.
 
