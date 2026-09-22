@@ -5,9 +5,9 @@ from enum import StrEnum
 from typing import Self
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, PositiveInt, model_validator
+from pydantic import Field, PositiveInt, model_validator
 
-from ragged_claws.models.base import JsonScalar, NonEmptyStr, Slug, VersionedModel
+from ragged_claws.models.base import JsonScalar, NonEmptyStr, Slug, UtcDatetime, VersionedModel
 from ragged_claws.models.temporal import TemporalValue
 
 
@@ -26,7 +26,7 @@ class FeatureSnapshot(VersionedModel):
 
     feature_snapshot_id: UUID
     event_id: UUID
-    snapshot_at: AwareDatetime
+    snapshot_at: UtcDatetime
     feature_version: NonEmptyStr
     features: tuple[FeatureValue, ...]
     provenance_id: UUID
@@ -81,9 +81,9 @@ class Outcome(VersionedModel):
     event_id: UUID
     security_id: UUID | None = None
     listing_id: UUID | None = None
-    actionable_at: AwareDatetime
-    entry_at: AwareDatetime | None = None
-    exit_at: AwareDatetime | None = None
+    actionable_at: UtcDatetime
+    entry_at: UtcDatetime | None = None
+    exit_at: UtcDatetime | None = None
     horizon_sessions: PositiveInt
     entry_price: Decimal | None = None
     exit_price: Decimal | None = None

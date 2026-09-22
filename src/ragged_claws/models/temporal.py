@@ -5,9 +5,9 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Self
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import Field, model_validator
 
-from ragged_claws.models.base import CanonicalModel, NonEmptyStr
+from ragged_claws.models.base import CanonicalModel, NonEmptyStr, UtcDatetime
 
 
 class TemporalPrecision(StrEnum):
@@ -82,7 +82,7 @@ class TemporalValue(CanonicalModel):
     raw_value: NonEmptyStr
     precision: TemporalPrecision
     partial_date: PartialDate | None = None
-    timestamp: AwareDatetime | None = None
+    timestamp: UtcDatetime | None = None
     source_timezone: NonEmptyStr | None = None
 
     @model_validator(mode="after")

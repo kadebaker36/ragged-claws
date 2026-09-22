@@ -4,9 +4,15 @@ from enum import StrEnum
 from typing import Annotated, Literal, Self
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, StringConstraints, model_validator
+from pydantic import Field, StringConstraints, model_validator
 
-from ragged_claws.models.base import CanonicalModel, NonEmptyStr, Slug, VersionedModel
+from ragged_claws.models.base import (
+    CanonicalModel,
+    NonEmptyStr,
+    Slug,
+    UtcDatetime,
+    VersionedModel,
+)
 from ragged_claws.models.temporal import TemporalValue
 
 Sha256Hex = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
@@ -61,8 +67,8 @@ class SourceObservation(VersionedModel):
     provider_namespace: Slug
     source_native_id: NonEmptyStr
     lineage: SourceLineage
-    retrieved_at: AwareDatetime
-    observed_at: AwareDatetime
+    retrieved_at: UtcDatetime
+    observed_at: UtcDatetime
     public_time: TemporalValue | None = None
     raw_content_hash: ContentHash
     adapter_version: NonEmptyStr
@@ -84,7 +90,7 @@ class Provenance(VersionedModel):
     source_observation_ids: tuple[UUID, ...] = Field(min_length=1)
     parent_provenance_ids: tuple[UUID, ...] = ()
     derivation_kind: DerivationKind
-    derived_at: AwareDatetime
+    derived_at: UtcDatetime
     transform_version: NonEmptyStr
 
     @model_validator(mode="after")

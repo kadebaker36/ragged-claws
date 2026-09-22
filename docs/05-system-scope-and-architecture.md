@@ -114,7 +114,8 @@ institutions ───────────────► ISSUER ◄──�
 
 ### Point-in-time correct
 
-Occurrence time, public time, observed time, and actionable time are separate concepts.
+Occurrence time, source-public time, effective availability under an explicit versioned policy,
+observed time, and actionable time are separate concepts.
 
 A historical feature may use only information whose historical public/known timing is defensible at that simulated decision time.
 
@@ -266,13 +267,17 @@ Paper/live decision preserving model/config/features/source state and portfolio 
 
 ## 7. Temporal and execution convention
 
-For the daily-bar bootstrap:
+First derive effective availability from source-public evidence using an explicit, named, versioned
+availability policy. Preserve both values; never overwrite the source-public evidence.
 
-1. precise public time before regular-session open → that session's open;
-2. public time at/after regular-session open → next regular session's open;
+Then, for the daily-bar bootstrap:
+
+1. precise effective availability before regular-session open → that session's open;
+2. effective availability at/after regular-session open → next regular session's open;
 3. date-only disclosure → next regular session's open after that date unless a stronger source rule exists.
 
-Never use a same-day daily-bar open for information published after the open.
+Never use a same-day daily-bar open for information that became effectively available at or after
+the open.
 
 ## 8. Storage convention
 

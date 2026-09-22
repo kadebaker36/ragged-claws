@@ -5,9 +5,15 @@ from enum import StrEnum
 from typing import Annotated, Self
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, StringConstraints, model_validator
+from pydantic import Field, StringConstraints, model_validator
 
-from ragged_claws.models.base import CanonicalModel, NonEmptyStr, Slug, VersionedModel
+from ragged_claws.models.base import (
+    CanonicalModel,
+    NonEmptyStr,
+    Slug,
+    UtcDatetime,
+    VersionedModel,
+)
 from ragged_claws.models.temporal import TemporalValue
 
 Mic = Annotated[str, StringConstraints(pattern=r"^[A-Z0-9]{4}$")]
@@ -76,7 +82,7 @@ class EntityAlias(VersionedModel):
     valid_from: TemporalValue | None = None
     valid_to: TemporalValue | None = None
     known_from: TemporalValue | None = None
-    observed_at: AwareDatetime
+    observed_at: UtcDatetime
 
 
 class ExternalIdentifier(VersionedModel):
@@ -94,7 +100,7 @@ class ExternalIdentifier(VersionedModel):
     valid_from: TemporalValue | None = None
     valid_to: TemporalValue | None = None
     known_from: TemporalValue | None = None
-    observed_at: AwareDatetime
+    observed_at: UtcDatetime
 
     @model_validator(mode="after")
     def validate_namespace(self) -> Self:
@@ -208,7 +214,7 @@ class Relationship(VersionedModel):
     valid_to: TemporalValue | None = None
     known_from: TemporalValue | None = None
     known_to: TemporalValue | None = None
-    observed_at: AwareDatetime
+    observed_at: UtcDatetime
     confidence: Decimal | None = Field(default=None, ge=Decimal("0"), le=Decimal("1"))
     source_observation_ids: tuple[UUID, ...] = Field(min_length=1)
     provenance_id: UUID

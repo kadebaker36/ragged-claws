@@ -1,9 +1,10 @@
 """Shared strict-model configuration and canonical scalar types."""
 
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, StringConstraints
 
 MODEL_SCHEMA_VERSION: Literal["1.0.0"] = "1.0.0"
 
@@ -13,6 +14,13 @@ Slug = Annotated[
     StringConstraints(strip_whitespace=True, min_length=1, pattern=r"^[a-z][a-z0-9_.-]*$"),
 ]
 JsonScalar = None | bool | int | Decimal | str
+
+
+def _normalize_aware_utc(value: datetime) -> datetime:
+    return value.astimezone(UTC)
+
+
+UtcDatetime = Annotated[AwareDatetime, AfterValidator(_normalize_aware_utc)]
 
 
 class CanonicalModel(BaseModel):
