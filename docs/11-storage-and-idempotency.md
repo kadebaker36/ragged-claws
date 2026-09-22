@@ -49,8 +49,13 @@ retrieval order, or retrieval timestamp. Identical source-native versions theref
 canonical observation ID across later retrievals; changed bytes create a different version ID.
 
 Capture history remains separate. When the synthetic pipeline sees an already-persisted observation
-ID, it reuses the first persisted `SourceObservation` rather than replacing its original retrieval
-or observation state with a later capture time. The later capture manifest remains available.
+ID, it reuses the first persisted `SourceObservation` only when source-version semantics agree:
+provider/native identity, lineage, public time, raw hash, adapter/parser versions, retention, and
+license metadata must match. Semantic disagreement raises `SourceObservationConflictError` without
+rewriting canonical state. Retrieval time, observation time, and source locator are capture context;
+the first canonical values remain unchanged and the later capture manifest preserves newer values.
+Event public/actionable timing is derived from the accepted observation's public-time evidence, not
+from a separate staging value.
 
 ## Canonical Parquet envelope
 
@@ -76,6 +81,11 @@ For both an existing dataset and one persistence batch:
 - same record ID plus identical canonical payload is an idempotent no-op;
 - same record ID plus a different canonical payload raises `CanonicalConflictError`;
 - no overwrite, last-write-wins, field merge, or silent discard occurs.
+
+Before any existing Parquet row can participate in a merge/rewrite, its JSON is validated through
+the authoritative Pydantic model and its internal canonical ID must equal the envelope `record_id`.
+Malformed payloads, current-model violations, or ID disagreement raise `PersistenceError`; the
+existing file is left byte-for-byte unchanged rather than repaired, discarded, or carried forward.
 
 Mutable staging/curated files are written to a temporary file in the destination directory and then
 atomically replaced. Failed writes remove their temporary file and leave prior state intact.

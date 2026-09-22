@@ -44,6 +44,7 @@ def test_duplicate_ingestion_is_idempotent_and_catalog_is_rebuildable(tmp_path: 
         source_native_id="invented-record-001",
         retrieved_at=datetime(2024, 5, 7, 21, 0, tzinfo=UTC),
         observed_at=datetime(2024, 5, 7, 21, 1, tzinfo=UTC),
+        source_locator="fixture://synthetic/later-retrieval-location",
     )
 
     assert raw_object_path(layout, first.manifest.content_hash.value).read_bytes() == raw_bytes
@@ -52,6 +53,10 @@ def test_duplicate_ingestion_is_idempotent_and_catalog_is_rebuildable(tmp_path: 
     assert len(list(layout.raw_manifests.glob("*.json"))) == 2
     assert first.bundle.observation == repeated.bundle.observation
     assert repeated.bundle.observation.retrieved_at == first.manifest.retrieved_at
+    assert repeated.manifest.source_locator == "fixture://synthetic/later-retrieval-location"
+    assert repeated.bundle.observation.source_locator == first.bundle.observation.source_locator
+    assert repeated.bundle.event.public_time == repeated.bundle.observation.public_time
+    assert repeated.bundle.event.actionable_at == first.bundle.event.actionable_at
     assert _dataset_hashes(layout.curated) == curated_hashes_before
     assert _dataset_hashes(layout.staging) == staging_hashes_before
     rebuilt_after_duplicate = rebuild_catalog(layout)

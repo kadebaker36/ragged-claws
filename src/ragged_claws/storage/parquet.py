@@ -119,7 +119,14 @@ def persist_envelope_records[EnvelopeModelT: BaseModel](
             dataset_kind=dataset_kind,
             model_schema_version=model_schema_version,
         )
-        existing = _read_rows(path)
+        existing = {
+            record_id: payload
+            for record_id, (payload, _) in _read_validated_rows(
+                path,
+                model_type=model_type,
+                id_field=id_field,
+            ).items()
+        }
 
     changed = False
     for record_id, payload in incoming.items():
@@ -161,13 +168,12 @@ def load_envelope_records[EnvelopeModelT: BaseModel](
         dataset_kind=dataset_kind,
         model_schema_version=model_schema_version,
     )
-    records: list[EnvelopeModelT] = []
-    for record_id, payload in sorted(_read_rows(path).items()):
-        record = model_type.model_validate_json(payload)
-        if _record_id(record, id_field) != record_id:
-            raise PersistenceError(f"record ID column disagrees with {model_type.__name__} payload")
-        records.append(record)
-    return tuple(records)
+    validated = _read_validated_rows(
+        path,
+        model_type=model_type,
+        id_field=id_field,
+    )
+    return tuple(record for _, record in (validated[key] for key in sorted(validated)))
 
 
 def parquet_metadata(path: Path) -> dict[str, str]:
@@ -204,6 +210,29 @@ def _read_rows(path: Path) -> dict[str, str]:
             raise PersistenceError(f"duplicate record ID in {path.name}: {record_id}")
         rows[record_id] = payload
     return rows
+
+
+def _read_validated_rows[EnvelopeModelT: BaseModel](
+    path: Path,
+    *,
+    model_type: type[EnvelopeModelT],
+    id_field: str,
+) -> dict[str, tuple[str, EnvelopeModelT]]:
+    validated: dict[str, tuple[str, EnvelopeModelT]] = {}
+    for record_id, payload in _read_rows(path).items():
+        try:
+            record = model_type.model_validate_json(payload)
+            canonical_id = _record_id(record, id_field)
+        except (TypeError, ValueError) as exc:
+            raise PersistenceError(
+                f"invalid {model_type.__name__} payload for envelope record {record_id}"
+            ) from exc
+        if canonical_id != record_id:
+            raise PersistenceError(
+                f"record ID column disagrees with {model_type.__name__} payload: {record_id}"
+            )
+        validated[record_id] = (payload, record)
+    return validated
 
 
 def _write_rows(

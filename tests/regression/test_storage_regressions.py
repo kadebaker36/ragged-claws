@@ -7,20 +7,125 @@ from uuid import UUID
 
 import pytest
 
-from ragged_claws.ingestion import SyntheticAdapter
+from ragged_claws.ingestion import (
+    SourceObservationConflictError,
+    SyntheticAdapter,
+    SyntheticStagingRecord,
+)
 from ragged_claws.models import (
     Event,
     FeatureValue,
+    ObservationRole,
+    SourceLineage,
     SourceObservation,
     TemporalPrecision,
     TemporalValue,
 )
-from ragged_claws.storage import CanonicalConflictError, CanonicalParquetStore, DataLayout
+from ragged_claws.storage import (
+    CanonicalConflictError,
+    CanonicalParquetStore,
+    DataLayout,
+    RawCaptureManifest,
+)
 from ragged_claws.temporal import EligibilityReason, evaluate_eligibility
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "synthetic"
 FIXTURE_V1 = FIXTURES / "persistence_event_v1.json"
 FIXTURE_V2 = FIXTURES / "persistence_event_v2.json"
+
+
+@pytest.mark.parametrize(
+    ("semantic_field", "update"),
+    [
+        pytest.param(
+            "public_time",
+            {
+                "public_time": TemporalValue(
+                    raw_value="2024-05-06T08:00:00-04:00",
+                    precision=TemporalPrecision.SECOND,
+                    timestamp=datetime.fromisoformat("2024-05-06T08:00:00-04:00"),
+                )
+            },
+            id="public-time",
+        ),
+        pytest.param(
+            "parser_version",
+            {"parser_version": "synthetic-json/conflicting"},
+            id="parser-version",
+        ),
+        pytest.param(
+            "lineage",
+            {
+                "lineage": SourceLineage(
+                    source_family="synthetic.changed-family",
+                    observation_role=ObservationRole.SYNTHETIC,
+                )
+            },
+            id="lineage",
+        ),
+    ],
+)
+def test_repeated_source_version_rejects_semantic_disagreement_without_overwrite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    semantic_field: str,
+    update: dict[str, object],
+) -> None:
+    adapter = SyntheticAdapter(DataLayout(tmp_path))
+    raw_bytes = FIXTURE_V1.read_bytes()
+    first = adapter.ingest(
+        raw_bytes,
+        source_native_id="invented-record-001",
+        retrieved_at=datetime(2024, 5, 6, 21, 0, tzinfo=UTC),
+        observed_at=datetime(2024, 5, 6, 21, 1, tzinfo=UTC),
+    )
+    observation_path = adapter.store.path_for(SourceObservation)
+    authoritative_bytes = observation_path.read_bytes()
+    build_observation = adapter.observation
+
+    def conflicting_observation(
+        staging: SyntheticStagingRecord,
+        manifest: RawCaptureManifest,
+    ) -> SourceObservation:
+        return build_observation(staging, manifest).model_copy(update=update)
+
+    monkeypatch.setattr(adapter, "observation", conflicting_observation)
+    with pytest.raises(SourceObservationConflictError, match=semantic_field):
+        adapter.ingest(
+            raw_bytes,
+            source_native_id="invented-record-001",
+            retrieved_at=datetime(2024, 5, 7, 21, 0, tzinfo=UTC),
+            observed_at=datetime(2024, 5, 7, 21, 1, tzinfo=UTC),
+        )
+
+    assert observation_path.read_bytes() == authoritative_bytes
+    assert adapter.store.load(SourceObservation) == (first.bundle.observation,)
+    assert len(list(adapter.layout.raw_manifests.glob("*.json"))) == 2
+
+
+def test_canonical_event_timing_uses_accepted_observation_public_time(tmp_path: Path) -> None:
+    adapter = SyntheticAdapter(DataLayout(tmp_path))
+    first = adapter.ingest(
+        FIXTURE_V1.read_bytes(),
+        source_native_id="invented-record-001",
+        retrieved_at=datetime(2024, 5, 6, 21, 0, tzinfo=UTC),
+        observed_at=datetime(2024, 5, 6, 21, 1, tzinfo=UTC),
+    )
+    disagreeing_staging = first.staging.model_copy(
+        update={
+            "public_time": TemporalValue(
+                raw_value="2024-05-06T08:00:00-04:00",
+                precision=TemporalPrecision.SECOND,
+                timestamp=datetime.fromisoformat("2024-05-06T08:00:00-04:00"),
+            )
+        }
+    )
+
+    remapped = adapter.canonicalize(disagreeing_staging, first.bundle.observation)
+
+    assert remapped.event.public_time == first.bundle.observation.public_time
+    assert remapped.event.public_time != disagreeing_staging.public_time
+    assert remapped.event.actionable_at == first.bundle.event.actionable_at
 
 
 def test_changed_source_version_preserves_both_raw_objects_and_observations(
