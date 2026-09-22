@@ -1,0 +1,354 @@
+{
+  "$defs": {
+    "ExternalIdentifier": {
+      "additionalProperties": false,
+      "description": "A typed, source-backed identifier claim for a canonical subject.",
+      "properties": {
+        "external_identifier_id": {
+          "format": "uuid",
+          "title": "External Identifier Id",
+          "type": "string"
+        },
+        "identifier_type": {
+          "$ref": "#/$defs/ExternalIdentifierType"
+        },
+        "known_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TemporalValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "market_scope": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Market Scope"
+        },
+        "namespace": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_.-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Namespace"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "provenance_id": {
+          "format": "uuid",
+          "title": "Provenance Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_observation_id": {
+          "format": "uuid",
+          "title": "Source Observation Id",
+          "type": "string"
+        },
+        "subject_id": {
+          "format": "uuid",
+          "title": "Subject Id",
+          "type": "string"
+        },
+        "subject_type": {
+          "$ref": "#/$defs/IdentifierSubjectType"
+        },
+        "valid_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TemporalValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TemporalValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "external_identifier_id",
+        "subject_type",
+        "subject_id",
+        "identifier_type",
+        "value",
+        "source_observation_id",
+        "provenance_id",
+        "observed_at"
+      ],
+      "title": "ExternalIdentifier",
+      "type": "object"
+    },
+    "ExternalIdentifierType": {
+      "enum": [
+        "sec_cik",
+        "lei",
+        "figi_instrument",
+        "figi_share_class",
+        "figi_composite",
+        "isin",
+        "cusip",
+        "sedol",
+        "other"
+      ],
+      "title": "ExternalIdentifierType",
+      "type": "string"
+    },
+    "IdentifierSubjectType": {
+      "enum": [
+        "entity",
+        "security",
+        "listing"
+      ],
+      "title": "IdentifierSubjectType",
+      "type": "string"
+    },
+    "PartialDate": {
+      "additionalProperties": false,
+      "description": "A date-like source value with only its defensible components populated.",
+      "properties": {
+        "day": {
+          "anyOf": [
+            {
+              "maximum": 31,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Day"
+        },
+        "month": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Month"
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 9999,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "PartialDate",
+      "type": "object"
+    },
+    "SecurityType": {
+      "enum": [
+        "common_stock",
+        "preferred_stock",
+        "depositary_receipt",
+        "fund_share",
+        "other"
+      ],
+      "title": "SecurityType",
+      "type": "string"
+    },
+    "TemporalPrecision": {
+      "description": "Precision actually supported by the source value.",
+      "enum": [
+        "unknown",
+        "year",
+        "month",
+        "day",
+        "minute",
+        "second"
+      ],
+      "title": "TemporalPrecision",
+      "type": "string"
+    },
+    "TemporalValue": {
+      "additionalProperties": false,
+      "description": "A raw temporal value represented as a partial date or aware timestamp.",
+      "properties": {
+        "partial_date": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "source_timezone": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Timezone"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "TemporalValue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An issued instrument or share class, separate from issuer and listing.",
+  "properties": {
+    "display_name": {
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "external_identifiers": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ExternalIdentifier"
+      },
+      "title": "External Identifiers",
+      "type": "array"
+    },
+    "issuer_entity_id": {
+      "format": "uuid",
+      "title": "Issuer Entity Id",
+      "type": "string"
+    },
+    "provenance_id": {
+      "format": "uuid",
+      "title": "Provenance Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "security_id": {
+      "format": "uuid",
+      "title": "Security Id",
+      "type": "string"
+    },
+    "security_type": {
+      "$ref": "#/$defs/SecurityType"
+    },
+    "share_class": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Share Class"
+    }
+  },
+  "required": [
+    "security_id",
+    "issuer_entity_id",
+    "security_type",
+    "display_name",
+    "provenance_id"
+  ],
+  "title": "Security",
+  "type": "object"
+}

@@ -1,0 +1,44 @@
+{
+  "additionalProperties": false,
+  "description": "Links one canonical event to all observations supporting that event.",
+  "properties": {
+    "event_evidence_id": {
+      "format": "uuid",
+      "title": "Event Evidence Id",
+      "type": "string"
+    },
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "provenance_id": {
+      "format": "uuid",
+      "title": "Provenance Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_observation_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Source Observation Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "event_evidence_id",
+    "event_id",
+    "source_observation_ids",
+    "provenance_id"
+  ],
+  "title": "EventEvidence",
+  "type": "object"
+}

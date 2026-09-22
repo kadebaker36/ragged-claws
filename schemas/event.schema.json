@@ -1,0 +1,525 @@
+{
+  "$defs": {
+    "DisclosedRange": {
+      "additionalProperties": false,
+      "description": "An Event-owned semantic range that never invents a midpoint.\n\nDisclosed ranges are pure values nested under Event. They inherit the Event's\nevidence and provenance; parser_version records only the parsing method.",
+      "properties": {
+        "currency": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
+        },
+        "lower_bound": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower Bound"
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "parser_version": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parser Version"
+        },
+        "raw_text": {
+          "minLength": 1,
+          "title": "Raw Text",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "upper_bound": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper Bound"
+        }
+      },
+      "required": [
+        "name",
+        "raw_text"
+      ],
+      "title": "DisclosedRange",
+      "type": "object"
+    },
+    "EventAttribute": {
+      "additionalProperties": false,
+      "description": "A typed normalized event attribute, optionally retaining its raw source code.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "raw_value": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Value"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Value"
+        },
+        "value_type": {
+          "$ref": "#/$defs/EventAttributeType"
+        }
+      },
+      "required": [
+        "name",
+        "value_type",
+        "value"
+      ],
+      "title": "EventAttribute",
+      "type": "object"
+    },
+    "EventAttributeType": {
+      "description": "Runtime type of a normalized, source-independent event attribute.",
+      "enum": [
+        "code",
+        "text",
+        "boolean",
+        "integer",
+        "decimal"
+      ],
+      "title": "EventAttributeType",
+      "type": "string"
+    },
+    "EventPartyReference": {
+      "additionalProperties": false,
+      "description": "An entity participating in an event in a stated semantic role.",
+      "properties": {
+        "entity_id": {
+          "format": "uuid",
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "role": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity_id",
+        "role"
+      ],
+      "title": "EventPartyReference",
+      "type": "object"
+    },
+    "FinancialValue": {
+      "additionalProperties": false,
+      "description": "An Event-owned exact value with a source-independent semantic role.\n\nFinancial values are pure values nested under Event. They inherit the Event's\nevidence and provenance rather than carrying independent lineage.",
+      "properties": {
+        "currency": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
+        },
+        "kind": {
+          "$ref": "#/$defs/FinancialValueKind"
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "value"
+      ],
+      "title": "FinancialValue",
+      "type": "object"
+    },
+    "FinancialValueKind": {
+      "enum": [
+        "monetary_amount",
+        "unit_price",
+        "quantity",
+        "percentage"
+      ],
+      "title": "FinancialValueKind",
+      "type": "string"
+    },
+    "PartialDate": {
+      "additionalProperties": false,
+      "description": "A date-like source value with only its defensible components populated.",
+      "properties": {
+        "day": {
+          "anyOf": [
+            {
+              "maximum": 31,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Day"
+        },
+        "month": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Month"
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 9999,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "PartialDate",
+      "type": "object"
+    },
+    "TemporalPrecision": {
+      "description": "Precision actually supported by the source value.",
+      "enum": [
+        "unknown",
+        "year",
+        "month",
+        "day",
+        "minute",
+        "second"
+      ],
+      "title": "TemporalPrecision",
+      "type": "string"
+    },
+    "TemporalValue": {
+      "additionalProperties": false,
+      "description": "A raw temporal value represented as a partial date or aware timestamp.",
+      "properties": {
+        "partial_date": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "source_timezone": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Timezone"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "TemporalValue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One canonical event, independent of the observations that reported it.",
+  "properties": {
+    "actionable_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actionable At"
+    },
+    "actors": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EventPartyReference"
+      },
+      "title": "Actors",
+      "type": "array"
+    },
+    "attributes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EventAttribute"
+      },
+      "title": "Attributes",
+      "type": "array"
+    },
+    "disclosed_ranges": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DisclosedRange"
+      },
+      "title": "Disclosed Ranges",
+      "type": "array"
+    },
+    "economic_units": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EventPartyReference"
+      },
+      "title": "Economic Units",
+      "type": "array"
+    },
+    "event_evidence_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Event Evidence Ids",
+      "type": "array"
+    },
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Event Type",
+      "type": "string"
+    },
+    "financial_values": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FinancialValue"
+      },
+      "title": "Financial Values",
+      "type": "array"
+    },
+    "issuer_entity_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Issuer Entity Id"
+    },
+    "listing_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Listing Id"
+    },
+    "occurrence_time": {
+      "$ref": "#/$defs/TemporalValue"
+    },
+    "provenance_id": {
+      "format": "uuid",
+      "title": "Provenance Id",
+      "type": "string"
+    },
+    "public_time": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TemporalValue"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "security_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Security Id"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "occurrence_time",
+    "event_evidence_ids",
+    "provenance_id"
+  ],
+  "title": "Event",
+  "type": "object"
+}

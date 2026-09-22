@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "FinancialValueKind": {
+      "enum": [
+        "monetary_amount",
+        "unit_price",
+        "quantity",
+        "percentage"
+      ],
+      "title": "FinancialValueKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An Event-owned exact value with a source-independent semantic role.\n\nFinancial values are pure values nested under Event. They inherit the Event's\nevidence and provenance rather than carrying independent lineage.",
+  "properties": {
+    "currency": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Z]{3}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Currency"
+    },
+    "kind": {
+      "$ref": "#/$defs/FinancialValueKind"
+    },
+    "name": {
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "title": "Name",
+      "type": "string"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Unit"
+    },
+    "value": {
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Value",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "kind",
+    "value"
+  ],
+  "title": "FinancialValue",
+  "type": "object"
+}

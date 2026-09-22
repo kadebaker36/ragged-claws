@@ -1,0 +1,134 @@
+{
+  "$defs": {
+    "PartialDate": {
+      "additionalProperties": false,
+      "description": "A date-like source value with only its defensible components populated.",
+      "properties": {
+        "day": {
+          "anyOf": [
+            {
+              "maximum": 31,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Day"
+        },
+        "month": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Month"
+        },
+        "precision": {
+          "$ref": "#/$defs/TemporalPrecision"
+        },
+        "raw_value": {
+          "minLength": 1,
+          "title": "Raw Value",
+          "type": "string"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "maximum": 9999,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "raw_value",
+        "precision"
+      ],
+      "title": "PartialDate",
+      "type": "object"
+    },
+    "TemporalPrecision": {
+      "description": "Precision actually supported by the source value.",
+      "enum": [
+        "unknown",
+        "year",
+        "month",
+        "day",
+        "minute",
+        "second"
+      ],
+      "title": "TemporalPrecision",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A raw temporal value represented as a partial date or aware timestamp.",
+  "properties": {
+    "partial_date": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PartialDate"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "precision": {
+      "$ref": "#/$defs/TemporalPrecision"
+    },
+    "raw_value": {
+      "minLength": 1,
+      "title": "Raw Value",
+      "type": "string"
+    },
+    "source_timezone": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Timezone"
+    },
+    "timestamp": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Timestamp"
+    }
+  },
+  "required": [
+    "raw_value",
+    "precision"
+  ],
+  "title": "TemporalValue",
+  "type": "object"
+}
