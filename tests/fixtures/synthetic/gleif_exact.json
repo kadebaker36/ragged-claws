@@ -1,0 +1,15 @@
+{
+  "data": [
+    {
+      "type": "lei-records",
+      "id": "529900SYNTHETIC00001",
+      "attributes": {
+        "entity": {
+          "legalName": {
+            "name": "Synthetic Issuer Incorporated"
+          }
+        }
+      }
+    }
+  ]
+}

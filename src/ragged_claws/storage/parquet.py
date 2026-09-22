@@ -13,10 +13,14 @@ import pyarrow.parquet as pq  # type: ignore[import-untyped]
 from pydantic import BaseModel
 
 from ragged_claws.models import (
+    Entity,
     Event,
     EventEvidence,
+    ExternalIdentifier,
     FeatureValue,
+    Listing,
     Provenance,
+    Security,
     SourceObservation,
 )
 from ragged_claws.models.base import MODEL_SCHEMA_VERSION
@@ -50,6 +54,12 @@ _CURATED_SPECS: dict[type[BaseModel], DatasetSpec] = {
     EventEvidence: DatasetSpec("event_evidence.parquet", "event_evidence_id"),
     Event: DatasetSpec("event.parquet", "event_id"),
     FeatureValue: DatasetSpec("feature_value.parquet", "feature_value_id"),
+    Entity: DatasetSpec("entity.parquet", "entity_id"),
+    ExternalIdentifier: DatasetSpec(
+        "external_identifier.parquet", "external_identifier_id"
+    ),
+    Security: DatasetSpec("security.parquet", "security_id"),
+    Listing: DatasetSpec("listing.parquet", "listing_id"),
 }
 
 
