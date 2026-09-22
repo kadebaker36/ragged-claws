@@ -15,11 +15,16 @@ from ragged_claws.market_data import (
     DailyBarRequest,
     HistoricalSymbol,
 )
+from ragged_claws.market_data.alpaca import ALPACA_ADJUSTMENTS
 from ragged_claws.models import PriceAdjustment
 from ragged_claws.storage import DataLayout, raw_object_path
 
 SECURITY_ID = UUID("20000000-0000-4000-8000-000000000020")
 LISTING_ID = UUID("30000000-0000-4000-8000-000000000020")
+
+
+def test_alpaca_adjustment_spelling_is_explicit() -> None:
+    assert ALPACA_ADJUSTMENTS[PriceAdjustment.SPINOFF] == "spin-off"
 
 
 def test_alpaca_adapter_is_explicit_paginated_and_historical_symbol_safe(

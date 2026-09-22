@@ -45,7 +45,7 @@ Alpaca payload retention is classified conservatively as restricted and remains 
 ## Adjustment and feed semantics
 
 The adapter maps canonical `raw`, `split`, `dividend`, `spinoff`, and `all` values explicitly,
-including canonical `spinoff` to Alpaca's `spin_off` spelling;
+including canonical `spinoff` to Alpaca's `spin-off` spelling;
 canonical `other` fails. A calculation requires security and SPY bars to use the configured same
 adjustment and feed. Mismatch raises instead of mixing conventions. Feed configuration remains
 versioned adapter/engine configuration because the current canonical `OutcomeMethodology` has no

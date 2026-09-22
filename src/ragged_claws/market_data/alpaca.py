@@ -34,7 +34,7 @@ ALPACA_ADJUSTMENTS = {
     PriceAdjustment.RAW: "raw",
     PriceAdjustment.SPLIT: "split",
     PriceAdjustment.DIVIDEND: "dividend",
-    PriceAdjustment.SPINOFF: "spin_off",
+    PriceAdjustment.SPINOFF: "spin-off",
     PriceAdjustment.ALL: "all",
 }
 NEW_YORK = ZoneInfo("America/New_York")
