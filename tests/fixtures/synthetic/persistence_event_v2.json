@@ -1,0 +1,12 @@
+{
+  "fixture_version": "1.0.0",
+  "source_native_id": "invented-record-001",
+  "event_id": "70000000-0000-4000-8000-000000000001",
+  "event_evidence_id": "71000000-0000-4000-8000-000000000001",
+  "provenance_id": "72000000-0000-4000-8000-000000000001",
+  "event_type": "synthetic_disclosure",
+  "occurrence_date": "2024-05-03",
+  "published_at": "2024-05-06T16:42:15-04:00",
+  "amount": "2345.6700",
+  "currency": "USD"
+}
