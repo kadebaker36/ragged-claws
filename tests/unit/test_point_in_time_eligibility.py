@@ -5,6 +5,7 @@ from decimal import Decimal
 from uuid import UUID
 
 import pytest
+from pydantic import ValidationError
 
 from ragged_claws.models import (
     AliasType,
@@ -21,6 +22,7 @@ from ragged_claws.models import (
     TemporalValue,
 )
 from ragged_claws.temporal import (
+    EligibilityDecision,
     EligibilityReason,
     PointInTimeViolation,
     eligible_features_at,
@@ -38,6 +40,17 @@ from tests.model_helpers import (
 )
 
 SNAPSHOT_2020 = datetime(2020, 6, 1, tzinfo=UTC)
+
+
+@pytest.mark.parametrize("reason", list(EligibilityReason))
+def test_eligibility_decision_requires_flag_to_match_reason(
+    reason: EligibilityReason,
+) -> None:
+    expected = reason is EligibilityReason.ELIGIBLE
+
+    assert EligibilityDecision(eligible=expected, reason=reason).eligible is expected
+    with pytest.raises(ValidationError, match="eligible flag"):
+        EligibilityDecision(eligible=not expected, reason=reason)
 
 
 def exact_time(value: str) -> TemporalValue:

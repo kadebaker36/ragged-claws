@@ -36,8 +36,16 @@ class ActionabilityResult(CanonicalModel):
 
     @model_validator(mode="after")
     def validate_representation(self) -> "ActionabilityResult":
-        has_action = self.actionable_at is not None and self.session_date is not None
-        if has_action != (self.status is ActionabilityStatus.ACTIONABLE):
+        actual_presence = (
+            self.actionable_at is not None,
+            self.session_date is not None,
+        )
+        expected_presence = (
+            (True, True)
+            if self.status is ActionabilityStatus.ACTIONABLE
+            else (False, False)
+        )
+        if actual_presence != expected_presence:
             raise ValueError("actionable fields do not match actionability status")
         return self
 

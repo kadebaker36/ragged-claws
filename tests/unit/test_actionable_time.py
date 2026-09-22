@@ -1,11 +1,13 @@
 """Reviewed-calendar tests for the conservative V0 daily-bar convention."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
+from pydantic import ValidationError
 
 from ragged_claws.models import PartialDate, TemporalPrecision, TemporalValue
 from ragged_claws.temporal import (
+    ActionabilityResult,
     ActionabilityStatus,
     ActionableTimeError,
     ActionableTimeResolver,
@@ -127,6 +129,54 @@ def test_partial_date_is_explicitly_non_actionable() -> None:
 
     assert result.status is ActionabilityStatus.UNSUPPORTED_PRECISION
     assert result.actionable_at is None
+
+
+@pytest.mark.parametrize(
+    ("status", "actionable_at", "session_date"),
+    [
+        (
+            ActionabilityStatus.ACTIONABLE,
+            datetime(2024, 5, 7, 13, 30, tzinfo=UTC),
+            None,
+        ),
+        (ActionabilityStatus.ACTIONABLE, None, date(2024, 5, 7)),
+        (ActionabilityStatus.ACTIONABLE, None, None),
+        (
+            ActionabilityStatus.UNSUPPORTED_PRECISION,
+            datetime(2024, 5, 7, 13, 30, tzinfo=UTC),
+            None,
+        ),
+        (ActionabilityStatus.UNSUPPORTED_PRECISION, None, date(2024, 5, 7)),
+        (
+            ActionabilityStatus.UNSUPPORTED_PRECISION,
+            datetime(2024, 5, 7, 13, 30, tzinfo=UTC),
+            date(2024, 5, 7),
+        ),
+    ],
+)
+def test_actionability_result_rejects_fields_that_contradict_status(
+    status: ActionabilityStatus,
+    actionable_at: datetime | None,
+    session_date: date | None,
+) -> None:
+    source = TemporalValue(
+        raw_value="2024-05-06T08:00:00-04:00",
+        precision=TemporalPrecision.SECOND,
+        timestamp=datetime.fromisoformat("2024-05-06T08:00:00-04:00"),
+    )
+    availability = apply_availability_policy(source, ZERO_DELAY)
+
+    with pytest.raises(ValidationError, match="actionable fields"):
+        ActionabilityResult(
+            availability=availability,
+            status=status,
+            actionable_at=actionable_at,
+            session_date=session_date,
+            calendar_name="XNYS",
+            calendar_version="test",
+            convention_id="v0_daily_bar_open",
+            convention_version="1.0.0",
+        )
 
 
 def test_calendar_lookup_failure_does_not_invent_actionability() -> None:

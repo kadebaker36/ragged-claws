@@ -3,6 +3,8 @@
 from datetime import UTC, date, datetime
 from enum import StrEnum
 
+from pydantic import model_validator
+
 from ragged_claws.models.base import CanonicalModel
 from ragged_claws.models.research import FeatureSnapshot, FeatureValue
 from ragged_claws.models.temporal import TemporalPrecision, TemporalValue
@@ -27,6 +29,12 @@ class EligibilityDecision(CanonicalModel):
 
     eligible: bool
     reason: EligibilityReason
+
+    @model_validator(mode="after")
+    def validate_representation(self) -> "EligibilityDecision":
+        if self.eligible != (self.reason is EligibilityReason.ELIGIBLE):
+            raise ValueError("eligible flag does not match eligibility reason")
+        return self
 
 
 def evaluate_eligibility(
