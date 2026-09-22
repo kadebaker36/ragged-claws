@@ -16,6 +16,7 @@ from ragged_claws.models import (
     Event,
     EventEvidence,
     FeatureValue,
+    Outcome,
     Provenance,
     SourceObservation,
 )
@@ -50,6 +51,7 @@ _CURATED_SPECS: dict[type[BaseModel], DatasetSpec] = {
     EventEvidence: DatasetSpec("event_evidence.parquet", "event_evidence_id"),
     Event: DatasetSpec("event.parquet", "event_id"),
     FeatureValue: DatasetSpec("feature_value.parquet", "feature_value_id"),
+    Outcome: DatasetSpec("outcome.parquet", "outcome_id"),
 }
 
 
