@@ -1,13 +1,19 @@
 """Temporal values that preserve source precision without manufacturing dates."""
 
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Self
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import Field, model_validator
 
-from ragged_claws.models.base import CanonicalModel, NonEmptyStr
+from ragged_claws.models.base import CanonicalModel, NonEmptyStr, UtcDatetime
+
+_ISO_8601_AWARE_TIMESTAMP = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[Tt ]\d{2}:\d{2}"
+    r"(?::\d{2}(?:[.,]\d+)?)?"
+    r"(?:[Zz]|[+-]\d{2}(?::?\d{2})?)$"
+)
 
 
 class TemporalPrecision(StrEnum):
@@ -82,7 +88,7 @@ class TemporalValue(CanonicalModel):
     raw_value: NonEmptyStr
     precision: TemporalPrecision
     partial_date: PartialDate | None = None
-    timestamp: AwareDatetime | None = None
+    timestamp: UtcDatetime | None = None
     source_timezone: NonEmptyStr | None = None
 
     @model_validator(mode="after")
@@ -114,6 +120,26 @@ class TemporalValue(CanonicalModel):
                 raise ValueError("sub-second precision is not represented by this model")
             if self.precision is TemporalPrecision.MINUTE and timestamp.second != 0:
                 raise ValueError("minute precision cannot contain non-zero seconds")
+            raw_timestamp = self._parse_iso_aware_raw_value()
+            if (
+                raw_timestamp is not None
+                and raw_timestamp.astimezone(UTC) != timestamp.astimezone(UTC)
+            ):
+                raise ValueError("parsed timestamp conflicts with the ISO-like raw value")
             return self
 
         raise ValueError(f"unsupported temporal precision: {self.precision}")
+
+    def _parse_iso_aware_raw_value(self) -> datetime | None:
+        if _ISO_8601_AWARE_TIMESTAMP.fullmatch(self.raw_value) is None:
+            return None
+        candidate = self.raw_value
+        if candidate.endswith(("z", "Z")):
+            candidate = f"{candidate[:-1]}+00:00"
+        try:
+            parsed = datetime.fromisoformat(candidate)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            return None
+        return parsed

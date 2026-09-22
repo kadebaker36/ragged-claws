@@ -1,6 +1,7 @@
 """Evidence-lineage and strict-validation tests."""
 
 import json
+from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
@@ -42,6 +43,22 @@ def test_source_observation_and_provenance_json_roundtrip() -> None:
 
     assert SourceObservation.model_validate_json(observation.model_dump_json()) == observation
     assert Provenance.model_validate_json(derivation.model_dump_json()) == derivation
+
+
+def test_precise_observation_timestamps_normalize_to_utc_and_reject_naive_values() -> None:
+    payload = source_observation().model_dump()
+    payload["retrieved_at"] = datetime.fromisoformat("2024-05-06T16:00:00-04:00")
+    payload["observed_at"] = datetime.fromisoformat("2024-05-06T17:00:00-04:00")
+
+    observation = SourceObservation.model_validate(payload)
+
+    assert observation.retrieved_at == datetime(2024, 5, 6, 20, tzinfo=UTC)
+    assert observation.observed_at == datetime(2024, 5, 6, 21, tzinfo=UTC)
+    assert '"retrieved_at":"2024-05-06T20:00:00Z"' in observation.model_dump_json()
+
+    payload["retrieved_at"] = datetime(2024, 5, 6, 20)
+    with pytest.raises(ValidationError):
+        SourceObservation.model_validate(payload)
 
 
 def test_duplicate_evidence_links_fail_loudly() -> None:

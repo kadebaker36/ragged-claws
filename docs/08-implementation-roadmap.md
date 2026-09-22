@@ -21,7 +21,7 @@ canonical event
     ↓
 entity/security/listing resolution
     ↓
-public → actionable timestamp
+source-public → effective-availability → actionable timestamp
     ↓
 market outcome
     ↓
@@ -252,14 +252,19 @@ MFE/MAE are optional until their daily-bar semantics are fixed and tested.
 
 ## 6. Point-in-time actionable convention
 
-V0 uses a conservative convention compatible with daily bars:
+V0 first applies an explicit named/versioned availability policy to source-public evidence. The
+policy may declare zero delay or a documented positive delay for exact timestamps, and the result
+preserves source-public and effective-availability values separately.
 
-1. precise public timestamp before regular-session open → that session's open;
-2. public timestamp at/after regular-session open → next regular session's open;
+It then uses a conservative convention compatible with daily bars:
+
+1. precise effective-availability timestamp before regular-session open → that session's open;
+2. effective-availability timestamp at/after regular-session open → next regular session's open;
 3. date-only disclosure → next regular session's open after that date unless a stronger source-specific rule exists;
-4. preserve public and actionable times separately.
+4. preserve source-public, effective-availability, and actionable times plus policy/convention versions.
 
-Never use a daily bar's same-day open for information published after that open.
+Never use a daily bar's same-day open for information that became effectively available at or after
+that open.
 
 Tests cover weekends, holidays, DST, early closes, premarket, intraday, after-hours, and date-only disclosures.
 
@@ -317,7 +322,7 @@ Implement:
 - timezone-aware UTC normalization where precision supports it;
 - source precision/raw time preservation;
 - valid vs known vs observed semantics;
-- public → actionable-time rule;
+- source-public → effective-availability → actionable-time rule;
 - historical snapshot filters.
 
 Acceptance:
@@ -382,7 +387,7 @@ If Alpaca Basic is used, initial historical research window is **2016-present**.
 Implement:
 
 - local exchange calendar;
-- public → actionable-session rule;
+- effective-availability → actionable-session rule;
 - explicit bar adjustment mode;
 - exact entry/exit convention;
 - SPY benchmark;

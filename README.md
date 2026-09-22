@@ -62,6 +62,7 @@ It is not intended to become an options day-trading platform.
 - `docs/07-bootstrap-cost-strategy.md`
 - `docs/08-implementation-roadmap.md`
 - `docs/09-adversarial-architecture-review.md`
+- `docs/10-temporal-and-point-in-time-rules.md`
 
 See `AGENTS.md` before making implementation changes. The adversarial review hardens integration and point-in-time assumptions that must be honored during M0/M1 implementation.
 

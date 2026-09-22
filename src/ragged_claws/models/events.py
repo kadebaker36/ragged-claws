@@ -5,9 +5,15 @@ from enum import StrEnum
 from typing import Self
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, ValidationInfo, field_validator, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
-from ragged_claws.models.base import CanonicalModel, NonEmptyStr, Slug, VersionedModel
+from ragged_claws.models.base import (
+    CanonicalModel,
+    NonEmptyStr,
+    Slug,
+    UtcDatetime,
+    VersionedModel,
+)
 from ragged_claws.models.financial import DisclosedRange, FinancialValue
 from ragged_claws.models.temporal import TemporalValue
 
@@ -76,7 +82,7 @@ class Event(VersionedModel):
     listing_id: UUID | None = None
     occurrence_time: TemporalValue
     public_time: TemporalValue | None = None
-    actionable_at: AwareDatetime | None = None
+    actionable_at: UtcDatetime | None = None
     financial_values: tuple[FinancialValue, ...] = ()
     disclosed_ranges: tuple[DisclosedRange, ...] = ()
     attributes: tuple[EventAttribute, ...] = ()
