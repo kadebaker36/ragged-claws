@@ -56,11 +56,15 @@ class IdentityCatalog:
         self._identifier_index: dict[
             tuple[IdentifierSubjectType, str, str, str], list[ExternalIdentifier]
         ] = defaultdict(list)
+        self._claims_by_subject: dict[
+            tuple[IdentifierSubjectType, UUID], list[ExternalIdentifier]
+        ] = defaultdict(list)
         for claim in self.external_identifiers.values():
             normalized = normalize_external_identifier(claim.identifier_type, claim.value)
             scope = claim.market_scope.upper() if claim.market_scope is not None else ""
             key = (claim.subject_type, claim.identifier_type.value, normalized, scope)
             self._identifier_index[key].append(claim)
+            self._claims_by_subject[(claim.subject_type, claim.subject_id)].append(claim)
 
     def resolve_identifier(self, request: IdentifierResolutionRequest) -> ResolutionResult:
         normalized = normalize_external_identifier(request.identifier_type, request.value)
@@ -130,19 +134,40 @@ class IdentityCatalog:
                 uncertain.append(listing)
             elif validity:
                 certain.append(listing)
+        claims_by_listing = {
+            listing.listing_id: tuple(
+                self._claims_by_subject.get(
+                    (IdentifierSubjectType.LISTING, listing.listing_id), ()
+                )
+            )
+            for listing in (*certain, *uncertain)
+        }
         if request.known_at is not None:
-            known = [
+            valid_candidates = (*certain, *uncertain)
+            claims_by_listing = {
+                listing.listing_id: tuple(
+                    claim
+                    for claim in claims_by_listing[listing.listing_id]
+                    if _known_at(claim, request.known_at)
+                )
+                for listing in valid_candidates
+            }
+            certain = [
                 listing
                 for listing in certain
-                if any(_known_at(claim, request.known_at) for claim in listing.external_identifiers)
+                if claims_by_listing[listing.listing_id]
             ]
-            if certain and not known:
+            uncertain = [
+                listing
+                for listing in uncertain
+                if claims_by_listing[listing.listing_id]
+            ]
+            if valid_candidates and not certain and not uncertain:
                 return _empty_result(
                     IdentifierSubjectType.LISTING,
                     ResolutionReason.NOT_KNOWN_AT_TIME,
                     method=ResolutionMethod.HISTORICAL_LISTING,
                 )
-            certain = known
         if len(certain) == 1 and not uncertain:
             listing = certain[0]
             return _resolved_from_claims(
@@ -150,9 +175,10 @@ class IdentityCatalog:
                 subject_id=listing.listing_id,
                 method=ResolutionMethod.HISTORICAL_LISTING,
                 reason=ResolutionReason.UNIQUE_VALID_LISTING,
-                claims=listing.external_identifiers,
+                claims=claims_by_listing[listing.listing_id],
                 valid_from=listing.effective_from,
                 valid_to=listing.effective_to,
+                derive_claim_validity=False,
             )
         candidates = tuple(
             sorted({listing.listing_id for listing in (*certain, *uncertain)}, key=str)
@@ -162,7 +188,7 @@ class IdentityCatalog:
                 tuple(
                     claim
                     for listing in (*certain, *uncertain)
-                    for claim in listing.external_identifiers
+                    for claim in claims_by_listing[listing.listing_id]
                 )
             )
             return ResolutionResult(
@@ -182,7 +208,7 @@ class IdentityCatalog:
         if uncertain:
             listing = uncertain[0]
             claim_ids, observation_ids, provenance_ids = _evidence_fields(
-                listing.external_identifiers
+                claims_by_listing[listing.listing_id]
             )
             return ResolutionResult(
                 status=ResolutionStatus.UNRESOLVED,
@@ -243,9 +269,15 @@ def _resolved_from_claims(
     claims: tuple[ExternalIdentifier, ...],
     valid_from: TemporalValue | None = None,
     valid_to: TemporalValue | None = None,
+    derive_claim_validity: bool = True,
 ) -> ResolutionResult:
     ordered = tuple(sorted(claims, key=lambda claim: str(claim.external_identifier_id)))
-    known_values = [claim.known_from for claim in ordered if claim.known_from is not None]
+    if derive_claim_validity:
+        valid_from_values = {claim.valid_from for claim in ordered}
+        valid_to_values = {claim.valid_to for claim in ordered}
+        valid_from = next(iter(valid_from_values)) if len(valid_from_values) == 1 else None
+        valid_to = next(iter(valid_to_values)) if len(valid_to_values) == 1 else None
+    known_values = {claim.known_from for claim in ordered}
     observed_values = [claim.observed_at for claim in ordered]
     return ResolutionResult(
         status=ResolutionStatus.RESOLVED,
@@ -263,7 +295,7 @@ def _resolved_from_claims(
         provenance_ids=tuple(sorted({claim.provenance_id for claim in ordered}, key=str)),
         valid_from=valid_from,
         valid_to=valid_to,
-        known_from=known_values[0] if len(set(known_values)) == 1 else None,
+        known_from=next(iter(known_values)) if len(known_values) == 1 else None,
         observed_at=min(observed_values) if observed_values else None,
     )
 

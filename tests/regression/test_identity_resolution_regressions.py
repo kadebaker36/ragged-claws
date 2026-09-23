@@ -170,8 +170,53 @@ def test_later_discovered_mapping_does_not_leak_into_historical_resolution() -> 
     assert point_in_time.reason is ResolutionReason.NOT_KNOWN_AT_TIME
 
 
+def test_pit_listing_result_excludes_later_evidence_and_uses_separate_claims() -> None:
+    listing = _listing(
+        LISTING_OLD,
+        SECURITY_A,
+        "PIT",
+        from_date=date(2020, 1, 1),
+        to_date=None,
+        figi="BBG000PIT001",
+    ).model_copy(update={"external_identifiers": ()})
+    early_claim = _listing_claim(
+        LISTING_OLD,
+        "BBG000PIT001",
+        observation_id=UUID("50000000-0000-4000-8000-000000000001"),
+        known_from=day_value(date(2020, 1, 1)),
+    )
+    later_claim = _listing_claim(
+        LISTING_OLD,
+        "BBG000PIT001",
+        observation_id=UUID("50000000-0000-4000-8000-000000000002"),
+        known_from=day_value(date(2024, 1, 1)),
+    )
+    catalog = IdentityCatalog(
+        securities=_securities(),
+        listings=(listing,),
+        external_identifiers=(later_claim, early_claim),
+    )
+
+    result = catalog.resolve_listing(
+        _request(SECURITY_A, "PIT", date(2021, 1, 1)).model_copy(
+            update={"known_at": datetime(2021, 1, 1, tzinfo=UTC)}
+        )
+    )
+
+    assert result.status is ResolutionStatus.RESOLVED
+    assert result.supporting_external_identifier_ids == (
+        early_claim.external_identifier_id,
+    )
+    assert result.source_observation_ids == (early_claim.source_observation_id,)
+    assert result.known_from == early_claim.known_from
+
+
 def _catalog(*listings: Listing) -> IdentityCatalog:
-    securities = (
+    return IdentityCatalog(securities=_securities(), listings=tuple(listings))
+
+
+def _securities() -> tuple[Security, Security]:
+    return (
         Security(
             security_id=SECURITY_A,
             issuer_entity_id=ISSUER_A,
@@ -187,7 +232,6 @@ def _catalog(*listings: Listing) -> IdentityCatalog:
             provenance_id=PROVENANCE,
         ),
     )
-    return IdentityCatalog(securities=securities, listings=tuple(listings))
 
 
 def _listing(
@@ -201,7 +245,32 @@ def _listing(
     known_from: TemporalValue | None = None,
 ) -> Listing:
     observation_id = UUID(int=listing_id.int + 0x10000000000000000000000000000000)
-    claim = ExternalIdentifier(
+    claim = _listing_claim(
+        listing_id,
+        figi,
+        observation_id=observation_id,
+        known_from=known_from or day_value(date(2017, 1, 1)),
+    )
+    return Listing(
+        listing_id=listing_id,
+        security_id=security_id,
+        symbol=symbol,
+        exchange_mic="XNYS",
+        effective_from=day_value(from_date) if from_date is not None else None,
+        effective_to=day_value(to_date) if to_date is not None else None,
+        external_identifiers=(claim,),
+        provenance_id=PROVENANCE,
+    )
+
+
+def _listing_claim(
+    listing_id: UUID,
+    figi: str,
+    *,
+    observation_id: UUID,
+    known_from: TemporalValue,
+) -> ExternalIdentifier:
+    return ExternalIdentifier(
         external_identifier_id=deterministic_external_identifier_id(
             subject_type=IdentifierSubjectType.LISTING,
             subject_id=listing_id,
@@ -215,18 +284,8 @@ def _listing(
         value=figi,
         source_observation_id=observation_id,
         provenance_id=PROVENANCE,
-        known_from=known_from or day_value(date(2017, 1, 1)),
+        known_from=known_from,
         observed_at=OBSERVED,
-    )
-    return Listing(
-        listing_id=listing_id,
-        security_id=security_id,
-        symbol=symbol,
-        exchange_mic="XNYS",
-        effective_from=day_value(from_date) if from_date is not None else None,
-        effective_to=day_value(to_date) if to_date is not None else None,
-        external_identifiers=(claim,),
-        provenance_id=PROVENANCE,
     )
 
 

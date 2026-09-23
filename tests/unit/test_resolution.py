@@ -90,6 +90,7 @@ def test_exact_typed_cik_resolves_issuer_and_duplicate_mapping_conflicts() -> No
     assert resolved.subject_id == ISSUER_ID
     assert resolved.source_observation_ids == (OBSERVATION_ID,)
     assert resolved.known_from == claim.known_from
+    assert resolved.valid_from == claim.valid_from
 
     other_id = UUID("10000000-0000-4000-8000-000000000099")
     conflict_claim = _claim(
@@ -324,6 +325,7 @@ def _claim(
         value=value,
         source_observation_id=observation_id,
         provenance_id=PROVENANCE_ID,
+        valid_from=day_value(date(2019, 1, 1)),
         known_from=known,
         observed_at=OBSERVED_AT,
     )
