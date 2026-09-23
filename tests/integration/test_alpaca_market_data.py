@@ -9,6 +9,7 @@ from uuid import UUID
 import httpx
 import pytest
 
+import ragged_claws.market_data.alpaca as alpaca_module
 from ragged_claws.market_data import (
     AlpacaHistoricalBarsAdapter,
     AlpacaMarketDataError,
@@ -41,6 +42,7 @@ def test_alpaca_adapter_is_explicit_paginated_and_historical_symbol_safe(
         assert params["feed"] == "iex"
         assert "asof" in params
         assert params["limit"] == "10000"
+        assert params["end"] == ("2024-03-11" if symbol == "OLD" else "2024-03-12")
         if symbol == "OLD" and "page_token" not in params:
             payload: dict[str, object] = {
                 "bars": {
@@ -189,3 +191,140 @@ def test_alpaca_rejects_fractional_volume_without_truncation(tmp_path: Path) -> 
         adapter.fetch(
             request, retrieved_at=datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
         )
+
+
+def test_alpaca_observation_identity_includes_request_semantics(tmp_path: Path) -> None:
+    content = (
+        b'{"bars":{"SYN":[{"t":"2024-03-11T04:00:00Z","o":10,'
+        b'"h":11,"l":9,"c":10.5,"v":100}]},"next_page_token":null}'
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=content, request=request)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler), base_url="https://data.alpaca.markets"
+    )
+    adapter = AlpacaHistoricalBarsAdapter(
+        DataLayout(tmp_path / "data"),
+        api_key="fixture-key",
+        api_secret="fixture-secret",
+        client=client,
+    )
+    base_request = DailyBarRequest(
+        security_id=SECURITY_ID,
+        listing_id=LISTING_ID,
+        start=date(2024, 3, 11),
+        end=date(2024, 3, 11),
+        symbols=(
+            HistoricalSymbol(
+                symbol="SYN",
+                valid_from=date(2024, 3, 11),
+                provider_asof=date(2024, 3, 11),
+            ),
+        ),
+        adjustment=PriceAdjustment.RAW,
+        feed="iex",
+    )
+
+    raw = adapter.fetch(
+        base_request, retrieved_at=datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
+    )
+    split = adapter.fetch(
+        base_request.model_copy(update={"adjustment": PriceAdjustment.SPLIT}),
+        retrieved_at=datetime(2026, 9, 22, 12, 0, tzinfo=UTC),
+    )
+
+    assert raw.observations[0].raw_content_hash == split.observations[0].raw_content_hash
+    assert raw.observations[0].source_native_id != split.observations[0].source_native_id
+    assert (
+        raw.observations[0].source_observation_id
+        != split.observations[0].source_observation_id
+    )
+
+
+def test_alpaca_rejects_out_of_interval_bars(tmp_path: Path) -> None:
+    content = (
+        b'{"bars":{"OLD":[{"t":"2024-03-12T04:00:00Z","o":10,'
+        b'"h":11,"l":9,"c":10.5,"v":100}]},"next_page_token":null}'
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=content, request=request)
+
+    adapter = AlpacaHistoricalBarsAdapter(
+        DataLayout(tmp_path / "data"),
+        api_key="fixture-key",
+        api_secret="fixture-secret",
+        client=httpx.Client(
+            transport=httpx.MockTransport(handler),
+            base_url="https://data.alpaca.markets",
+        ),
+    )
+    request = DailyBarRequest(
+        security_id=SECURITY_ID,
+        listing_id=LISTING_ID,
+        start=date(2024, 3, 11),
+        end=date(2024, 3, 11),
+        symbols=(
+            HistoricalSymbol(
+                symbol="OLD",
+                valid_from=date(2024, 3, 11),
+                valid_to=date(2024, 3, 12),
+                provider_asof=date(2024, 3, 11),
+            ),
+        ),
+        adjustment=PriceAdjustment.RAW,
+        feed="iex",
+    )
+
+    with pytest.raises(AlpacaMarketDataError, match="outside the requested"):
+        adapter.fetch(
+            request, retrieved_at=datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
+        )
+
+
+def test_alpaca_pagination_has_a_hard_safety_limit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request_count = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal request_count
+        request_count += 1
+        content = json.dumps(
+            {"bars": {"SYN": []}, "next_page_token": f"page-{request_count}"}
+        ).encode()
+        return httpx.Response(200, content=content, request=request)
+
+    monkeypatch.setattr(alpaca_module, "MAX_ALPACA_PAGES", 2)
+    adapter = AlpacaHistoricalBarsAdapter(
+        DataLayout(tmp_path / "data"),
+        api_key="fixture-key",
+        api_secret="fixture-secret",
+        client=httpx.Client(
+            transport=httpx.MockTransport(handler),
+            base_url="https://data.alpaca.markets",
+        ),
+    )
+    request = DailyBarRequest(
+        security_id=SECURITY_ID,
+        listing_id=LISTING_ID,
+        start=date(2024, 3, 11),
+        end=date(2024, 3, 11),
+        symbols=(
+            HistoricalSymbol(
+                symbol="SYN",
+                valid_from=date(2024, 3, 11),
+                provider_asof=date(2024, 3, 11),
+            ),
+        ),
+        adjustment=PriceAdjustment.RAW,
+        feed="iex",
+    )
+
+    with pytest.raises(AlpacaMarketDataError, match="safety limit"):
+        adapter.fetch(
+            request, retrieved_at=datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
+        )
+    assert request_count == 2

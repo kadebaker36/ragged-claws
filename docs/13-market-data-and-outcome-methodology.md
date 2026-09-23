@@ -32,7 +32,9 @@ Official Alpaca documentation was re-reviewed on **2026-09-22**:
   selection and that an unsubscribed user can use the IEX feed.
 
 The adapter therefore sends `timeframe=1Day`, adjustment, feed, and `asof` on every request. It does
-not rely on provider defaults. Pagination tokens are followed and repeated tokens fail closed.
+not rely on provider defaults. Alpaca's inclusive `end` is sent as the last permitted session date,
+and a response outside the canonical historical-symbol interval fails closed. Pagination tokens are
+followed; repeated tokens and a bounded-page safety limit fail closed.
 Alpaca `asof` is only a convenience for provider symbol mapping; it never replaces canonical
 listing identity. The bootstrap research window is 2016-present when Basic coverage is used.
 
@@ -47,10 +49,10 @@ Alpaca payload retention is classified conservatively as restricted and remains 
 The adapter maps canonical `raw`, `split`, `dividend`, `spinoff`, and `all` values explicitly,
 including canonical `spinoff` to Alpaca's `spin-off` spelling;
 canonical `other` fails. A calculation requires security and SPY bars to use the configured same
-adjustment and feed. Mismatch raises instead of mixing conventions. Feed configuration remains
-versioned adapter/engine configuration because the current canonical `OutcomeMethodology` has no
-feed field; price observation IDs retain the concrete provider pages. This is a documented V0
-limitation, not a silent default.
+adjustment, feed, and provider namespace. Mismatch raises instead of mixing conventions. Feed
+configuration remains versioned adapter/engine configuration because the current canonical
+`OutcomeMethodology` has no feed field; price observation IDs retain the concrete provider pages.
+This is a documented V0 limitation, not a silent default.
 
 ## Entry, exit, and calendar
 

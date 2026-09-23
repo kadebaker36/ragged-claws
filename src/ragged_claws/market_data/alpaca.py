@@ -30,6 +30,7 @@ ALPACA_ADAPTER_VERSION = "alpaca-bars/1.0.0"
 ALPACA_PARSER_VERSION = "alpaca-bars-json/1.0.0"
 ALPACA_LICENSE = "alpaca-market-data-terms"
 ALPACA_DATA_BASE_URL = "https://data.alpaca.markets"
+MAX_ALPACA_PAGES = 100
 ALPACA_ADJUSTMENTS = {
     PriceAdjustment.RAW: "raw",
     PriceAdjustment.SPLIT: "split",
@@ -117,11 +118,13 @@ class AlpacaHistoricalBarsAdapter:
         captures: list[UUID] = []
         seen_page_tokens: set[str] = set()
         while True:
+            if page_number >= MAX_ALPACA_PAGES:
+                raise AlpacaMarketDataError("Alpaca pagination exceeded the safety limit")
             parameters: dict[str, str | int] = {
                 "symbols": segment.symbol,
                 "timeframe": "1Day",
                 "start": start.isoformat(),
-                "end": (end + timedelta(days=1)).isoformat(),
+                "end": end.isoformat(),
                 "adjustment": ALPACA_ADJUSTMENTS[request.adjustment],
                 "feed": request.feed,
                 "asof": segment.provider_asof.isoformat(),
@@ -138,9 +141,10 @@ class AlpacaHistoricalBarsAdapter:
                 raise AlpacaMarketDataError("Alpaca historical bars request failed") from exc
 
             page_number += 1
-            native_id = (
-                f"bars:{request.listing_id}:{segment.symbol}:{start}:{end}:page:{page_number}"
+            request_identity = json.dumps(
+                parameters, allow_nan=False, separators=(",", ":"), sort_keys=True
             )
+            native_id = f"bars:{request.listing_id}:{request_identity}"
             manifest = capture_raw_bytes(
                 self.layout,
                 response.content,
@@ -183,7 +187,12 @@ class AlpacaHistoricalBarsAdapter:
             if not isinstance(symbol_bars, list):
                 raise AlpacaMarketDataError("Alpaca symbol bars must be an array")
             for raw_bar in symbol_bars:
-                bars.append(_normalize_bar(raw_bar, request, observation.source_observation_id))
+                bar = _normalize_bar(raw_bar, request, observation.source_observation_id)
+                if not start <= bar.session_date <= end:
+                    raise AlpacaMarketDataError(
+                        "Alpaca returned a bar outside the requested historical-symbol interval"
+                    )
+                bars.append(bar)
             observations.append(observation)
             captures.append(manifest.capture_id)
             token = payload.get("next_page_token")

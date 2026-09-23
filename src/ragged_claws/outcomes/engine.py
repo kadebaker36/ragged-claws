@@ -137,6 +137,13 @@ class ForwardOutcomeEngine:
             )
         security_by_date = self._index_bars(security_bars, listing)
         benchmark_by_date = self._index_bars(benchmark_bars, self.benchmark_listing)
+        providers = {
+            bar.provider_namespace for bar in (*security_bars, *benchmark_bars)
+        }
+        if len(providers) > 1:
+            raise OutcomeCalculationError(
+                "security and benchmark bars require one compatible price provider"
+            )
         entry = security_by_date.get(entry_date)
         benchmark_entry = benchmark_by_date.get(entry_date)
         if entry is None or benchmark_entry is None:
@@ -324,12 +331,12 @@ class ForwardOutcomeEngine:
         security_id = security.security_id if security is not None else None
         listing_id = listing.listing_id if listing is not None else None
         components = (
-                str(event.event_id),
-                str(security_id or "unresolved"),
-                str(listing_id or "unresolved"),
-                str(horizon),
-                str(self.methodology_id),
-                self.methodology_version,
+            str(event.event_id),
+            str(security_id or "unresolved"),
+            str(listing_id or "unresolved"),
+            str(horizon),
+            str(self.methodology_id),
+            self.methodology_version,
         )
         identity = "".join(f"{len(value)}:{value}" for value in components)
         return Outcome(
@@ -346,7 +353,7 @@ class ForwardOutcomeEngine:
             security_return=security_return,
             benchmark_listing_id=(
                 self.benchmark_listing.listing_id
-                if status is OutcomeStatus.COMPLETE
+                if security_id is not None and listing_id is not None
                 else None
             ),
             benchmark_return=benchmark_return,

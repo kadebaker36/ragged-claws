@@ -264,6 +264,7 @@ def test_future_exit_is_right_censored_only_after_valid_entry() -> None:
     )
     assert outcome.status is OutcomeStatus.RIGHT_CENSORED
     assert outcome.entry_price == Decimal("100")
+    assert outcome.benchmark_listing_id == SPY_LISTING_ID
 
 
 def test_unresolved_and_explicit_terminal_states_do_not_guess() -> None:
@@ -298,6 +299,24 @@ def test_adjustment_or_feed_mismatch_fails_explicitly() -> None:
         update={"adjustment": PriceAdjustment.RAW}
     )
     with pytest.raises(OutcomeCalculationError, match="adjustment and feed"):
+        _engine().calculate(
+            event=_event(),
+            horizon_sessions=5,
+            security=_security(),
+            listing=_listing(),
+            security_bars=security_bars,
+            benchmark_bars=benchmark_bars,
+            coverage_through=date(2024, 7, 11),
+            provenance_id=PROVENANCE_ID,
+        )
+
+
+def test_security_and_benchmark_require_one_price_provider() -> None:
+    security_bars, benchmark_bars = _complete_bars()
+    benchmark_bars[0] = benchmark_bars[0].model_copy(
+        update={"provider_namespace": "other.market_data"}
+    )
+    with pytest.raises(OutcomeCalculationError, match="compatible price provider"):
         _engine().calculate(
             event=_event(),
             horizon_sessions=5,
