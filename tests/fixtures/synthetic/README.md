@@ -12,3 +12,7 @@ a production adapter.
 `SyntheticAdapter` inputs. They share an invented source-native ID but have different exact bytes
 and disclosed amounts so append-only source-version behavior can be tested without implying that
 production canonical correction/reconciliation is solved.
+
+`openfigi_mapping.json`, `gleif_exact.json`, and `gleif_candidates.json` are invented
+provider-shaped identity fixtures. They exercise identifier-layer and exact-versus-candidate
+semantics without copying provider data or requiring network access.

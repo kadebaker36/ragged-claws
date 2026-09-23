@@ -1,0 +1,14 @@
+[
+  {
+    "data": [
+      {
+        "figi": "BBG000TESTL1",
+        "shareClassFIGI": "BBG00TESTSC1",
+        "compositeFIGI": "BBG00TESTCO1",
+        "ticker": "SYN.A",
+        "exchCode": "US",
+        "name": "SYNTHETIC ISSUER CLASS A"
+      }
+    ]
+  }
+]
