@@ -1,7 +1,7 @@
-"""Source ingestion implementations; M0 contains only a synthetic test adapter."""
+"""Source ingestion and shared observation acceptance contracts."""
 
+from ragged_claws.ingestion.observations import SourceObservationConflictError
 from ragged_claws.ingestion.synthetic import (
-    SourceObservationConflictError,
     SyntheticAdapter,
     SyntheticBundle,
     SyntheticIngestionResult,
