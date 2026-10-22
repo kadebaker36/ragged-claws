@@ -10,3 +10,8 @@
 
 # Preserve exact recorded SEC response bytes and hashes on every platform.
 tests/fixtures/sec/*.txt binary
+
+# Exact CC BY-SA LittleSis responses; metadata remains ordinary text.
+tests/fixtures/littlesis/recorded-1565630.json binary
+tests/fixtures/littlesis/recorded-297069.json binary
+tests/fixtures/littlesis/recorded-position-page.json binary

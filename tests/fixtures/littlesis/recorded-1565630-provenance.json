@@ -1,0 +1,12 @@
+{
+  "url": "https://littlesis.org/api/relationships/1565630",
+  "retrieved_at": "2026-10-22T21:56:18.664182+00:00",
+  "sha256": "cfeca2dbe39876a467ca7c3722709fb573ca7d18fded632b6d7ce4fde5fdec38",
+  "size_bytes": 2446,
+  "attribution": {
+    "copyright": "LittleSis CC BY-SA 4.0",
+    "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "apiVersion": "2.0"
+  },
+  "changes": "none; exact response bytes"
+}
