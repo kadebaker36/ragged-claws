@@ -28,6 +28,45 @@ def version() -> None:
     typer.echo(__version__)
 
 
+@app.command("ingest-littlesis")
+def ingest_littlesis(
+    source: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    source_url: Annotated[str, typer.Option()],
+    data_dir: Annotated[Path, typer.Option()] = Path("data"),
+) -> None:
+    """Ingest one local API-v2 response as context; makes no network request."""
+    from ragged_claws.ingestion.littlesis import LittleSisAdapter
+    from ragged_claws.ingestion.littlesis_parser import LittleSisError
+    from ragged_claws.storage import DataLayout, PersistenceError
+
+    try:
+        bundle = LittleSisAdapter(DataLayout(data_dir)).ingest(
+            source.read_bytes(), source_locator=source_url, retrieved_at=datetime.now(UTC)
+        )
+    except (LittleSisError, PersistenceError) as exc:
+        typer.echo(json.dumps({"rejected_snapshots": 1, "reason": str(exc)}, sort_keys=True))
+        raise typer.Exit(2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "snapshot_id": str(bundle.source_version_id),
+                "counts": {
+                    status: sum(m.status == status for m in bundle.mappings)
+                    for status in ("imported", "reused", "unresolved", "excluded")
+                },
+                "reasons": dict(Counter(m.reason for m in bundle.mappings if m.reason)),
+                "snapshot_observed_at": bundle.observation.observed_at.isoformat(),
+                "relationships": len(bundle.relationships),
+                "pit_ineligible_relationships": sum(
+                    r.known_from is None for r in bundle.relationships
+                ),
+                "attribution": bundle.attribution,
+            },
+            sort_keys=True,
+        )
+    )
+
+
 @app.command("ingest-sec-form4")
 def ingest_sec_form4(
     source: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
