@@ -19,6 +19,7 @@ from ragged_claws.models import (
     ExternalIdentifier,
     FeatureValue,
     Listing,
+    Outcome,
     Provenance,
     Security,
     SourceObservation,
@@ -60,6 +61,7 @@ _CURATED_SPECS: dict[type[BaseModel], DatasetSpec] = {
     ),
     Security: DatasetSpec("security.parquet", "security_id"),
     Listing: DatasetSpec("listing.parquet", "listing_id"),
+    Outcome: DatasetSpec("outcome.parquet", "outcome_id"),
 }
 
 
