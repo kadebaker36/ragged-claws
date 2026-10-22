@@ -1,0 +1,26 @@
+{
+  "data": [
+    {
+      "type": "lei-records",
+      "id": "529900SYNTHETIC00002",
+      "attributes": {
+        "entity": {
+          "legalName": {
+            "name": "Synthetic Name Holdings"
+          }
+        }
+      }
+    },
+    {
+      "type": "lei-records",
+      "id": "529900SYNTHETIC00001",
+      "attributes": {
+        "entity": {
+          "legalName": {
+            "name": "Synthetic Name Incorporated"
+          }
+        }
+      }
+    }
+  ]
+}
