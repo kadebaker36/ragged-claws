@@ -196,6 +196,40 @@ def test_complete_five_session_spy_relative_result_uses_exact_decimal_math() -> 
     assert outcome.exit_at.date() == date(2024, 7, 11)
 
 
+@pytest.mark.parametrize("issuer_only", [True, False])
+@pytest.mark.parametrize("path", ["complete", "terminal", "excluded", "censored", "missing"])
+def test_contradictory_issuer_is_rejected_on_every_result_path(
+    issuer_only: bool, path: str,
+) -> None:
+    event = _event().model_copy(update={
+        "issuer_entity_id": UUID(int=88),
+        "security_id": None if issuer_only else SECURITY_ID,
+        "listing_id": None if issuer_only else LISTING_ID,
+    })
+    bars, benchmark = _complete_bars()
+    with pytest.raises(OutcomeCalculationError, match="issuer"):
+        _engine().calculate(
+            event=event, horizon_sessions=5, security=_security(), listing=_listing(),
+            security_bars=() if path == "missing" else bars, benchmark_bars=benchmark,
+            coverage_through=date(2024, 7, 10) if path == "censored" else date(2024, 7, 11),
+            provenance_id=PROVENANCE_ID, terminal_delisted=path == "terminal",
+            exclusion_reason="predeclared rule" if path == "excluded" else None,
+        )
+
+
+def test_consistent_issuer_only_event_resolves_without_symbol_fallback() -> None:
+    bars, benchmark = _complete_bars()
+    event = _event().model_copy(update={"security_id": None, "listing_id": None})
+    result = _engine().calculate(
+        event=event, horizon_sessions=5, security=_security(), listing=_listing(),
+        security_bars=bars, benchmark_bars=benchmark, coverage_through=date(2024, 7, 11),
+        provenance_id=PROVENANCE_ID,
+    )
+    assert (result.security_return, result.benchmark_return, result.excess_return) == (
+        Decimal("0.1"), Decimal("0.01"), Decimal("0.09"),
+    )
+
+
 def test_repeating_decimal_division_has_deterministic_unquantized_context() -> None:
     security_bars = [
         _bar(LISTING_ID, SECURITY_ID, date(2024, 7, 3), "3", "3", SECURITY_OBSERVATION),

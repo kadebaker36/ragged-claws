@@ -91,6 +91,20 @@ class ForwardOutcomeEngine:
             raise ValueError(f"unsupported horizon: {horizon_sessions}")
         if event.actionable_at is None:
             raise OutcomeCalculationError("event has no actionable timestamp")
+        if (security is None) != (listing is None):
+            raise OutcomeCalculationError("security and listing must resolve together")
+        if security is not None and listing is not None:
+            if (
+                event.issuer_entity_id is not None
+                and event.issuer_entity_id != security.issuer_entity_id
+            ):
+                raise OutcomeCalculationError("event issuer disagrees with resolved security issuer")
+            if listing.security_id != security.security_id:
+                raise OutcomeCalculationError("listing does not belong to the supplied security")
+            if event.security_id is not None and event.security_id != security.security_id:
+                raise OutcomeCalculationError("event security disagrees with resolved security")
+            if event.listing_id is not None and event.listing_id != listing.listing_id:
+                raise OutcomeCalculationError("event listing disagrees with resolved listing")
         if exclusion_reason is not None:
             return self._outcome(
                 event=event,
@@ -102,8 +116,6 @@ class ForwardOutcomeEngine:
                 exclusion_reason=exclusion_reason,
             )
         if security is None or listing is None:
-            if security is not None or listing is not None:
-                raise OutcomeCalculationError("security and listing must resolve together")
             return self._outcome(
                 event=event,
                 horizon=horizon_sessions,
@@ -112,12 +124,6 @@ class ForwardOutcomeEngine:
                 status=OutcomeStatus.UNRESOLVED_SECURITY,
                 provenance_id=provenance_id,
             )
-        if listing.security_id != security.security_id:
-            raise OutcomeCalculationError("listing does not belong to the supplied security")
-        if event.security_id is not None and event.security_id != security.security_id:
-            raise OutcomeCalculationError("event security disagrees with resolved security")
-        if event.listing_id is not None and event.listing_id != listing.listing_id:
-            raise OutcomeCalculationError("event listing disagrees with resolved listing")
         if terminal_delisted:
             return self._outcome(
                 event=event,

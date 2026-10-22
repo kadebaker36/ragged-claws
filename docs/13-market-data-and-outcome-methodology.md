@@ -4,6 +4,12 @@ Issue #6 adds a deliberately narrow historical daily-bar boundary and V0 forward
 calculator. It does not resolve identity, parse SEC filings, build portfolios, or implement trading.
 Canonical `Security` and `Listing` identities must already be supplied by an upstream process.
 
+Before returning any status, supplied identity must be consistent: Event issuer agrees with Security
+issuer, Event security agrees with Security, and Event listing agrees with the entry Listing, wherever
+the Event populates those fields. Listing belongs to Security. Contradictions raise an explicit input
+error even for exclusions and terminal states; absent resolution remains explicit and never triggers
+a name/ticker fallback.
+
 ## Provider-neutral contract
 
 `DailyBarRequest` is anchored to canonical security and listing UUIDs. Historical symbols are
