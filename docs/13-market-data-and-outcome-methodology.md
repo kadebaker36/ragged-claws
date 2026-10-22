@@ -24,6 +24,14 @@ feed. Research logic consumes these normalized values and never Alpaca JSON.
 The protocol is intentionally limited to historical regular-session daily bars. It is not a generic
 financial-data framework.
 
+Each request now covers exactly one symbol and canonical Listing. Use
+`DailyBarRequest.from_listing(listing, start=..., end=..., provider_asof=...,
+adjustment=..., feed=...)` for each canonical segment. The factory clips the inclusive requested
+date range to the Listing's half-open interval and retains its actual UUID and symbol. Empty
+intersections and non-day boundaries raise; raw request construction also rejects a range outside
+its supplied symbol interval. Fetch OLD and NEW separately, then concatenate their bars and retain
+both batches' observations and captures. Multi-symbol requests with one Listing UUID are rejected.
+
 ## Alpaca documentation review
 
 Official Alpaca documentation was re-reviewed on **2026-09-22**:
@@ -82,6 +90,30 @@ assessment. It must itself be an XNYS session and cannot precede entry. If the r
 is later, the result is right-censored. If that session has elapsed but a required bar is absent,
 the result is missing-price. This explicit cutoff prevents a missing response from being mislabeled
 as future censoring.
+
+## Listing history across the horizon
+
+`calculate(listing=entry_listing, listing_history=(next_listing, ...), ...)` accepts additional
+canonical Listings of the same Security and venue. The simple single-listing call remains valid.
+`listing` must be valid on the entry date and remains `Outcome.listing_id`, including in its stable
+ID convention. Additional bindings retain their own UUIDs; no bar is relabeled to the entry UUID.
+All supplied bars must match a supplied binding and fall inside that binding's half-open interval.
+The same configured session calendar, adjustment, feed and provider checks apply across the series
+and benchmark. Overlapping or conflicting bindings, different securities (including reused tickers),
+different venues, and non-day boundaries raise explicit input errors. Gaps across elapsed coverage
+from entry through `min(exit, coverage_through)` also raise rather than implying a bridge. Future
+bindings need not be guessed for a right-censored horizon.
+
+Exit identity is audited through `Outcome.methodology.price_source_observation_ids`, the normalized
+bar's actual Listing UUID, and the source observation's native request identity containing that UUID.
+Persist/retain each batch's observations and immutable capture manifests alongside canonical identity
+and outcomes. Entry/exit price pages are included even when they belong to different listings. This
+supports a same-Security rename; it is not a general corporate-action or venue-transfer engine.
+
+There is no canonical model/schema migration. The request validation is deliberately stricter:
+callers of the old multi-symbol request must issue one request per canonical Listing. Existing
+single-listing outcome IDs and valid payloads are unchanged; recomputing a different payload for an
+existing ID still requires deliberate research-version handling under the strict storage contract.
 
 ## Return math and benchmark
 

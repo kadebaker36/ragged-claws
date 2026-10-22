@@ -1,13 +1,14 @@
 """Provider-neutral daily-bar request and normalized response values."""
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 from pydantic import Field, model_validator
 
-from ragged_claws.models import PriceAdjustment, SourceObservation
+from ragged_claws.market_data.listings import listing_bounds
+from ragged_claws.models import Listing, PriceAdjustment, SourceObservation
 from ragged_claws.models.base import CanonicalModel, NonEmptyStr, Slug
 
 
@@ -37,18 +38,38 @@ class DailyBarRequest(CanonicalModel):
     listing_id: UUID
     start: date
     end: date
-    symbols: tuple[HistoricalSymbol, ...] = Field(min_length=1)
+    symbols: tuple[HistoricalSymbol, ...] = Field(min_length=1, max_length=1)
     adjustment: PriceAdjustment
     feed: Slug
+
+    @classmethod
+    def from_listing(
+        cls, listing: Listing, *, start: date, end: date, provider_asof: date,
+        adjustment: PriceAdjustment, feed: str,
+    ) -> Self:
+        """Clip one request to one canonical listing; fetch renames separately."""
+        lower, upper = listing_bounds(listing)
+        return cls(
+            security_id=listing.security_id,
+            listing_id=listing.listing_id,
+            start=max(start, lower) if lower is not None else start,
+            end=min(end, upper - timedelta(days=1)) if upper is not None else end,
+            symbols=(HistoricalSymbol(
+                symbol=listing.symbol, valid_from=lower or start, valid_to=upper,
+                provider_asof=provider_asof,
+            ),),
+            adjustment=adjustment, feed=feed,
+        )
 
     @model_validator(mode="after")
     def validate_coverage(self) -> Self:
         if self.end < self.start:
             raise ValueError("request end precedes start")
-        ordered = sorted(self.symbols, key=lambda value: value.valid_from)
-        for previous, current in zip(ordered, ordered[1:], strict=False):
-            if previous.valid_to is None or current.valid_from < previous.valid_to:
-                raise ValueError("historical symbol intervals must not overlap")
+        segment = self.symbols[0]
+        if self.start < segment.valid_from or (
+            segment.valid_to is not None and self.end >= segment.valid_to
+        ):
+            raise ValueError("request must stay inside its canonical listing segment")
         return self
 
 

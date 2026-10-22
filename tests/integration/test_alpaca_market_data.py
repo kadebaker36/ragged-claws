@@ -17,8 +17,10 @@ from ragged_claws.market_data import (
     HistoricalSymbol,
 )
 from ragged_claws.market_data.alpaca import ALPACA_ADJUSTMENTS
-from ragged_claws.models import PriceAdjustment
+from ragged_claws.models import Listing, PriceAdjustment
+from ragged_claws.resolution import day_value
 from ragged_claws.storage import DataLayout, raw_object_path
+from tests.model_helpers import PROVENANCE_ID
 
 SECURITY_ID = UUID("20000000-0000-4000-8000-000000000020")
 LISTING_ID = UUID("30000000-0000-4000-8000-000000000020")
@@ -107,46 +109,38 @@ def test_alpaca_adapter_is_explicit_paginated_and_historical_symbol_safe(
     adapter = AlpacaHistoricalBarsAdapter(
         layout, api_key="fixture-key", api_secret="fixture-secret", client=client
     )
-    request = DailyBarRequest(
-        security_id=SECURITY_ID,
-        listing_id=LISTING_ID,
-        start=date(2024, 3, 8),
-        end=date(2024, 3, 12),
-        symbols=(
-            HistoricalSymbol(
-                symbol="OLD",
-                valid_from=date(2020, 1, 1),
-                valid_to=date(2024, 3, 12),
-                provider_asof=date(2024, 3, 8),
-            ),
-            HistoricalSymbol(
-                symbol="NEW",
-                valid_from=date(2024, 3, 12),
-                provider_asof=date(2024, 3, 12),
-            ),
-        ),
-        adjustment=PriceAdjustment.SPLIT,
-        feed="iex",
+    old = Listing(
+        security_id=SECURITY_ID, listing_id=LISTING_ID, symbol="OLD", exchange_mic="XNYS",
+        effective_from=day_value(date(2020, 1, 1)),
+        effective_to=day_value(date(2024, 3, 12)), provenance_id=PROVENANCE_ID,
     )
+    new = old.model_copy(update={
+        "listing_id": UUID(int=21), "symbol": "NEW",
+        "effective_from": day_value(date(2024, 3, 12)), "effective_to": None,
+    })
+    batches = [adapter.fetch(
+        DailyBarRequest.from_listing(
+            listing, start=date(2024, 3, 8), end=date(2024, 3, 12), provider_asof=asof,
+            adjustment=PriceAdjustment.SPLIT, feed="iex",
+        ), retrieved_at=datetime(2026, 9, 22, 12, 0, tzinfo=UTC),
+    ) for listing, asof in ((old, date(2024, 3, 8)), (new, date(2024, 3, 12)))]
+    bars = tuple(bar for batch in batches for bar in batch.bars)
+    observations = tuple(observation for batch in batches for observation in batch.observations)
 
-    batch = adapter.fetch(
-        request, retrieved_at=datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
-    )
-
-    assert [bar.session_date for bar in batch.bars] == [
+    assert [bar.session_date for bar in bars] == [
         date(2024, 3, 8),
         date(2024, 3, 11),
         date(2024, 3, 12),
     ]
-    assert all(bar.listing_id == LISTING_ID for bar in batch.bars)
-    assert batch.bars[0].close == Decimal("10.123456789012345678901")
-    assert len(batch.observations) == 3
-    assert len(batch.capture_ids) == 3
+    assert [bar.listing_id for bar in bars] == [old.listing_id, old.listing_id, new.listing_id]
+    assert bars[0].close == Decimal("10.123456789012345678901")
+    assert len(observations) == 3
+    assert sum(len(batch.capture_ids) for batch in batches) == 3
     assert [request.url.params["symbols"] for request in requests] == ["OLD", "OLD", "NEW"]
     assert requests[0].url.params["asof"] == "2024-03-08"
     assert requests[2].url.params["asof"] == "2024-03-12"
     # The fixture straddles the U.S. DST change: both 05:00Z and 04:00Z daily stamps work.
-    for observation in batch.observations:
+    for observation in observations:
         path = raw_object_path(layout, observation.raw_content_hash.value)
         assert path.exists()
         assert path.read_bytes().startswith(b'{"bars"')

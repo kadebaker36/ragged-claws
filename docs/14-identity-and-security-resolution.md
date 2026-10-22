@@ -69,6 +69,13 @@ This permits a ticker change to select the correct pre/post-change Listing and p
 symbol reused by another issuer/security from merging the two. Overlapping evidence stays
 ambiguous.
 
+For price outcomes spanning a same-Security rename, pass the selected entry Listing plus subsequent
+canonical bindings as the engine's `listing_history`. Request bars separately using
+`DailyBarRequest.from_listing` for each segment. The outcome keeps the entry Listing UUID while
+each normalized bar and its source observation retain the actual segment identity. See doc 13 for
+coverage, interval and lineage validation; retrospective listing validity does not establish PIT
+feature eligibility.
+
 ## Point-in-time knowledge
 
 Validity and knowledge are separate. A Listing may have been valid at historical time T while the
@@ -137,11 +144,10 @@ conflict behavior.
 
 ## Deliberate limitations
 
-- No SEC Form 4 parser, market-data/outcome integration, LittleSis, Quiver, R2, or trading.
+- No SEC Form 4 parser, LittleSis, Quiver, R2, or trading.
 - No fuzzy entity merge, people/household resolution, corporate-action engine, or generalized
   identity platform.
 - No live OpenFIGI/GLEIF network client. The pure provider boundaries are ready for a later
   raw-capture-aware client without making normal tests depend on network access.
 - Identifier-format normalization checks representation and identity layer; it does not claim to
   replace provider validation or all identifier checksum rules.
-

@@ -11,6 +11,7 @@ from uuid import UUID, uuid5
 import exchange_calendars as xcals  # type: ignore[import-untyped]
 
 from ragged_claws.market_data import DailyBar
+from ragged_claws.market_data.listings import listing_bounds
 from ragged_claws.models import (
     Event,
     Listing,
@@ -86,6 +87,7 @@ class ForwardOutcomeEngine:
         provenance_id: UUID,
         terminal_delisted: bool = False,
         exclusion_reason: str | None = None,
+        listing_history: Sequence[Listing] = (),
     ) -> Outcome:
         if horizon_sessions not in SUPPORTED_HORIZONS:
             raise ValueError(f"unsupported horizon: {horizon_sessions}")
@@ -93,18 +95,27 @@ class ForwardOutcomeEngine:
             raise OutcomeCalculationError("event has no actionable timestamp")
         if (security is None) != (listing is None):
             raise OutcomeCalculationError("security and listing must resolve together")
+        if listing_history and listing is None:
+            raise OutcomeCalculationError("listing history requires resolved identity")
         if security is not None and listing is not None:
             if (
                 event.issuer_entity_id is not None
                 and event.issuer_entity_id != security.issuer_entity_id
             ):
-                raise OutcomeCalculationError("event issuer disagrees with resolved security issuer")
+                raise OutcomeCalculationError(
+                    "event issuer disagrees with resolved security issuer"
+                )
             if listing.security_id != security.security_id:
                 raise OutcomeCalculationError("listing does not belong to the supplied security")
             if event.security_id is not None and event.security_id != security.security_id:
                 raise OutcomeCalculationError("event security disagrees with resolved security")
             if event.listing_id is not None and event.listing_id != listing.listing_id:
                 raise OutcomeCalculationError("event listing disagrees with resolved listing")
+            for segment in listing_history:
+                if segment.security_id != security.security_id:
+                    raise OutcomeCalculationError("listing history belongs to another security")
+                if segment.exchange_mic != listing.exchange_mic:
+                    raise OutcomeCalculationError("listing history requires one compatible venue")
         if exclusion_reason is not None:
             return self._outcome(
                 event=event,
@@ -141,8 +152,13 @@ class ForwardOutcomeEngine:
             raise OutcomeCalculationError(
                 "coverage_through must be the latest completed regular session"
             )
-        security_by_date = self._index_bars(security_bars, listing)
-        benchmark_by_date = self._index_bars(benchmark_bars, self.benchmark_listing)
+        bindings = self._listing_bindings((listing, *listing_history))
+        benchmark_bindings = self._listing_bindings((self.benchmark_listing,))
+        if not self._valid_on(listing, entry_date):
+            raise OutcomeCalculationError("entry listing is not valid on the entry session")
+        self._validate_coverage(bindings, entry_date, min(exit_date, coverage_through))
+        security_by_date = self._index_bars(security_bars, bindings)
+        benchmark_by_date = self._index_bars(benchmark_bars, benchmark_bindings)
         providers = {
             bar.provider_namespace for bar in (*security_bars, *benchmark_bars)
         }
@@ -277,12 +293,17 @@ class ForwardOutcomeEngine:
             raise OutcomeCalculationError("XNYS session indexing failed") from exc
 
     def _index_bars(
-        self, bars: Sequence[DailyBar], listing: Listing
+        self, bars: Sequence[DailyBar], bindings: Mapping[UUID, Listing]
     ) -> dict[date, DailyBar]:
         indexed: dict[date, DailyBar] = {}
         for bar in bars:
-            if bar.security_id != listing.security_id or bar.listing_id != listing.listing_id:
+            listing = bindings.get(bar.listing_id)
+            if listing is None or bar.security_id != listing.security_id:
                 raise OutcomeCalculationError("bar canonical identity disagrees with its binding")
+            if not self._valid_on(listing, bar.session_date):
+                raise OutcomeCalculationError("bar is outside its canonical listing interval")
+            if not self._is_session(bar.session_date):
+                raise OutcomeCalculationError("bar date is not a configured regular session")
             if bar.adjustment is not self.adjustment or bar.feed != self.feed:
                 raise OutcomeCalculationError(
                     "security and benchmark bars require the configured adjustment and feed"
@@ -292,6 +313,49 @@ class ForwardOutcomeEngine:
                 raise OutcomeCalculationError(f"conflicting bar for {bar.session_date}")
             indexed[bar.session_date] = bar
         return indexed
+
+    @staticmethod
+    def _valid_on(listing: Listing, session: date) -> bool:
+        start, end = listing_bounds(listing)
+        return (start is None or start <= session) and (end is None or session < end)
+
+    @staticmethod
+    def _listing_bindings(listings: Sequence[Listing]) -> dict[UUID, Listing]:
+        bindings: dict[UUID, Listing] = {}
+        try:
+            for listing in listings:
+                previous = bindings.get(listing.listing_id)
+                if previous is not None and previous != listing:
+                    raise OutcomeCalculationError("conflicting canonical listing binding")
+                listing_bounds(listing)
+                bindings[listing.listing_id] = listing
+            ordered = sorted(
+                bindings.values(), key=lambda value: listing_bounds(value)[0] or date.min,
+            )
+            for previous, current in zip(ordered, ordered[1:], strict=False):
+                end = listing_bounds(previous)[1]
+                start = listing_bounds(current)[0]
+                if end is None or start is None or start < end:
+                    raise OutcomeCalculationError("overlapping canonical listing bindings")
+        except ValueError as exc:
+            raise OutcomeCalculationError(str(exc)) from exc
+        return bindings
+
+    @staticmethod
+    def _validate_coverage(bindings: Mapping[UUID, Listing], start: date, end: date) -> None:
+        cursor = start
+        for listing in sorted(
+            bindings.values(), key=lambda value: listing_bounds(value)[0] or date.min,
+        ):
+            lower, upper = listing_bounds(listing)
+            if upper is not None and upper <= cursor:
+                continue
+            if lower is not None and lower > cursor:
+                break
+            if upper is None or upper > end:
+                return
+            cursor = upper
+        raise OutcomeCalculationError("canonical listing coverage gap across outcome horizon")
 
     def _is_session(self, value: date) -> bool:
         calendar = xcals.get_calendar(
