@@ -286,6 +286,41 @@ def test_changed_payload_conflicts_before_curated_or_staging_publication(tmp_pat
     assert len(tuple(adapter.layout.raw_objects.glob("*/*"))) == 2
 
 
+def test_replay_keeps_accepted_attribution_after_later_catalog_enrichment(tmp_path: Path) -> None:
+    adapter = SecForm4Adapter(DataLayout(tmp_path))
+    original = _ingest(adapter)
+    assert original.unresolved_owner_ciks
+    _seed_typed_owners(adapter)
+    replay = adapter.ingest(
+        _raw(),
+        accession=ACCESSION,
+        source_locator=URL,
+        retrieved_at=OBSERVED + timedelta(days=1),
+        acceptance_timezone="America/New_York",
+    )
+    assert replay == original
+    assert len(adapter.store.load(Event)) == 3
+    assert all(not event.actors for event in adapter.store.load(Event))
+
+
+def test_replay_recovers_missing_datasets_from_frozen_mapping(tmp_path: Path) -> None:
+    adapter = SecForm4Adapter(DataLayout(tmp_path))
+    original = _ingest(adapter)
+    # Simulate interrupted publication after the validated mapping was persisted.
+    adapter.store.path_for(SourceObservation).unlink()
+    adapter.store.path_for(Event).unlink()
+    replay = adapter.ingest(
+        _raw(),
+        accession=ACCESSION,
+        source_locator=URL,
+        retrieved_at=OBSERVED + timedelta(days=1),
+        acceptance_timezone="America/New_York",
+    )
+    assert replay == original
+    assert adapter.store.load(SourceObservation) == (original.observation,)
+    assert set(adapter.store.load(Event)) == set(original.events)
+
+
 def _variants(*, first_row: bytes | None = None, extra: bytes = b"") -> bytes:
     """Invented alterations are produced in-memory and never labeled recorded SEC data."""
     raw = _raw()
@@ -505,6 +540,34 @@ def test_unrelated_exhibit_does_not_replace_ownership_document(tmp_path: Path) -
         _raw().replace(b"</SEC-DOCUMENT>", exhibit + b"</SEC-DOCUMENT>"),
     )
     assert bundle.filing.document_name == "ownership.xml" and len(bundle.events) == 3
+
+
+@pytest.mark.parametrize("variant", ["duplicate_table", "split_amounts", "split_owner_id"])
+def test_duplicate_singleton_containers_fail_before_any_publication(
+    tmp_path: Path,
+    variant: str,
+) -> None:
+    raw = _raw()
+    if variant == "duplicate_table":
+        table = re.search(rb"<nonDerivativeTable>.*?</nonDerivativeTable>", raw, re.S)
+        assert table is not None
+        raw = raw.replace(table[0], table[0] + table[0])
+    elif variant == "split_amounts":
+        raw = raw.replace(
+            b"</transactionShares>",
+            b"</transactionShares></transactionAmounts><transactionAmounts>",
+            1,
+        )
+    else:
+        raw = raw.replace(
+            b"</rptOwnerCik>", b"</rptOwnerCik></reportingOwnerId><reportingOwnerId>", 1
+        )
+    adapter = SecForm4Adapter(DataLayout(tmp_path))
+    with pytest.raises(SecParseError, match="singleton"):
+        _ingest(adapter, raw)
+    assert not adapter.store.load(Event)
+    assert not adapter.load_staging()
+    assert tuple(adapter.layout.raw_objects.glob("*/*"))
 
 
 @pytest.mark.parametrize("value", [b"NaN", b"1_000", b"-1"])

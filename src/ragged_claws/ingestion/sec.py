@@ -333,6 +333,8 @@ class SecForm4Adapter:
                     provenance_id=provenance.provenance_id,
                 )
             )
+        if len({event.event_id for event in events}) != len(events):
+            raise SecParseError("duplicate transaction coordinates in canonical mapping")
         return SecBundle(
             filing=filing,
             observation=observation,
@@ -350,17 +352,7 @@ class SecForm4Adapter:
         """Preflight all datasets before publication; filesystem writes remain single-writer."""
         staged = self.load_staging()
         _check_existing(staged, (bundle.filing,), "source_version_id")
-        mappings = (
-            load_envelope_records(
-                self.mapping_path,
-                model_type=SecBundle,
-                id_field="source_version_id",
-                dataset_kind="staging",
-                model_schema_version="1.0.0",
-            )
-            if self.mapping_path.exists()
-            else ()
-        )
+        mappings = self.load_mappings()
         for previous in mappings:
             if (
                 previous.filing.source_version_id == bundle.filing.source_version_id
@@ -415,6 +407,15 @@ class SecForm4Adapter:
             model_schema_version="1.0.0",
         )
 
+    def load_mappings(self) -> tuple[SecBundle, ...]:
+        return load_envelope_records(
+            self.mapping_path,
+            model_type=SecBundle,
+            id_field="source_version_id",
+            dataset_kind="staging",
+            model_schema_version="1.0.0",
+        )
+
     def ingest(
         self,
         content: bytes,
@@ -452,6 +453,14 @@ class SecForm4Adapter:
             acceptance_raw=acceptance_raw,
         )
         candidate = self.observation(filing, manifest)
+        previous = next(
+            (
+                mapping
+                for mapping in self.load_mappings()
+                if mapping.source_version_id == filing.source_version_id
+            ),
+            None,
+        )
         existing = next(
             (
                 obs
@@ -460,7 +469,21 @@ class SecForm4Adapter:
             ),
             None,
         )
+        if existing is None and previous is not None:
+            existing = previous.observation
         observation = accept_source_observation(existing, candidate)
+        if previous is not None:
+            if (
+                previous.filing != filing
+                or previous.observation != observation
+                or previous.availability_policy != (policy or acceptance_policy())
+                or previous.provenance.transform_version != TRANSFORM_VERSION
+            ):
+                raise CanonicalConflictError("SEC source version has different mapping semantics")
+            # Frozen mappings survive later catalog enrichment. Revalidate/repair missing datasets
+            # after an interrupted publication without recalculating attribution or first-seen time.
+            self.persist(previous)
+            return previous
         bundle = self.canonicalize(filing, observation, policy=policy)
         self.persist(bundle)
         return bundle

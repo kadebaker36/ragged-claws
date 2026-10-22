@@ -43,6 +43,13 @@ explicitly. UTF-8 and a 5 MB parser size bound are supported. The bare-XML path 
 accession, document name and form type; official filing and acceptance metadata are optional,
 untrusted inputs the caller must source. Missing metadata is never inferred from transaction dates.
 
+Supported XML containers/scalars are singleton except explicit repeated reporting owners/signatures,
+transaction/holding rows, footnote definitions and footnote references. Duplicate tables and split
+duplicate amount/owner containers fail before any staging or canonical publication; path lookups
+cannot combine children across containers. A final canonical mapping check rejects duplicate event
+coordinates. This bounded structural guard was added after supervisor probes demonstrated both
+failure modes; it does not claim complete XSD validation.
+
 Staging preserves all reporting owners with source-stated role flags/titles, all supported table
 children with row coordinates and exclusion reasons, direct/indirect ownership, A/D flags,
 security titles, optional exact Decimal shares/prices, references and footnote text. The complete
@@ -121,7 +128,10 @@ tickers and owner order do not define event/subject identity. Changing source ro
 one accession is a correction conflict, not an implicit match or deletion.
 
 Repeated identical ingestion reuses the first canonical observation after semantic comparison;
-later retrieval creates only another capture manifest. New accessions reuse verified subjects and
+later retrieval creates only another capture manifest. An already-accepted mapping is reused even
+if the current identity catalog has since gained owner resolutions. Replays validate and restore
+missing datasets from that frozen bundle instead of recomputing attribution or first-seen times.
+New accessions reuse verified subjects and
 add independent source claims. Changed bytes for an already-persisted accession are rejected even
 when no P/S events were emitted. Same-ID/different-payload storage remains strict. Changing timing,
 owner-resolution or methodology configuration requires deliberate reprocessing/version handling;

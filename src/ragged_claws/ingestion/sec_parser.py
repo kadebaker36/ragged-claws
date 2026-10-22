@@ -137,6 +137,7 @@ def parse_filing(
     root = _xml(text)
     if root.tag != "ownershipDocument" or _text(root, "documentType", required=True) != form_type:
         raise SecParseError("header/metadata/XML form contradiction")
+    _validate_structure(root)
     xml_accession = _text(root, "accessionNumber")
     if xml_accession and xml_accession != accession:
         raise SecParseError("caller/XML accession contradiction")
@@ -208,6 +209,32 @@ def _xml(text: str) -> ET.Element:
         return ET.fromstring(text)
     except ET.ParseError as exc:
         raise SecParseError("invalid ownership XML") from exc
+
+
+def _validate_structure(root: ET.Element) -> None:
+    """The supported subset has singleton containers except these explicit arrays.
+
+    Checking leaves alone is insufficient: two transactionAmounts nodes can split their
+    children so that a path lookup returns one of each scalar from different containers.
+    """
+    arrays = {
+        "ownershipDocument": {"reportingOwner", "ownerSignature"},
+        "nonDerivativeTable": {"nonDerivativeTransaction", "nonDerivativeHolding"},
+        "derivativeTable": {"derivativeTransaction", "derivativeHolding"},
+        "footnotes": {"footnote"},
+    }
+    for parent in root.iter():
+        seen: set[str] = set()
+        for child in parent:
+            if (
+                child.tag in seen
+                and child.tag != "footnoteId"
+                and child.tag not in arrays.get(parent.tag, set())
+            ):
+                raise SecParseError(
+                    f"duplicate singleton XML container/field {parent.tag}/{child.tag}"
+                )
+            seen.add(child.tag)
 
 
 def _header(text: str, key: str, *, required: bool = True) -> str | None:
