@@ -215,6 +215,45 @@ def _catalog(*listings: Listing) -> IdentityCatalog:
     return IdentityCatalog(securities=_securities(), listings=tuple(listings))
 
 
+def test_listing_provenance_survives_without_fabricated_knowledge() -> None:
+    listing = _listing(
+        LISTING_OLD, SECURITY_A, "OLD", from_date=date(2020, 1, 1),
+        to_date=None, figi="BBG000OLD001",
+    ).model_copy(update={"external_identifiers": ()})
+    catalog = _catalog(listing)
+    request = _request(SECURITY_A, "OLD", date(2024, 7, 3))
+    result = catalog.resolve_listing(request)
+    assert result.status is ResolutionStatus.RESOLVED
+    assert result.provenance_ids == (listing.provenance_id,)
+    assert result.source_observation_ids == ()
+    assert result.supporting_external_identifier_ids == ()
+    assert result.known_from is None
+    assert result.observed_at is None
+    pit = catalog.resolve_listing(request.model_copy(update={"known_at": OBSERVED}))
+    assert pit.reason is ResolutionReason.NOT_KNOWN_AT_TIME
+
+
+def test_listing_and_claim_provenance_is_sorted_unique_and_order_independent() -> None:
+    listing = _listing(
+        LISTING_OLD, SECURITY_A, "OLD", from_date=date(2020, 1, 1),
+        to_date=None, figi="BBG000OLD001",
+    )
+    first = listing.external_identifiers[0]
+    second = first.model_copy(update={
+        "external_identifier_id": UUID(int=101),
+        "provenance_id": UUID(int=102),
+    })
+    request = _request(SECURITY_A, "OLD", date(2024, 7, 3))
+    results = [IdentityCatalog(
+        securities=_securities(), listings=(listing,), external_identifiers=claims,
+    ).resolve_listing(request) for claims in ((first, second), (second, first))]
+    assert results[0] == results[1]
+    assert results[0].provenance_ids == tuple(sorted(
+        {listing.provenance_id, first.provenance_id, second.provenance_id}, key=str,
+    ))
+    assert results[0].source_observation_ids == (first.source_observation_id,)
+
+
 def _securities() -> tuple[Security, Security]:
     return (
         Security(

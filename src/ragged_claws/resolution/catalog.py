@@ -179,6 +179,7 @@ class IdentityCatalog:
                 valid_from=listing.effective_from,
                 valid_to=listing.effective_to,
                 derive_claim_validity=False,
+                additional_provenance_ids=(listing.provenance_id,),
             )
         candidates = tuple(
             sorted({listing.listing_id for listing in (*certain, *uncertain)}, key=str)
@@ -270,6 +271,7 @@ def _resolved_from_claims(
     valid_from: TemporalValue | None = None,
     valid_to: TemporalValue | None = None,
     derive_claim_validity: bool = True,
+    additional_provenance_ids: tuple[UUID, ...] = (),
 ) -> ResolutionResult:
     ordered = tuple(sorted(claims, key=lambda claim: str(claim.external_identifier_id)))
     if derive_claim_validity:
@@ -292,7 +294,12 @@ def _resolved_from_claims(
         source_observation_ids=tuple(
             sorted({claim.source_observation_id for claim in ordered}, key=str)
         ),
-        provenance_ids=tuple(sorted({claim.provenance_id for claim in ordered}, key=str)),
+        provenance_ids=tuple(
+            sorted(
+                {claim.provenance_id for claim in ordered} | set(additional_provenance_ids),
+                key=str,
+            )
+        ),
         valid_from=valid_from,
         valid_to=valid_to,
         known_from=next(iter(known_values)) if len(known_values) == 1 else None,

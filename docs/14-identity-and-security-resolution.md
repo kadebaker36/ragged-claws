@@ -78,6 +78,12 @@ evidence. `observed_at` never substitutes for `known_from`. Without `known_at`, 
 reconstruction is allowed, but the result still returns supporting claim, observation, provenance,
 validity, known, and observed timing so later PIT filtering remains possible.
 
+A unique historical Listing retains its own `provenance_id` alongside sorted, deduplicated claim
+provenance. With no identifier claims, retrospective resolution still retains that evidence pointer;
+it does not infer observation IDs or known/observed timestamps from a provenance UUID. Such a bare
+Listing remains ineligible for `known_at` resolution. Listing provenance is audit context, not proof
+of historical public knowledge.
+
 ## OpenFIGI enrichment boundary
 
 Official sources reviewed on 2026-09-22:
@@ -138,3 +144,4 @@ conflict behavior.
   raw-capture-aware client without making normal tests depend on network access.
 - Identifier-format normalization checks representation and identity layer; it does not claim to
   replace provider validation or all identifier checksum rules.
+
