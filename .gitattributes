@@ -14,6 +14,11 @@ tests/fixtures/sec/*.txt binary
 # Original versioned research artifact bytes remain reconstructible on both CI platforms.
 tests/fixtures/research/history-v1/*.json binary
 
+# Exact public historical identity responses and the explicitly labeled parent byte excerpt.
+tests/fixtures/identity/sec-2024/*.txt binary
+tests/fixtures/identity/sec-2024/*.htm binary
+tests/fixtures/identity/sec-2024/*.html binary
+
 # Exact CC BY-SA LittleSis responses; metadata remains ordinary text.
 tests/fixtures/littlesis/recorded-1565630.json binary
 tests/fixtures/littlesis/recorded-297069.json binary
