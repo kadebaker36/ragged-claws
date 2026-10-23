@@ -405,7 +405,7 @@ def test_evaluation_plan_contract_is_checked_before_identity(
     elif mutation == "protocol":
         raw["plan"]["hypothesis_id"] = "invented-other-protocol"
     else:
-        raw["plan"]["period"]["end"] = "2024-12-31"
+        raw["plan"]["period"]["end"] = "2024-12-30"
     plan = AnalysisPlan.model_validate_json(encoded(raw["plan"]))
     raw["plan_sha256"] = model_hash(plan)
     write_once(root / PLANS / f"{model_hash(plan)}.json", encoded(plan))
