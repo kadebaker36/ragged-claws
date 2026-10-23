@@ -159,9 +159,7 @@ class ForwardOutcomeEngine:
         self._validate_coverage(bindings, entry_date, min(exit_date, coverage_through))
         security_by_date = self._index_bars(security_bars, bindings)
         benchmark_by_date = self._index_bars(benchmark_bars, benchmark_bindings)
-        providers = {
-            bar.provider_namespace for bar in (*security_bars, *benchmark_bars)
-        }
+        providers = {bar.provider_namespace for bar in (*security_bars, *benchmark_bars)}
         if len(providers) > 1:
             raise OutcomeCalculationError(
                 "security and benchmark bars require one compatible price provider"
@@ -292,6 +290,14 @@ class ForwardOutcomeEngine:
         except Exception as exc:
             raise OutcomeCalculationError("XNYS session indexing failed") from exc
 
+    def session_bounds(
+        self, actionable_at: datetime, horizon_sessions: int
+    ) -> tuple[date, date, datetime, datetime]:
+        """Expose the same reviewed session schedule for research coverage/terminal audits."""
+        if horizon_sessions not in SUPPORTED_HORIZONS:
+            raise ValueError("unsupported horizon")
+        return self._sessions(actionable_at, horizon_sessions)
+
     def _index_bars(
         self, bars: Sequence[DailyBar], bindings: Mapping[UUID, Listing]
     ) -> dict[date, DailyBar]:
@@ -330,7 +336,8 @@ class ForwardOutcomeEngine:
                 listing_bounds(listing)
                 bindings[listing.listing_id] = listing
             ordered = sorted(
-                bindings.values(), key=lambda value: listing_bounds(value)[0] or date.min,
+                bindings.values(),
+                key=lambda value: listing_bounds(value)[0] or date.min,
             )
             for previous, current in zip(ordered, ordered[1:], strict=False):
                 end = listing_bounds(previous)[1]
@@ -345,7 +352,8 @@ class ForwardOutcomeEngine:
     def _validate_coverage(bindings: Mapping[UUID, Listing], start: date, end: date) -> None:
         cursor = start
         for listing in sorted(
-            bindings.values(), key=lambda value: listing_bounds(value)[0] or date.min,
+            bindings.values(),
+            key=lambda value: listing_bounds(value)[0] or date.min,
         ):
             lower, upper = listing_bounds(listing)
             if upper is not None and upper <= cursor:

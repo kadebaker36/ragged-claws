@@ -70,15 +70,19 @@ _CURATED_SPECS: dict[type[BaseModel], DatasetSpec] = {
 class CanonicalParquetStore:
     """Persist supported canonical records with strict ID conflict semantics."""
 
-    def __init__(self, layout: DataLayout) -> None:
+    def __init__(self, layout: DataLayout, *, read_only: bool = False) -> None:
         self.layout = layout
-        self.layout.create()
+        self.read_only = read_only
+        if not read_only:
+            self.layout.create()
 
     def path_for(self, model_type: type[BaseModel]) -> Path:
         return self.layout.curated / _curated_spec(model_type).filename
 
     def persist(self, model_type: type[ModelT], records: Iterable[ModelT]) -> bool:
         """Return whether authoritative state changed; identical IDs/payloads are no-ops."""
+        if self.read_only:
+            raise PersistenceError("cannot publish into a read-only canonical store")
         spec = _curated_spec(model_type)
         return persist_envelope_records(
             self.path_for(model_type),

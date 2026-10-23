@@ -9,12 +9,22 @@ from typing import Annotated
 import typer
 
 from ragged_claws import __version__
+from ragged_claws.research.snapshot import ResearchError
+from ragged_claws.storage import PersistenceError
 
 app = typer.Typer(
     add_completion=False,
     help="Ragged Claws research infrastructure.",
     no_args_is_help=True,
+    pretty_exceptions_show_locals=False,
 )
+
+
+def research_failure(exc: Exception, key: str) -> None:
+    # Model/IO errors can embed private payloads; only our curated rejection text is public.
+    reason = str(exc) if isinstance(exc, ResearchError) else "invalid research input or persistence"
+    typer.echo(json.dumps({key: 1, "reason": reason}))
+    raise typer.Exit(2) from exc
 
 
 @app.callback()
@@ -26,6 +36,105 @@ def main() -> None:
 def version() -> None:
     """Print the installed package version."""
     typer.echo(__version__)
+
+
+@app.command("research-prepare-sec")
+def research_prepare_sec(
+    source: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    metadata: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    protocol: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option()],
+) -> None:
+    """Prepare the exact recorded public SEC fixture with unresolved identity/prices; offline."""
+    from ragged_claws.research.examples import prepare_sec
+
+    try:
+        prepare_sec(output, source, metadata, protocol, as_of=datetime.now(UTC))
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "preparation_rejected")
+    typer.echo("Recorded SEC diagnostic inputs prepared; no price access or validation performed.")
+
+
+@app.command("research-prepare-synthetic")
+def research_prepare_synthetic(
+    protocol: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option()],
+) -> None:
+    """Prepare invented engineering inputs and prices; no network or real research result."""
+    from ragged_claws.research.examples import prepare_synthetic
+
+    try:
+        prepare_synthetic(output, protocol)
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "preparation_rejected")
+    typer.echo("INVENTED engineering inputs prepared; not investment evidence.")
+
+
+@app.command("research-freeze")
+def research_freeze(
+    prepared: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option()],
+) -> None:
+    """Hash and freeze explicit local canonical inputs, protocol, prices and origin inventory."""
+    from ragged_claws.research.snapshot import freeze
+
+    try:
+        result = freeze(prepared, output)
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "freeze_rejected")
+        return
+    typer.echo(str(result.snapshot_id))
+
+
+@app.command("research-build")
+def research_build(
+    snapshot: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option()],
+    registry: Annotated[Path, typer.Option()],
+) -> None:
+    """Build version-scoped research Parquet/report; validation requires a matching registration."""
+    from ragged_claws.research.build import build
+    try:
+        report = build(snapshot, output, registry)
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "rejected_build")
+        return
+    typer.echo(
+        json.dumps(
+            {
+                "snapshot_id": str(report.snapshot_id),
+                "mode": report.mode,
+                "events": report.input_events,
+                "protocol_status": report.protocol_status,
+                "report": str(output / str(report.snapshot_id) / "report.json"),
+            }
+        )
+    )
+
+
+@app.command("research-register")
+def research_register(
+    protocol: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    origins: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    registry: Annotated[Path, typer.Option()],
+    approval_reference: Annotated[str, typer.Option()],
+    attest_uninspected: Annotated[bool, typer.Option()] = False,
+) -> None:
+    """Seal an accepted protocol only after explicit separate supervisor review; not automatic."""
+    from ragged_claws.research.models import Protocol
+    from ragged_claws.research.protocol import register
+    try:
+        value = register(
+            Protocol.model_validate_json(protocol.read_bytes()),
+            origins,
+            registry,
+            approval_reference=approval_reference,
+            attest_uninspected=attest_uninspected,
+        )
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "registration_rejected")
+        return
+    typer.echo(str(value.registration_id))
 
 
 @app.command("ingest-quiver-fixture")
