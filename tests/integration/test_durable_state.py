@@ -32,7 +32,20 @@ from ragged_claws.durable.validation import capture_layout, validate_layout
 from ragged_claws.ingestion.littlesis import LittleSisAdapter
 from ragged_claws.ingestion.sec import SecForm4Adapter
 from ragged_claws.ingestion.synthetic import SyntheticAdapter, SyntheticStagingRecord
-from ragged_claws.models import Event, RetentionClass
+from ragged_claws.models import (
+    DerivationKind,
+    Event,
+    ExternalIdentifier,
+    ExternalIdentifierType,
+    IdentifierSubjectType,
+    Outcome,
+    OutcomeMethodology,
+    OutcomeStatus,
+    PriceAdjustment,
+    Provenance,
+    RetentionClass,
+    SourceObservation,
+)
 from ragged_claws.research.build import build
 from ragged_claws.research.examples import prepare_sec
 from ragged_claws.research.snapshot import digest, encoded, environment, freeze, verify_snapshot
@@ -595,3 +608,92 @@ def test_offline_cli_recovery_demo_and_pinned_inspection(tmp_path: Path) -> None
     assert inspection.exit_code == 0 and json.loads(inspection.output)["records"]["Event"] == 3
     conflict = runner.invoke(app, ["durable-offline-demo", "--output", str(output)])
     assert conflict.exit_code == 2 and "new_owned" in conflict.output
+
+
+@pytest.mark.parametrize("subject", list(IdentifierSubjectType))
+def test_orphan_standalone_identifier_subject_is_not_exported(
+    tmp_path: Path, subject: IdentifierSubjectType
+) -> None:
+    layout = DataLayout(tmp_path / "data")
+    invented(layout)
+    store = CanonicalParquetStore(layout)
+    observation = store.load(SourceObservation)[0]
+    claim = ExternalIdentifier(
+        external_identifier_id=UUID(int=9001),
+        subject_type=subject,
+        subject_id=UUID(int=99999),
+        identifier_type=ExternalIdentifierType.OTHER,
+        namespace="invented",
+        value="INVENTED",
+        source_observation_id=observation.source_observation_id,
+        provenance_id=store.load(Provenance)[0].provenance_id,
+        observed_at=NOW,
+    )
+    store.persist(ExternalIdentifier, (claim,))
+    objects = TracedObjects()
+    with pytest.raises(DurableError, match="orphan_subject_reference"):
+        publish(objects, layout, expected_parent=None, policy=INVENTED)
+    assert not objects.puts
+
+
+def test_orphan_outcome_benchmark_is_not_exported(tmp_path: Path) -> None:
+    layout = DataLayout(tmp_path / "data")
+    invented(layout)
+    store = CanonicalParquetStore(layout)
+    store.persist(
+        Outcome,
+        (
+            Outcome(
+                outcome_id=UUID(int=9002),
+                event_id=store.load(Event)[0].event_id,
+                actionable_at=NOW,
+                horizon_sessions=20,
+                benchmark_listing_id=UUID(int=99999),
+                status=OutcomeStatus.EXCLUDED,
+                exclusion_reason="INVENTED incomplete benchmark test",
+                provenance_id=store.load(Provenance)[0].provenance_id,
+                methodology=OutcomeMethodology(
+                    methodology_id=UUID(int=9003),
+                    methodology_version="invented/1",
+                    calendar_id="xnys",
+                    calendar_version="invented",
+                    entry_convention="regular_open",
+                    exit_convention="nth_close",
+                    price_adjustment=PriceAdjustment.ALL,
+                ),
+            ),
+        ),
+    )
+    objects = TracedObjects()
+    with pytest.raises(DurableError, match="orphan_canonical_evidence_reference"):
+        publish(objects, layout, expected_parent=None, policy=INVENTED)
+    assert not objects.puts
+
+
+@pytest.mark.parametrize("defect", ["cycle", "depth"])
+def test_provenance_graph_cycle_or_depth_limit_fails_before_upload(
+    tmp_path: Path, defect: str
+) -> None:
+    layout = DataLayout(tmp_path / "data")
+    invented(layout)
+    store = CanonicalParquetStore(layout)
+    observation = store.load(SourceObservation)[0]
+    size = 2 if defect == "cycle" else 130
+    values = tuple(
+        Provenance(
+            provenance_id=UUID(int=5000 + i),
+            source_observation_ids=(observation.source_observation_id,),
+            parent_provenance_ids=(UUID(int=5000 + (i + 1) % size),)
+            if i + 1 < size or defect == "cycle"
+            else (),
+            derivation_kind=DerivationKind.SYNTHETIC_TEST,
+            derived_at=NOW,
+            transform_version="invented/1",
+        )
+        for i in range(size)
+    )
+    store.persist(Provenance, values)
+    objects = TracedObjects()
+    with pytest.raises(DurableError, match="cyclic_provenance|provenance_depth_bound"):
+        publish(objects, layout, expected_parent=None, policy=INVENTED)
+    assert not objects.puts

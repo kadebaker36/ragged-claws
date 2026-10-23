@@ -30,6 +30,7 @@ from ragged_claws.models import (
     Entity,
     Event,
     EventEvidence,
+    ExternalIdentifier,
     FeatureValue,
     Listing,
     Outcome,
@@ -473,6 +474,7 @@ def _lineage(records: dict[type[BaseModel], dict[str, BaseModel]], models: list[
         "entity_id": Entity,
         "security_id": Security,
         "listing_id": Listing,
+        "benchmark_listing_id": Listing,
         "listing_history_ids": Listing,
         "event_id": Event,
         "event_evidence_ids": EventEvidence,
@@ -499,7 +501,7 @@ def _lineage(records: dict[type[BaseModel], dict[str, BaseModel]], models: list[
                 ):
                     raise DurableError("embedded_canonical_payload_conflict")
             if (
-                isinstance(value, SubjectReference)
+                isinstance(value, (SubjectReference, ExternalIdentifier))
                 and str(value.subject_id) not in ids[subjects[value.subject_type.value]]
             ):
                 raise DurableError("orphan_subject_reference")
@@ -520,14 +522,20 @@ def _lineage(records: dict[type[BaseModel], dict[str, BaseModel]], models: list[
     for model in models:
         walk(model)
     provenances = records[Provenance]
+    completed: set[str] = set()
 
     def visit(identity: str, trail: frozenset[str]) -> None:
         if identity in trail:
             raise DurableError("cyclic_provenance")
+        if identity in completed:
+            return
+        if len(trail) >= 128:
+            raise DurableError("provenance_depth_bound_exceeded")
         value = provenances[identity]
         assert isinstance(value, Provenance)
         for parent in value.parent_provenance_ids:
             visit(str(parent), trail | {identity})
+        completed.add(identity)
 
     for identity in provenances:
         visit(identity, frozenset())

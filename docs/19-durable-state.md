@@ -96,6 +96,8 @@ filenames/models must agree. Reads are bounded:16MiB/file,256MiB total,4096 file
 50000 Parquet rows/file,64MiB declared uncompressed Parquet data/file and256MiB aggregate expansion.
 Parent metadata history
 is bounded to4096 manifests/32MiB. This is a bootstrap boundary, not a bulk archive transfer tool.
+Canonical identifier subjects and outcome benchmark references must resolve; provenance traversal
+rejects cycles/depth beyond128 and memoizes completed nodes rather than revisiting shared subgraphs.
 
 Retention/configuration metadata is inspected before full payload traversal. Restricted or unknown
 raw/derived dependencies reject the whole mixed generation by default with countable safe reasons.
