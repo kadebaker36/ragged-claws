@@ -1,0 +1,28 @@
+{
+  "protocol_format": "1.0.0",
+  "status": "proposal",
+  "hypothesis_id": "sec-table-i-p-s",
+  "version": "v1",
+  "population": "Canonical SEC ownership Table I P/S reported acquisitions/dispositions, with source-backed issuer/security/listing identity where available. P/S does not prove an open-market venue. Include unresolved, missing, terminal and non-actionable records in coverage accounting. No current ticker-universe filter.",
+  "event_types": ["equity_purchase", "equity_sale"],
+  "source_families": ["sec.ownership"],
+  "features": ["event_type", "reported_shares", "known_relationship_context"],
+  "feature_definitions": {
+    "event_type": "Canonical purchase/sale classification available under the declared source-public/actionable policy; not an assertion of open-market venue.",
+    "reported_shares": "Canonical transaction_shares quantity in shares, where supplied; no USD trade-size buckets because SEC reported-price currency is unknown.",
+    "known_relationship_context": "Positive count of source-backed matching relationship assertions with eligible known/valid intervals at the decision time. Unknown, late-known or absent/incomplete context is unavailable, never false or zero. No current LittleSis graph backfill."
+  },
+  "horizons": [20, 60, 90],
+  "benchmark": "SPY",
+  "discovery": {"start": "2016-01-01", "end": "2019-12-31"},
+  "validation": {"start": "2021-01-01", "end": "2023-12-31"},
+  "expected_direction": "Predeclared proposal: purchase-event 60-session SPY-relative mean exceeds sale-event mean. This is a descriptive contrast, not a short-sale strategy. 20/90-session comparisons are secondary and cannot replace a failed primary endpoint.",
+  "exclusions": "All candidate events are accounted at each horizon. Exclude unsupported source/type and public-date windows explicitly; reject unknown/mismatched timing or identity. Do not drop unresolved, delisted, missing-price, censored or absent-current-universe records. Calendar year 2020 is an embargo between discovery and validation; no discovery event is selected in that year. Future window amendments require fresh review and cannot restore untouched status after inspection.",
+  "decision_standard": "PROPOSED, NOT ACCEPTED: insufficient if either arm has fewer than 1000 complete validation events or fewer than 200 distinct issuers, or if fewer than 90% of selected actionable events have complete 60-session benchmark outcomes. A positive research finding would additionally require the 95% issuer-cluster percentile-bootstrap confidence interval lower bound (5000 cluster resamples with replacement, seed 1729, retain all events within each sampled issuer, event-weighted arm means, nearest-rank 2.5/97.5 percentiles; insufficient if more than 1% of resamples lack either arm) of the purchase-minus-sale SPY-excess mean contrast to exceed zero under prespecified 10/25/50-bps round-trip stock-cost sensitivity, plus positive purchase-arm net excess at 25 bps. Descriptive tables alone cannot pass this standard. Failure remains negative/inconclusive; no replacement horizon, cutoff search, model or optimized score. Inference/cost sensitivity is not implemented by this build slice and must be reviewed before use.",
+  "dependence_and_inspection_policy": "No IID inference across correlated event rows; report issuer event concentration. Before any real validation output, supervisor review must accept and register this exact protocol/code/origin inventory. Log all hypotheses, denied attempts and inspections in an append-only local journal. Prior overlapping real inspections, including under renamed hypotheses, prevent a new untouched claim; a crashed attempt is potentially inspected. This file is an unreviewed proposal, not a preregistration or claim that historical evidence is untouched.",
+  "execution_and_costs": "Existing XNYS actionable regular-session open to Nth-following-session close; explicit same feed/adjustment/provider for stock and SPY. IEX is not consolidated execution. Engine results are gross hypothetical daily-bar outcomes; fills, liquidity, costs, slippage and clustered inference remain unevaluated. No positions, orders or live paper execution.",
+  "availability_policies": [
+    {"policy_id": "sec_acceptance_plus_five_minutes", "policy_version": "1.0.0", "delay": "PT5M", "source_family": "sec.ownership", "rationale": "Explicit SEC acceptance plus five-minute research assumption; not measured first dissemination or guaranteed vendor/collector latency."}
+  ],
+  "code_config_version": "research-build/1.0.0"
+}
