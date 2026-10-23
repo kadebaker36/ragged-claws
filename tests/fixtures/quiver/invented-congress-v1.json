@@ -1,0 +1,4 @@
+[
+  {"Representative":"Invented Research Person","BioGuideID":"X999991","ReportDate":"2024-05-06","TransactionDate":"2024-05-01","Ticker":"RC_SYN_A","Transaction":"Purchase","Range":"$1,001 - $15,000","Amount":"1001","Party":"Invented Party","House":"Representatives","TickerType":"ST","Description":"Invented transaction, not a vendor record","ExcessReturn":9.99,"PriceChange":8.88,"SPYChange":7.77},
+  {"Representative":"Invented Research Person","BioGuideID":"X999991","ReportDate":"2024-05-06","TransactionDate":"2024-05-01","Ticker":"RC_SYN_A","Transaction":"Purchase","Range":"$1,001 - $15,000","Amount":"1001","Party":"Invented Party","House":"Representatives","TickerType":"ST","Description":"Invented transaction, not a vendor record","ExcessReturn":9.99,"PriceChange":8.88,"SPYChange":7.77}
+]

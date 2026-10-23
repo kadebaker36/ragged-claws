@@ -28,6 +28,62 @@ def version() -> None:
     typer.echo(__version__)
 
 
+@app.command("ingest-quiver-fixture")
+def ingest_quiver_fixture(
+    source: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    endpoint: Annotated[str, typer.Option()],
+    source_url: Annotated[str, typer.Option()],
+    synthetic: Annotated[
+        bool, typer.Option(help="Attest this file contains invented test data.")
+    ] = False,
+    data_dir: Annotated[Path, typer.Option()] = Path("data"),
+) -> None:
+    """Ingest invented Quiver-shaped fixtures only; no network or licensed vendor records."""
+    from ragged_claws.ingestion.quiver import QuiverAdapter
+    from ragged_claws.ingestion.quiver_parser import PATHS, QuiverError
+    from ragged_claws.storage import DataLayout, PersistenceError
+
+    try:
+        if not synthetic or endpoint not in PATHS:
+            raise QuiverError(
+                "explicit invented-fixture attestation and supported endpoint required"
+            )
+        bundle = QuiverAdapter(DataLayout(data_dir)).ingest(
+            source.read_bytes(),
+            endpoint=endpoint,
+            source_locator=source_url,
+            retrieved_at=datetime.now(UTC),
+            synthetic=True,
+        )
+    except (QuiverError, PersistenceError) as exc:
+        typer.echo(json.dumps({"rejected_snapshots": 1, "reason": str(exc)}, sort_keys=True))
+        raise typer.Exit(2) from exc
+    events = {e.event_id: e for e in bundle.events}
+    typer.echo(
+        json.dumps(
+            {
+                "snapshot_id": str(bundle.source_version_id),
+                "synthetic": True,
+                "rows": len(bundle.rows),
+                "counts": {
+                    status: sum(m.status == status for m in bundle.mappings)
+                    for status in ("linked", "unresolved", "excluded")
+                },
+                "unresolved_person_rows": sum(m.person_id is None for m in bundle.mappings),
+                "unresolved_security_rows": sum(
+                    m.event_id is None or events[m.event_id].security_id is None
+                    for m in bundle.mappings
+                ),
+                "missing_reported_date_rows": sum(r.reported_time is None for r in bundle.rows),
+                "ownership_unknown_rows": len(bundle.rows),
+                "predictive_features_emitted": 0,
+                "reasons": dict(Counter(m.reason for m in bundle.mappings if m.reason)),
+            },
+            sort_keys=True,
+        )
+    )
+
+
 @app.command("ingest-littlesis")
 def ingest_littlesis(
     source: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],

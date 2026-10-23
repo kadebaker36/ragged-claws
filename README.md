@@ -68,6 +68,7 @@ Bootstrap infrastructure is deliberately lean: GitHub is the code/control plane,
 - `docs/11-storage-and-idempotency.md`
 - `docs/12-runtime-and-deployment-strategy.md`
 - `docs/16-littlesis-snapshots.md`
+- `docs/17-quiver-context.md`
 
 See `AGENTS.md` before making implementation changes. The adversarial review hardens integration and point-in-time assumptions that must be honored during M0/M1 implementation.
 
