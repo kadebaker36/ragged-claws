@@ -122,6 +122,26 @@ def research_prepare_synthetic(
     typer.echo("INVENTED engineering inputs prepared; not investment evidence.")
 
 
+@app.command("research-prepare-identity-diagnostic")
+def research_prepare_identity_diagnostic(
+    evidence: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    sec_fixtures: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    protocol: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option()],
+) -> None:
+    """Import reviewed recorded SEC identity candidates; no network, bindings or prices."""
+    from ragged_claws.research.identity_evidence import prepare_identity_diagnostic
+
+    try:
+        prepare_identity_diagnostic(output, evidence, sec_fixtures, protocol)
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "identity_diagnostic_rejected")
+        return
+    typer.echo(
+        "Recorded common-stock candidate retained; event/listing bindings remain unresolved."
+    )
+
+
 @app.command("research-freeze")
 def research_freeze(
     prepared: Annotated[Path, typer.Argument(exists=True, file_okay=False)],

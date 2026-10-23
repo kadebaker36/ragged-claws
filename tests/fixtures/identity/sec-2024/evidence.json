@@ -1,0 +1,163 @@
+{
+  "format_version": "historical-identity-evidence/1.0.0",
+  "adapter_version": "recorded-sec-identity/1.0.0",
+  "parser_version": "reviewed-byte-spans/1.0.0",
+  "licensing_reference": "https://www.sec.gov/files/about/webmaster-faq.htm#reuse",
+  "licensing_basis": "Public SEC filing content free to access and reuse; no implication of commercial vendor rights.",
+  "acquisition_count": 3,
+  "additional_filing_accessions": [
+    "0001104659-24-020016",
+    "0000070858-24-000122"
+  ],
+  "resources": [
+    {
+      "name": "13ga-submission",
+      "requested_url": "https://www.sec.gov/Archives/edgar/data/70858/000110465924020016/0001104659-24-020016.txt",
+      "canonical_url": "https://www.sec.gov/Archives/edgar/data/70858/000110465924020016/0001104659-24-020016.txt",
+      "retrieved_at": "2026-10-23T13:41:11.144801+00:00",
+      "status": 200,
+      "size_bytes": 13356,
+      "sha256": "252953852009256b2506304a8c213db7791243b5f6b524b4d271dda4897d6f71",
+      "max_bytes": 524288,
+      "content_type": "text/plain",
+      "content_length": "13356",
+      "transport": "httpx bounded stream; existing SecThrottle 1 second; no redirect/retry",
+      "capture_version": "bounded-sec-evidence/1.0.0",
+      "retention_basis": "SEC webmaster FAQ public filing content free to access/reuse; no credentials retained",
+      "fixture_file": "0001104659-24-020016.txt",
+      "representation": "exact_full_response",
+      "reviewed_claim_spans": [
+        {
+          "field": "subject_cik",
+          "start": 411,
+          "end_exclusive": 421,
+          "exact_text": "0000070858"
+        },
+        {
+          "field": "acceptance",
+          "start": 124,
+          "end_exclusive": 138,
+          "exact_text": "20240213165550"
+        },
+        {
+          "field": "class",
+          "start": 2628,
+          "end_exclusive": 2640,
+          "exact_text": "Common Stock"
+        },
+        {
+          "field": "cusip",
+          "start": 2704,
+          "end_exclusive": 2713,
+          "exact_text": "060505104"
+        },
+        {
+          "field": "event_date",
+          "start": 2810,
+          "end_exclusive": 2827,
+          "exact_text": "December 29, 2023"
+        }
+      ]
+    },
+    {
+      "name": "10k-index",
+      "requested_url": "https://www.sec.gov/Archives/edgar/data/70858/000007085824000122/0000070858-24-000122-index.htm",
+      "canonical_url": "https://www.sec.gov/Archives/edgar/data/70858/000007085824000122/0000070858-24-000122-index.htm",
+      "retrieved_at": "2026-10-23T13:41:12.153627+00:00",
+      "status": 200,
+      "size_bytes": 15942,
+      "sha256": "b60ee0e1f1c2d8a5946f4e93466b8a8022af0650e60de56ac9fff6a865a84e14",
+      "max_bytes": 131072,
+      "content_type": "text/html; charset=UTF-8",
+      "content_length": "15942",
+      "transport": "httpx bounded stream; existing SecThrottle 1 second; no redirect/retry",
+      "capture_version": "bounded-sec-evidence/1.0.0",
+      "retention_basis": "SEC webmaster FAQ public filing content free to access/reuse; no credentials retained",
+      "fixture_file": "0000070858-24-000122-index.htm",
+      "representation": "exact_full_response",
+      "reviewed_claim_spans": [
+        {
+          "field": "accepted",
+          "start": 3732,
+          "end_exclusive": 3751,
+          "exact_text": "2024-02-20 17:01:30"
+        },
+        {
+          "field": "filing_date",
+          "start": 3642,
+          "end_exclusive": 3652,
+          "exact_text": "2024-02-20"
+        },
+        {
+          "field": "issuer_cik",
+          "start": 334,
+          "end_exclusive": 344,
+          "exact_text": "0000070858"
+        }
+      ]
+    },
+    {
+      "name": "10k-document",
+      "requested_url": "https://www.sec.gov/Archives/edgar/data/70858/000007085824000122/bac-20231231.htm",
+      "canonical_url": "https://www.sec.gov/Archives/edgar/data/70858/000007085824000122/bac-20231231.htm",
+      "retrieved_at": "2026-10-23T13:41:13.146470+00:00",
+      "status": 200,
+      "size_bytes": 12861776,
+      "sha256": "ae256da438e3a3311c38f5a80641e59e43f21cfe58b46d3f54a1a5794eeaa8da",
+      "max_bytes": 14680064,
+      "content_type": "text/html",
+      "content_length": null,
+      "transport": "httpx bounded stream; existing SecThrottle 1 second; no redirect/retry",
+      "capture_version": "bounded-sec-evidence/1.0.0",
+      "retention_basis": "SEC webmaster FAQ public filing content free to access/reuse; no credentials retained",
+      "fixture_file": "10k-common-cover-row.html",
+      "representation": "exact_contiguous_parent_byte_excerpt_not_full_response",
+      "parent_offset_start": 1445367,
+      "parent_offset_end_exclusive": 1446566,
+      "excerpt_sha256": "e678e8624730ecfa12611b8a03fedd58027f45c79e0df7cecdfe75688fcbac1b",
+      "excerpt_size_bytes": 1199,
+      "extraction": "byte slice parent[start:end]; only common cover table row; no text reserialization",
+      "parent_retained": "external content-addressed .bin in historical-identity-acquisition; not in Git",
+      "reviewed_claim_spans": [
+        {
+          "field": "class",
+          "start": 331,
+          "end_exclusive": 370,
+          "exact_text": "Common Stock, par value $0.01 per share"
+        },
+        {
+          "field": "symbol",
+          "start": 722,
+          "end_exclusive": 725,
+          "exact_text": "BAC"
+        },
+        {
+          "field": "exchange",
+          "start": 1143,
+          "end_exclusive": 1166,
+          "exact_text": "New York Stock Exchange"
+        }
+      ]
+    }
+  ],
+  "reviewed_claims": {
+    "13ga_subject_cik": "0000070858",
+    "13ga_title": "Common Stock",
+    "13ga_cusip": "060505104",
+    "13ga_acceptance_raw": "20240213165550",
+    "13ga_event_date": "December 29, 2023",
+    "13ga_signature_date": "February 13, 2024",
+    "10k_title": "Common Stock, par value $0.01 per share",
+    "10k_symbol": "BAC",
+    "10k_exchange_text": "New York Stock Exchange",
+    "10k_filing_date": "2024-02-20",
+    "10k_accepted_raw": "2024-02-20 17:01:30"
+  },
+  "decision": {
+    "security_candidate": "CUSIP-supported common stock candidate; no evidence of continuous validity through 2024-09-11",
+    "listing": "unresolved: no source-backed listing permanent identity, MIC mapping or interval spanning event; do not create Listing",
+    "event_binding": "none; preserve original Event payloads; no Controls bindings",
+    "reviewed_at": "2026-10-23",
+    "known_time": "13G source date only conservatively used for CUSIP existence; capture/review remains2026; unknown validity never becomes an open interval"
+  }
+}
