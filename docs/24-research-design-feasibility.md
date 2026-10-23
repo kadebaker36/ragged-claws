@@ -58,7 +58,11 @@ unique SEC Table I purchase events under the unchanged public/actionable convent
 P/S still does not establish open-market venue. No role, size, context or return-based filter
 is added. All candidates, unresolvable identities, exclusions and capacity blocks are logged.
 
-Proposed accounting skeleton: rank same-open eligible events by public/actionable time,
+Proposed accounting skeleton: enter no earlier than both the public-derived actionable open
+and the permissible open under the existing session rule applied to actual receipt/decision
+time. Keep public, observed, decision and actual entry times separate. Late receipt cannot
+backdate a trade; identity unavailable at the decision is a recorded block, not later
+retroactive eligibility. Rank same-entry eligible events by preserved public/actionable time,
 then permanent Event ID; buy only with available cash and an explicit fee reserve, at most
 one live exposure per issuer; a repeat event neither enlarges nor extends that holding.
 Exit at the existing 60-session close. Fix an affordable ticket rule, issuer weight cap,
@@ -73,7 +77,7 @@ predeclared valuation instant; deposits are not profit. Let R_B,t be a separate 
 benchmark ledger with the same external flows, its own explicit fills/costs and valuation
 convention. It is not a short position. Define `D_t = R_Pi,t - R_B,t` for every planned
 regular session, including cash-only/no-event days. Target `theta_Pi = E[D_t]` under a
-specified stable joint event/return/execution process; proposed null `theta_Pi <= 0`.
+specified stable joint event/collection/return/execution process; proposed null `theta_Pi <= 0`.
 An arithmetic calendar mean weights days equally, not events or issuers. It is not the
 original Delta, a Jensen regression intercept, causal effect or terminal wealth difference.
 Report both complete wealth paths separately: compounding means a positive arithmetic
@@ -122,7 +126,8 @@ profitable sample size, alpha allocation, stopping rule or readiness date is inv
 **Next dependency: a separately authorized, outcome-blind event-population/identity and
 timing-capacity audit over an explicitly bounded source scope.** It should establish what
 was collected versus merely absent, all unique candidate counts/statuses by day and issuer,
-source/public-time precision, unresolved identity, repeat issuers, and overlapping potential
+source/public-time precision, actual first receipt and decision availability, unresolved
+identity, repeat issuers, and overlapping potential
 60-session holding intervals. Counts alone cannot establish dollar capacity, available
 prices, dependence strength or power; report those as unknown. Do not inspect returns,
 filing-price-based invented dollar sizes or broker/provider data in this order. This is a

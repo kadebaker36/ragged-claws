@@ -26,13 +26,13 @@
     "status": "incomplete_proposal_not_executable",
     "policy_frozen": false,
     "target_population": "Future unique SEC Table I purchase candidates under unchanged conservative public/actionable timing, with all status/identity/capacity blocks recorded",
-    "policy_skeleton": "Cash-funded long-only entries, public/actionable-time then Event-ID tie order, one live holding per issuer, no repeat-event increase or extension, original 60-session exit",
+    "policy_skeleton": "Cash-funded long-only entries no earlier than the public-derived actionable open and actual receipt/decision-permissible open; preserve clocks separately, block unavailable identity without backfill; same-entry public/actionable-time then Event-ID tie order, one live holding per issuer, no repeat-event increase or extension, exit at the 60th session after actual entry",
     "unresolved_policy_parameters": ["affordable_ticket_rule", "issuer_weight_cap", "slot_limit", "fee_reserve_and_fills", "cash_return", "flow_unitization_and_marks", "missing_or_terminal_execution"],
     "weights": "Nonnegative security weights summing to at most one; residual cash; no leverage or shorting",
     "daily_endpoint": "D_t=unitized_net_policy_NAV_return_t-unitized_SPY_benchmark_NAV_return_t",
     "benchmark": "Separate SPY ledger with matching external flows and explicit benchmark costs/fills; not a short position",
     "calendar_weighting": "Every planned regular session equally, including cash-only/no-event days; missing marks unresolved, never zero or silently deleted",
-    "target": "theta_Pi=E[D_t] for a fixed policy under an explicitly justified stable joint event/return/execution process",
+    "target": "theta_Pi=E[D_t] for a fixed policy under an explicitly justified stable joint event/collection/return/execution process",
     "null": "theta_Pi<=0",
     "interpretation_limit": "Different from event contrast, factor-model alpha, causal effect and terminal wealth difference; complete wealth paths and risk remain separate",
     "assumptions_unestablished": ["complete licensed sampling frame and PIT identities", "affordable fully fixed execution/cashflow policy", "defensible marks and missing/terminal treatment", "stable target and moments", "dependence restrictions sufficient for a specified theorem and uncertainty method", "transport to any claimed future population"],
@@ -61,7 +61,7 @@
   "single_next_dependency": {
     "id": "outcome-blind-population-identity-timing-capacity-audit",
     "requires_separate_authorization": true,
-    "scope": "Explicitly bounded source scope, collection-versus-absence status, unique candidates by day/issuer, timing precision, unresolved identity, repeat issuers and overlapping potential 60-session intervals",
+    "scope": "Explicitly bounded source scope, collection-versus-absence status, unique candidates by day/issuer, timing precision, actual first receipt and decision availability, unresolved identity, repeat issuers and overlapping potential 60-session intervals",
     "does_not_establish": "Dollar affordability, price/terminal coverage, independence, power, untouched status or positive validation"
   },
   "sources_reviewed": [
