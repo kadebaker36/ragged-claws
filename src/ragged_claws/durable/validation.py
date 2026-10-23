@@ -128,7 +128,10 @@ def read_local(path: Path) -> bytes:
 
 
 def capture_layout(root: Path) -> dict[str, bytes]:
-    if (root / "analyses").exists() or (root / "research" / "analyses").exists():
+    if (root / "analyses").exists() or (
+        (root / "research" / "analyses").exists()
+        and not (root / "research" / "registry" / "archives").is_dir()
+    ):
         raise DurableError("analysis_artifacts_require_reviewed_durable_format")
     if root.is_symlink() or not root.is_dir():
         raise DurableError("unsafe_layout_root")
@@ -288,8 +291,11 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
     if forbidden:
         raise DurableError("cloud_retention_or_source_not_approved", forbidden)
     files = capture_layout(root)
+    from ragged_claws.durable.analysis_archive import validate_archive
+
     if sum(_parquet_expansion(root / p) for p in files if p.endswith(".parquet")) > MAX_TOTAL:
         raise DurableError("aggregate_parquet_expansion_bound_exceeded")
+    archive_paths = validate_archive(root, files, policy)
     store = CanonicalParquetStore(DataLayout(root), read_only=True)
     curated_specs = {store.path_for(m).name: (m, key) for m, key in CANONICAL}
     records: dict[type[BaseModel], dict[str, BaseModel]] = {m: {} for m, _ in CANONICAL}
@@ -301,6 +307,8 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
     reports: set[Path] = set()
     journals: dict[str, dict[str, Any]] = {}
     for name, content in files.items():
+        if name in archive_paths:
+            continue
         parts = tuple(name.split("/"))
         path = root / name
         model: type[BaseModel] | None = None
@@ -408,7 +416,8 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
             _scoped_research(contexts[frozen_scope], contexts.setdefault(scope, EvidenceContext())),
             policy,
         )
-    _journals(journals)
+    if not archive_paths:
+        _journals(journals)
     # Re-read after parsing: upload bytes must be precisely the validated stable input.
     if files != capture_layout(root):
         raise DurableError("candidate_changed_during_validation")

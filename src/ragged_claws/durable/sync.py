@@ -120,7 +120,15 @@ def restore(
         if ancestor.parent_id in seen or len(seen) >= 4096:
             raise DurableError("cyclic_or_excessive_generation_history")
         seen.add(ancestor.parent_id)
+        child = ancestor
         ancestor = load_generation(store, ancestor.parent_id)
+        current_files = {entry.path: entry for entry in child.files}
+        for entry in ancestor.files:
+            if entry.path not in current_files or (
+                not entry.path.startswith(("curated/", "staging/"))
+                and current_files[entry.path] != entry
+            ):
+                raise DurableError("generation_immutable_parent_history_changed")
         manifest_bytes += len(encoded(ancestor))
         if manifest_bytes > 32 * 1024 * 1024 or ancestor.policy != generation.policy:
             raise DurableError("unsupported_generation_history")

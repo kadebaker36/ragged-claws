@@ -125,14 +125,16 @@ a retained local quarantine is not durable audit after an ephemeral machine disa
 ## Durability and historical compatibility decision
 
 New analysis results belong in `research/analyses/EVALUATION_UUID` when assembling a
-durable layout. The current durable generation format deliberately **does not support**
-analysis artifacts or `.analysis.json` scope sidecars: exporting a layout containing
-them fails, rather than dropping them. Top-level `analyses` is also rejected explicitly.
-Keep all local analysis outputs and journals in persistent operator storage pending a
-separately reviewed durable format/failure-audit change. Do not publish a partial
-generation after omitting new analysis history. Prior frozen reports/registrations and
-started/finished journals remain readable/restorable with original bytes/hashes;
-normal execution still requires an exact environment match.
+durable layout. The additive [analysis-archive/1.0.0 extension](23-analysis-archive.md)
+now supports those artifacts and `.analysis.json` sidecars with explicit inventories,
+dependency closure and private absolute-path review. Export without the extension
+fails, rather than dropping them; top-level `analyses` remains rejected. Do not omit
+analysis history to publish a partial generation. Prior frozen reports/registrations,
+started/finished journals and original generation manifests remain byte-identical;
+normal execution still requires an exact environment match and current approval.
+Recovered absolute operator paths remain verbatim attestations, not relocation or
+execution permission. Published archive recovery does not solve unpublished failure
+history on an ephemeral runner; #15 activation remains blocked on that separate gate.
 
 ## Methodological limits and bounded next proposal
 
