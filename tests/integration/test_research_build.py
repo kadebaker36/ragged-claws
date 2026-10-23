@@ -4,7 +4,8 @@ import json
 import shutil
 from datetime import UTC, date, datetime
 from decimal import Decimal, localcontext
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+from typing import cast
 
 import pytest
 from pydantic import ValidationError
@@ -574,6 +575,18 @@ def add_restricted_source(prepared: Path, *, credentials: bool = False) -> None:
     refresh_origins(prepared)
 
 
+def permit_invented_restricted(root: Path) -> None:
+    config = read_inputs(root).config.model_copy(
+        update={
+            "output_rights": "private_only",
+            "restricted_raw_retention_permitted": True,
+            "restricted_derivatives_permitted": True,
+            "license_review_reference": "fixture://invented-review-not-real-permission",
+        }
+    )
+    (root / "config.json").write_bytes(encoded(config))
+
+
 def test_restricted_upstream_and_derivatives_require_private_non_sync_roots(
     prepared: Path, tmp_path: Path
 ) -> None:
@@ -606,6 +619,7 @@ def test_capture_credentials_rejected_before_snapshot_publication(
 ) -> None:
     copied = clone(prepared, tmp_path / "prepared")
     add_restricted_source(copied, credentials=True)
+    permit_invented_restricted(copied)
     with pytest.raises(ResearchError, match="credential-bearing") as error:
         freeze(copied, tmp_path / "frozen")
     assert "INVENTED-NOT-A-REAL-CREDENTIAL" not in str(error.value)
@@ -732,3 +746,118 @@ def test_cli_model_rejection_does_not_echo_input_payload(tmp_path: Path) -> None
     assert result.exit_code == 2
     assert "INVENTED-PRIVATE-CONTENT" not in result.output
     assert json.loads(result.output)["preparation_rejected"] == 1
+
+
+@pytest.mark.parametrize("location", ["OneDrive", "fake-git"])
+def test_restricted_preparation_location_rejected_before_graph_processing(
+    prepared: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, location: str
+) -> None:
+    parent = tmp_path / location
+    parent.mkdir()
+    if location == "fake-git":
+        (parent / ".git").mkdir()
+    copied = clone(prepared, parent / "prepared")
+    add_restricted_source(copied)
+    permit_invented_restricted(copied)
+
+    def unexpected_graph(_: object) -> None:
+        pytest.fail("restricted input must be rejected before raw/staging graph processing")
+
+    monkeypatch.setattr("ragged_claws.research.snapshot.verify_graph", unexpected_graph)
+    with pytest.raises(ResearchError, match="sync|Git/shared"):
+        freeze(copied, tmp_path / "private-frozen")
+    assert copied.exists() and not (tmp_path / "private-frozen").exists()
+
+
+@pytest.mark.parametrize("location", ["OneDrive", "fake-git"])
+def test_relocated_restricted_snapshot_rejects_verification_and_build(
+    prepared: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, location: str
+) -> None:
+    copied = clone(prepared, tmp_path / "prepared")
+    add_restricted_source(copied)
+    permit_invented_restricted(copied)
+    original = tmp_path / "private-frozen"
+    freeze(copied, original)
+    before = (original / "snapshot.json").read_bytes()
+    parent = tmp_path / location
+    parent.mkdir()
+    if location == "fake-git":
+        (parent / ".git").mkdir()
+    relocated = clone(original, parent / "frozen")
+
+    def unexpected_graph(_: object) -> None:
+        pytest.fail("relocated restricted input must be rejected before graph processing")
+
+    monkeypatch.setattr("ragged_claws.research.snapshot.verify_graph", unexpected_graph)
+    with pytest.raises(ResearchError, match="sync|Git/shared"):
+        verify_snapshot(relocated)
+    registry = tmp_path / "private-registry"
+    with pytest.raises(ResearchError, match="sync|Git/shared"):
+        build(relocated, tmp_path / "private-output", registry)
+    assert not (tmp_path / "private-output").exists()
+    assert all(
+        not json.loads(path.read_bytes())["outcome_inspection"]
+        for path in (registry / "attempts").glob("*.finished.json")
+    )
+    assert (original / "snapshot.json").read_bytes() == before
+    assert relocated.exists()
+
+
+def test_restricted_snapshot_can_relocate_between_private_roots(
+    prepared: Path, tmp_path: Path
+) -> None:
+    copied = clone(prepared, tmp_path / "private-prepared")
+    add_restricted_source(copied)
+    permit_invented_restricted(copied)
+    original = tmp_path / "private-frozen"
+    snapshot = freeze(copied, original)
+    relocated = clone(original, tmp_path / "other-private-frozen")
+    assert verify_snapshot(relocated) == snapshot
+    output, registry = tmp_path / "private-output", tmp_path / "private-registry"
+    first = build(original, output, registry)
+    before = (output / str(snapshot.snapshot_id) / "result.json").read_bytes()
+    assert build(relocated, output, registry) == first
+    assert (output / str(snapshot.snapshot_id) / "result.json").read_bytes() == before
+
+
+def test_public_source_snapshot_remains_portable_to_sync_and_git_roots(tmp_path: Path) -> None:
+    prepared = tmp_path / "public-prepared"
+    prepare_sec(
+        prepared,
+        ROOT / "tests/fixtures/sec/0000950170-24-105263.txt",
+        ROOT / "tests/fixtures/sec/provenance.json",
+        PROTOCOL,
+        as_of=datetime(2026, 10, 22, 23, tzinfo=UTC),
+    )
+    original = tmp_path / "public-frozen"
+    snapshot = freeze(prepared, original)
+    for name in ("OneDrive", "fake-git"):
+        parent = tmp_path / name
+        parent.mkdir()
+        if name == "fake-git":
+            (parent / ".git").mkdir()
+        relocated = clone(original, parent / "frozen")
+        assert verify_snapshot(relocated) == snapshot
+        # Public preparations at those roots may also freeze without weakening private policy.
+        public_prepared = clone(prepared, parent / "prepared")
+        assert freeze(public_prepared, parent / "second-frozen") == snapshot
+        report = build(relocated, parent / "output", parent / "registry")
+        assert report.input_events == 3
+        assert all(h.counts["unresolved_security"] == 3 for h in report.horizons)
+
+
+def test_private_input_metadata_guard_rejects_unc_without_network_access(
+    prepared: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from ragged_claws.research.snapshot import input_rights
+
+    config = read_inputs(prepared).config.model_copy(update={"output_rights": "private_only"})
+
+    # Simulate only the resolved anchor; no UNC directory is accessed or created.
+    def shared_resolution(_: Path) -> Path:
+        return cast(Path, PureWindowsPath("//invented-server/invented-share/private"))
+
+    with monkeypatch.context() as context:
+        context.setattr(Path, "resolve", shared_resolution)
+        with pytest.raises(ResearchError, match="Git/shared"):
+            input_rights(tmp_path / "no-input-read", config)

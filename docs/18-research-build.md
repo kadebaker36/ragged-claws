@@ -43,7 +43,13 @@ Every observation must resolve to retained raw bytes and an applicable capture m
 keys in request/query metadata are rejected without echoing their values. Unknown/restricted rights
 require a reviewed raw-retention and derivative permission reference, private-only configuration,
 and roots outside Git, UNC shares and known sync directories for upstream preparation, frozen data,
-outputs and journal. Path checks cannot discover every shared folder; operators remain responsible
+outputs and journal. Freeze checks the actual preparation root before traversing raw/staging inputs.
+Snapshot verification and builds recheck the current frozen input root, including after a copy or
+relocation; a formerly compliant location does not authorize a new restricted location. These checks
+read configuration and observation retention metadata first and reject before processing the raw
+dependency graph. Private-to-private relocation remains supported, and public-source snapshots
+without private-only policy remain portable to Git/sync roots. The tool does not move or delete an
+input to resolve a location failure. Path checks cannot discover every shared folder; operators remain responsible
 for actual storage access controls. No restricted payload, key, private setup file or local contact
 belongs in Git. The examples require no account, keys or network.
 

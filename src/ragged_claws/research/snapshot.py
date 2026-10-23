@@ -179,6 +179,25 @@ def output_rights(
         private_root(target)
 
 
+def input_rights(root: Path, expected_config: BuildConfig | None = None) -> None:
+    """Check the current input location before reading its raw/staging dependency graph.
+
+    A portable snapshot retains its storage restrictions after copying or relocation.
+    Only configuration and observation retention metadata are needed for this boundary.
+    """
+    if expected_config is not None and expected_config.output_rights == "private_only":
+        private_root(root)
+    config = BuildConfig.model_validate_json((root / "config.json").read_bytes())
+    if expected_config is not None and config != expected_config:
+        raise ResearchError("snapshot configuration mismatch")
+    if config.output_rights == "private_only":
+        private_root(root)
+    observations = CanonicalParquetStore(DataLayout(root / "data"), read_only=True).load(
+        SourceObservation
+    )
+    output_rights(config, observations, root)
+
+
 def capture_files(root: Path, observations: tuple[SourceObservation, ...]) -> tuple[Path, ...]:
     matched: set[UUID] = set()
     paths: list[Path] = []
@@ -525,9 +544,10 @@ def verify_graph(inputs: Inputs) -> None:
 def freeze(prepared: Path, target: Path) -> Snapshot:
     if target.is_symlink():
         raise ResearchError("snapshot target must not be a symlink")
+    input_rights(prepared)
     inputs = read_inputs(prepared)
-    verify_graph(inputs)
     output_rights(inputs.config, inputs.get(SourceObservation), target)
+    verify_graph(inputs)
     paths = [
         prepared / name
         for name in ("config.json", "protocol.json", "controls.json", "prices.json", "origins.json")
@@ -585,6 +605,7 @@ def freeze(prepared: Path, target: Path) -> Snapshot:
 
 def verify_snapshot(root: Path) -> Snapshot:
     snapshot = Snapshot.model_validate_json((root / "snapshot.json").read_bytes())
+    input_rights(root, snapshot.config)
     provisional = snapshot.model_copy(update={"snapshot_id": UUID(int=0)})
     if uuid5(NAMESPACE, model_hash(provisional)) != snapshot.snapshot_id:
         raise ResearchError("snapshot identity disagrees with manifest")
