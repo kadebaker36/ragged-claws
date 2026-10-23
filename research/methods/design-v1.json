@@ -1,0 +1,132 @@
+{
+  "format_version": "methods-design/1.0.0",
+  "design_id": "sec-p-s-dependence-audit-v1",
+  "status": "proposal",
+  "not_preregistered": true,
+  "execution": {
+    "this_turn": "common_shock_exact_enumeration_only",
+    "calibration_authorized": false,
+    "real_validation_authorized": false,
+    "production_changes_authorized": false
+  },
+  "counterexample": {
+    "format_version": "common-shock-input/1.0.0",
+    "purpose": "invented_statistical_counterexample_not_market_returns",
+    "issuers": 200,
+    "events_per_issuer_per_arm": 5,
+    "states": [-1, 1],
+    "state_probabilities": ["1/2", "1/2"],
+    "base_excess": "0.01",
+    "arm_shock": "0.02",
+    "candidate_calendar_episodes": 1,
+    "bootstrap_resamples": 5000,
+    "bootstrap_seed": 1729,
+    "bootstrap_algorithm": "issuer-pairs-sha256-counter/1",
+    "production_plan": "research/analysis-plans/sec-p-s-v2.json",
+    "production_plan_sha256": "796e7d582c2cc4f2f9d0043c1697834954e64abbd08b613d8a108be46ba43c40",
+    "stock_round_trip_bps": [10, 25, 50],
+    "benchmark_round_trip_bps": 0,
+    "units": "Decimal return fractions supplied as aggregate statistical inputs; no prices or ResearchRows"
+  },
+  "counterexample_expected_before_execution": {
+    "definition": "One economy-wide equiprobable state S for the entire panel. Every purchase excess is b+S*h; every sale excess b-S*h. All issuer clusters have five events per arm.",
+    "proof": "Every whole-issuer resample has the same arm means regardless of multiplicities. Thus every contrast and both interval endpoints equal 2*S*h, including with 200 issuers and 1000 events per arm.",
+    "unconditional_contrast": "0",
+    "state_minus_contrast_and_interval": "-0.04",
+    "state_plus_contrast_and_interval": "0.04",
+    "purchase_net25_minus": "-0.0125",
+    "purchase_net25_plus": "0.0275",
+    "issuer_conditional_states": ["negative", "positive"],
+    "calendar_sensitivity_states": ["insufficient", "insufficient"],
+    "exact_positive_declaration_fraction_under_this_null": "1/2",
+    "exact_unconditional_interval_coverage_of_zero": "0",
+    "interpretation": "Exact enumeration, not Monte Carlo. One cross-cluster assumption failure; neither an empirical system false-positive rate nor evidence for/against the economic hypothesis. No favorable seed or threshold search. Negative and insufficient states must be retained."
+  },
+  "primary_family": {
+    "id": "sec-table-i-p-s-60-conjunction-v1",
+    "families": 1,
+    "population": "Unique canonical SEC Table I P/S economic events under the unchanged source-public selection rules; no role/size/lag/context filtering. The observed statistic is conditional on complete eligible outcomes, not all missing/unresolved events.",
+    "endpoint": "60-session event-weighted mean SPY-excess purchase-minus-sale contrast Delta and purchase-arm mean SPY-excess minus 25/10000, muPnet25",
+    "direction": "Delta > 0 AND muPnet25 > 0",
+    "composite_null": "Delta <= 0 OR muPnet25 <= 0",
+    "one_sided_family_alpha": "0.025",
+    "proposed_rule": "Intersection-union: require BOTH valid one-sided 97.5% lower confidence bounds strictly > 0, plus unchanged full-sample count/coverage gates and adequate nonnegative availability/missingness/calendar screens. If component inference is not accepted/calibrated, formal decision is not_evaluated; if candidate calendar periods or coverage are inadequate, insufficient. A negative component/sensitivity is retained. No positive investment/funding verdict is authorized.",
+    "validity": "Under either component null, joint rejection is a subset of rejection of that true component, so valid component tests at .025 bound the family error by .025 without assuming independence. A purchase point mean >0 alone does not supply that component test. Current percentile lower bound at 2.5% is not automatically a one-sided 5% test, nor guaranteed to have its nominal coverage.",
+    "implementation_status": "No accepted inferential procedure selected. The existing issuer-only rule is descriptive; the proposed joint-bound baseline below is for later falsification/calibration, not production acceptance."
+  },
+  "descriptive_only": {
+    "horizons": [20, 90],
+    "cuts": ["features", "officer_director_role", "reported_size", "disclosure_lag", "relationship_context"],
+    "stock_costs_bps": [10, 25, 50],
+    "rule": "No secondary endpoint, cut, cost, seed or window can rescue the primary. Equal costs cancel in the contrast. Missing or late-known context remains unavailable; no new implied absence."
+  },
+  "family_amendment": {
+    "ledger": "Preserve every started/finished, denied, failed, negative, insufficient and external/manual inspection in one persistent reconciled history across names and versions.",
+    "rule": "Before any outcomes, a newly authorized fixed K-family design may allocate .025/K to each family's intersection-union component tests; K and all endpoints must be fixed then. K=1 here. No unused alpha is recycled after viewing results. Any unplanned family/cut/horizon/direction/window/seed change after inspection is descriptive only on that window and requires independent review and genuinely untouched future evidence for a new confirmation. Renaming/versioning cannot reset untouched status.",
+    "card_amendment": "After counterexample execution, do not edit this card to improve results. Any change is a separately named version, with rationale and links to all prior attempts; no automatic new validation trial."
+  },
+  "calendar_sensitivity": {
+    "id": "guarded-paired-episode-veto-v1",
+    "kind": "one descriptive veto; not a bootstrap, p-value, confidence interval or valid multiway procedure",
+    "calendar": "XNYS regular sessions from the existing reviewed calendar; anchor at first session on/after the declared validation start; never align to returns or event density",
+    "episode_sessions": 120,
+    "eligible_entry_sessions": 60,
+    "guard_sessions": 60,
+    "stride_sessions": 180,
+    "boundary": "For zero-based episode j: sessions 180*j+1 through 180*j+120. Admit entries only 180*j+1 through 180*j+60; a 60-session exit is entry+60 and must be inside this episode. Sessions 180*j+121 through 180*j+180 are guard entries excluded from this sensitivity only. No circular wrap, carry-over reassignment or partial final episode. Retain all omitted events/counts/reasons in the primary table.",
+    "unit": "One complete paired calendar episode, including all eligible issuers/arms together",
+    "weighting_estimand": "Within each episode, event-weighted complete purchase and sale means; then equally weight episode contrasts and purchase-net25 means. This targets a calendar-episode-balanced restricted-entry association, not the original all-event-weighted contrast or a tradable rebalanced portfolio.",
+    "minimum_complete_events_per_arm_per_episode": 20,
+    "minimum_complete_issuers_per_arm_per_episode": 10,
+    "minimum_complete_actionable_coverage_per_arm": "0.90",
+    "minimum_candidate_paired_episodes": 12,
+    "adequacy": "Every full planned episode must satisfy both-arm floors; an empty/one-arm/incomplete/unknown-coverage episode is insufficient, never silently dropped to keep favorable episodes. At least 12 candidate paired episodes are required. This is an operational screen, not a source-certified independent-period minimum or proof of independence.",
+    "veto": "If adequate, nonpositive equal-episode mean contrast or purchase net25 vetoes a positive primary interpretation. A positive descriptive sensitivity does not validate the primary inference. Undefined means or inadequate periods are insufficient.",
+    "coexistence_with_issuer_dependence": "Retain full-sample issuer analysis and episode issuer concentration maps, largest share and squared-share concentration. Repeated issuers across episodes and persistent global shocks can still connect episodes. Separate issuer/calendar calculations are NOT multiway inference. No independence claim is supplied by guard gaps or 12 episodes.",
+    "window_consequence": "2021-2023 contains fewer than 840 regular sessions even under a weekday upper bound, so at most four full episodes; it fails the 12-episode screen regardless of returns. Twelve episodes require at least 2100 sessions (11*180+120). Do not lengthen or reuse inspected history silently; choose a separately reviewed prospective design or accept insufficient evidence.",
+    "rationale": "60 entry sessions plus 60 maturity sessions contain all admitted horizons; another 60 sessions separate adjacent episodes' return supports. This removes mechanical cross-episode horizon overlap but does not remove within-episode shocks or long-lived dependence. Lengths/floors are conservative proposals selected before outcomes, not calibrated numerical guarantees."
+  },
+  "availability_sensitivity": {
+    "baseline": "SEC acceptance plus five minutes, then existing actionable-time resolver; assumption, not measured first dissemination",
+    "alternative": "Move each baseline actionable open exactly one additional XNYS regular session forward; derive a separate sensitivity entry/60-session outcome with the existing engine after authorization. Preserve original public timestamp, precision, baseline actionable timestamp and source selection window. Unknown baseline timing stays unknown. No source timestamp edits or invented latency observations.",
+    "denominators": "Keep the same selected source-event population; shifted outcomes may mature later or become censored. Report all transitions and episode-boundary moves. A failed/insufficient lagged sensitivity cannot be replaced by the baseline or another delay; no favorable delay search. Passing does not prove actual historical latency is covered.",
+    "screen": "Require adequate counts/coverage and strictly positive lagged descriptive contrast and purchase net25 for a positive robustness interpretation; still no calibrated inference or funding conclusion."
+  },
+  "coverage_and_missingness": {
+    "per_arm_counts": ["total_candidates", "selected", "selected_actionable", "unknown_selection", "non_actionable", "complete", "unresolved_security", "missing_price", "terminal_delisted", "right_censored", "excluded", "rejected"],
+    "rule": "Preserve disjoint status/reason counts and all source/identity/price dependencies. Coverage is complete/selected_actionable separately per arm. Unknown denominators are insufficient. Ninety percent coverage does not eliminate selection bias or identify missing returns.",
+    "sensitivity": "Adverse aggregate omitted-outcome mean shift delta=0.10 return units: unknown purchase-group mean is hypothetically complete purchase mean minus delta, and unknown sale-group mean complete sale mean plus delta. Unknown groups include each actionable unresolved/missing/terminal/censored/rejected outcome once. This is a scenario on aggregate means, not invented row prices, zero returns or terminal outcomes. Also report the exact adverse shift needed to change each sign when defined.",
+    "formula": "Let qP=mP/NP and qS=mS/NS. Hypothetical full-actionable Delta=Delta_complete-(qP+qS)*delta; purchase net25=complete purchase net25-qP*delta. Zero denominator means undefined. Nonpositive scenario means veto a positive robustness interpretation. Unknown/nonactionable selection is disclosed separately, not filled by this formula.",
+    "identification_limit": "Without justified missing-return restrictions, stock returns have no finite common upper bound and missing-arm contrasts can have uninformative/unbounded bounds. Terminal observations require real evidence. This scenario does not identify the all-event effect or repair nonrandom event selection."
+  },
+  "later_calibration": {
+    "status": "proposal_not_authorized_not_run",
+    "purpose": "Falsify one declared baseline and its descriptive veto; not compare a menu of methods or certify market validity. Analytic global-shock failure may justify rejecting the candidate without spending the numerical budget.",
+    "candidate": "Same 5000 whole-issuer resamples/seed1729/nearest-rank2.5% lower bounds, with BOTH Delta and purchase-net25 statistics from the SAME resample indices; apply the one descriptive episode veto. Adding a purchase confidence bound is a proposed research-only extension for later review, not a change to the existing production point-mean gate. No accepted joint inference is implemented now.",
+    "dimensions": {"issuers": 200, "events_per_arm": 1000, "candidate_episode_counts": [4, 12], "replications_per_cell": 2000},
+    "formula": "Statistical excess input Y=b+s*Delta/2+s*sigmaI*Ui+s*sigmaC*sum(Cd, d=entry..entry+59)+s*sigmaG*Z+sigmaE*Ee, s=+1 purchase/-1 sale. Ui,Cd,Z,Ee are independent symmetric {-1,+1} draws; Ui persists for the issuer, Z for the entire panel. No price or canonical Outcome engine is simulated.",
+    "structures_in_fixed_order": [
+      {"id": "independent", "sigmaI": "0", "sigmaC": "0", "sigmaG": "0", "sigmaE": "0.02", "cluster_sizes": "five per arm per issuer"},
+      {"id": "issuer", "sigmaI": "0.01", "sigmaC": "0", "sigmaG": "0", "sigmaE": "0.02", "cluster_sizes": "five per arm per issuer"},
+      {"id": "calendar_overlap", "sigmaI": "0", "sigmaC": "0.002", "sigmaG": "0", "sigmaE": "0.02", "cluster_sizes": "five per arm per issuer"},
+      {"id": "unequal_joint", "sigmaI": "0.01", "sigmaC": "0.002", "sigmaG": "0", "sigmaE": "0.02", "cluster_sizes": "purchase issuer0 has403 events, other199 have3 each; sale issuer1 has403, others3 each"},
+      {"id": "persistent_global", "sigmaI": "0", "sigmaC": "0", "sigmaG": "0.02", "sigmaE": "0.02", "cluster_sizes": "five per arm per issuer"}
+    ],
+    "parameter_cases_in_fixed_order": [
+      {"id": "contrast_null", "b": "0.01", "Delta": "0"},
+      {"id": "net25_null", "b": "-0.0175", "Delta": "0.04"},
+      {"id": "signal", "b": "0.01", "Delta": "0.02"}
+    ],
+    "event_allocation": "Within each arm order issuer then its events, zero-based flat index k. Episode j=k mod B; zero-based entry=180*j+((17*k+11*arm_index) mod 60), arm_index0 purchase/1 sale. Daily Cd runs from first entry through last exit. This gives deliberate within-episode partial overlap and no cross-episode support overlap. All outcomes initially complete with known identity; observed coverage/selection bias is a separate real-data gate.",
+    "seeds": "NumPy PCG64 with SeedSequence([20261023,cell_index,replicate_index]); cells ordered structure then parameter case then B=4,12. Draw Ui for200 issuers, Z, daily Cd, then Ee for1000 purchases and1000 sales. Capture locked NumPy/Python versions. Bootstrap seed stays1729 for every dataset, matching the fixed deployed algorithm; cache its index multiplicities once if validated. No seed/structure/threshold search.",
+    "cells": 30,
+    "null_cells": 20,
+    "alternative_cells": 10,
+    "nominal_joint_type_I": "0.025",
+    "nominal_component_lower_bound_coverage": "0.975",
+    "monte_carlo_uncertainty": "Exact binomial-inversion (Clopper-Pearson) intervals. For acceptance screens allocate .05/62 across62 prespecified metrics:20null cells times (joint rejection and two component coverages), plus independent-signal power at B4 and B12. Use two-sided intervals with .05/(2*62) per tail; union bound is conservative if repetitions are independent. Report raw counts and all rates, not only pass/fail. MC intervals do not establish financial validity.",
+    "predeclared_screen": "Required null-cell simultaneous upper bound on joint false-positive probability <=.04 and lower bound on each component coverage >=.96; nominal targets remain .025/.975, so these are finite-MC tolerances, not revised real-test alpha. Independent-signal power lower bound >=.80 only where the rule is adequate. B4 episode veto is structurally insufficient and is NEVER labeled calibrated because its rejection rate is zero. At B12 require insufficiency <=1% in nondegenerate control cells. Missing-arm resamples >1%, undefined intervals or zero-variation bootstrap distributions count as insufficient/degenerate, not discarded. Report unconditional rejection over all2000 repetitions and conditional rejection over valid ones separately. Any required cell failure rejects this candidate; any incomplete cells/budget stop is not_evaluated, never a partial success.",
+    "compute_budget": "One offline separately authorized run, at most4 CPU-hours and2GiB RAM, no cloud/new dependencies. Up to60000 datasets and5000 resamples each; cache the fixed200-issuer resample matrix. Any faster arithmetic implementation needs independent exact-oracle and boundary verification before execution; do not change seed/resamples/precision silently. Stop and retain incomplete/failed cells at budget, without reducing replications or selecting results.",
+    "known_limit": "Persistent-global shocks and repeated issuers can violate assumptions even for12 episodes. This plan may reject the candidate; no method is made valid by passing a finite synthetic grid. Do not remove difficult cells after outputs. No broad calibration is authorized in this turn."
+  }
+}
