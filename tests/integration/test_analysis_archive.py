@@ -9,7 +9,15 @@ from uuid import uuid4
 
 import pytest
 
-from ragged_claws.durable.analysis_archive import PLANS, SEALS, seal_archive
+from ragged_claws.durable.analysis_archive import (
+    APPROVALS,
+    ATTEMPTS,
+    PLANS,
+    SEALS,
+    _row_contract,
+    journal_records,
+    seal_archive,
+)
 from ragged_claws.durable.analysis_demo import POLICY, prepare_archive
 from ragged_claws.durable.models import CloudPolicy, DurableError
 from ragged_claws.durable.objects import (
@@ -21,8 +29,8 @@ from ragged_claws.durable.objects import (
 from ragged_claws.durable.sync import POINTER_KEY, generation_id, publish, restore
 from ragged_claws.durable.validation import capture_layout, validate_layout
 from ragged_claws.research.analysis import render
-from ragged_claws.research.analysis_models import AnalysisPlan, Evaluation
-from ragged_claws.research.models import Period, Protocol
+from ragged_claws.research.analysis_models import AnalysisApproval, AnalysisPlan, Evaluation
+from ragged_claws.research.models import Period, Protocol, Snapshot
 from ragged_claws.research.protocol import register
 from ragged_claws.research.snapshot import (
     ResearchError,
@@ -416,3 +424,81 @@ def test_evaluation_plan_contract_is_checked_before_identity(
     seal_archive(root, POLICY, absolute_paths_reviewed=True)
     with pytest.raises(DurableError, match="price_provider|plan_mismatch"):
         validate_layout(root, POLICY)
+
+
+@pytest.mark.parametrize(
+    ("operator_path", "allowed"),
+    [
+        ("/home/invented/operator/registry", True),
+        (r"Z:\invented\operator\registry", True),
+        ("invented/relative/registry", False),
+        (r"Z:relative\registry", False),
+    ],
+)
+def test_denied_approval_paths_remain_verbatim_across_operating_systems(
+    archive: tuple[Path, dict[str, Any]], tmp_path: Path, operator_path: str, allowed: bool
+) -> None:
+    root, _ = clone(archive, tmp_path / "candidate")
+    original = next((root / APPROVALS).glob("*.json"))
+    approval = AnalysisApproval.model_validate_json(original.read_bytes()).model_copy(
+        update={"registry_path": operator_path}
+    )
+    stored = root / APPROVALS / f"{model_hash(approval)}.json"
+    write_once(stored, encoded(approval))
+    header = next(
+        p
+        for p in (root / "research/registry/attempts").glob("*.started.json")
+        if "phase" in json.loads(p.read_bytes())
+    )
+    seal_archive(
+        root,
+        POLICY,
+        absolute_paths_reviewed=True,
+        attempt_approvals={header.name.removesuffix(".started.json"): model_hash(approval)},
+    )
+    before = stored.read_bytes()
+    if allowed:
+        validate_layout(root, POLICY)
+        assert json.loads(stored.read_bytes())["registry_path"] == operator_path
+        assert stored.read_bytes() == before
+    else:
+        with pytest.raises(DurableError, match="operator_path_invalid"):
+            validate_layout(root, POLICY)
+
+
+def test_successful_builder_journal_requires_its_result(
+    archive: tuple[Path, dict[str, Any]],
+) -> None:
+    files = capture_layout(archive[0])
+    approval_path = next(archive[0].joinpath(APPROVALS).glob("*.json"))
+    approval = AnalysisApproval.model_validate_json(approval_path.read_bytes())
+    records = {name: json.loads(files[ATTEMPTS + name]) for name in approval.preserved_history}
+    files.pop(f"research/{approval.result_scope_snapshot_id}/result.json")
+    with pytest.raises(DurableError, match="success_result_missing"):
+        journal_records(records, files)
+
+
+@pytest.mark.parametrize("mutation", ["missing", "extra", "identity", "complete_without_outcome"])
+def test_row_inventory_and_relationships_do_not_need_return_recomputation(
+    archive: tuple[Path, dict[str, Any]], mutation: str
+) -> None:
+    root, detail = archive
+    value = Evaluation.model_validate_json(
+        (root / "research/analyses" / detail["positive"] / "evaluation.json").read_bytes()
+    )
+    snapshot = Snapshot.model_validate_json(
+        (root / "snapshots" / detail["snapshot"] / "snapshot.json").read_bytes()
+    )
+    rows = tuple(r.row for r in value.rows)
+    events = {row.event.event_id for row in rows}
+    _row_contract(rows, snapshot, events)
+    if mutation == "missing":
+        rows = rows[1:]
+    elif mutation == "extra":
+        rows = (*rows, rows[0].model_copy(update={"horizon_sessions": 120}))
+    elif mutation == "identity":
+        rows = (rows[0].model_copy(update={"snapshot_id": uuid4()}), *rows[1:])
+    else:
+        rows = (rows[0].model_copy(update={"status": "complete", "outcome": None}), *rows[1:])
+    with pytest.raises(DurableError, match="archive_row"):
+        _row_contract(rows, snapshot, events)

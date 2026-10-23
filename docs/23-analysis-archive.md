@@ -57,7 +57,8 @@ is exactly `{"mode":"diagnostic","phase":"analysis_header_rejected"}` and can ha
 only an unsuccessful, uninspected finish without an inspection interval. Missing
 finish is preserved, never invented. Full starts must match their retained frozen
 snapshot, mode, protocol, period and potential coverage. Real successful attempts
-must be inspected. Post-read failures retain the conservative selection start through
+must be inspected, and every successful full attempt must retain its builder result.
+Post-read failures retain the conservative selection start through
 max(period end, coverage); true pre-read denials remain false. Interrupted real starts
 remain potentially inspected under the existing registration guard.
 
@@ -70,7 +71,8 @@ An unrelated root or other snapshot cannot supply a missing dependency: the exis
 per-loader closure validators still run for root, each frozen input, and each result
 with only its explicitly matching frozen input.
 
-The parser checks exact row copies, existing pure cost arithmetic, report distribution
+The parser checks the complete declared event/horizon inventory, deterministic row
+IDs, snapshot/event/outcome/status relationships, exact row copies, existing pure cost arithmetic, report distribution
 and status counts, arm counts/coverage/concentrations, primary contrast, bootstrap
 summary shape/counts, conditional decision consistency and exact Markdown. It does
 **not** regenerate returns, reassemble outcomes, resample the bootstrap, reconstruct
@@ -85,7 +87,8 @@ Restore does not start/finish an inspection, evaluate an experiment or rewrite a
 fingerprint. Existing current-environment execution guards remain intact. An old-code
 snapshot can be recovered exactly while normal execution rejects it. An approval's
 absolute `registry_path` remains verbatim, even after recovery to a different location;
-it cannot authorize that location. A different workspace or scope requires renewed
+both absolute POSIX and Windows paths are recognized on either host. It cannot
+authorize that location. A different workspace or scope requires renewed
 supervisor review/approval. Investment validation remains `not_evaluated`; inference
 design and actual untouched evidence remain unaccepted/unestablished.
 

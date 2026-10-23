@@ -2,13 +2,14 @@
 
 from datetime import UTC, date, datetime
 from fractions import Fraction
-from pathlib import Path, PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Literal
 from uuid import UUID, uuid5
 
 from pydantic import Field
 
 from ragged_claws.durable.models import MAX_FILES, CloudPolicy, DurableError, safe_path
+from ragged_claws.models import Event
 from ragged_claws.models.base import CanonicalModel, NonEmptyStr
 from ragged_claws.models.evidence import Sha256Hex
 from ragged_claws.research.analysis import render
@@ -175,6 +176,11 @@ def journal_records(records: dict[str, dict[str, Any]], files: dict[str, bytes])
                     value["outcome_inspection"] and not real
                 ):
                     raise DurableError("archive_inspection_mode_mismatch")
+                if (
+                    value["success"]
+                    and f"research/{started['snapshot_id']}/result.json" not in files
+                ):
+                    raise DurableError("archive_success_result_missing")
                 period = Period.model_validate_json(encoded(started["period"]))
                 if "inspection_period" in value:
                     inspected = Period.model_validate_json(encoded(value["inspection_period"]))
@@ -223,6 +229,31 @@ def _plan_matches(plan: AnalysisPlan, snapshot: Snapshot, protocol: Protocol) ->
         or ((config.mode == "synthetic") != (plan.purpose == "invented_engineering"))
     ):
         raise DurableError("archive_evaluation_plan_mismatch")
+
+
+def _row_contract(rows: tuple[ResearchRow, ...], snapshot: Snapshot, events: set[UUID]) -> None:
+    """Check the declared v1 record relationships, without deriving any outcome."""
+    keys = {(row.event.event_id, row.horizon_sessions) for row in rows}
+    if len(keys) != len(rows) or keys != {
+        (event, horizon) for event in events for horizon in snapshot.config.horizons
+    }:
+        raise DurableError("archive_row_inventory_mismatch")
+    for row in rows:
+        if (
+            row.snapshot_id != snapshot.snapshot_id
+            or row.row_id
+            != uuid5(snapshot.snapshot_id, f"row:{row.event.event_id}:{row.horizon_sessions}")
+            or (row.status == "complete" and row.outcome is None)
+            or (
+                row.outcome is not None
+                and (
+                    row.outcome.event_id != row.event.event_id
+                    or row.outcome.horizon_sessions != row.horizon_sessions
+                    or row.outcome.status.value != row.status
+                )
+            )
+        ):
+            raise DurableError("archive_row_relationship_mismatch")
 
 
 def _evaluation(
@@ -331,6 +362,7 @@ def _evaluation(
         model_schema_version="1.0.0",
     )
     rows = tuple(sorted(rows, key=lambda row: (row.horizon_sessions, str(row.event.event_id))))
+    _row_contract(rows, snapshot, {event.event_id for event in inputs.get(Event)})
     if (
         len({(r.event.event_id, r.horizon_sessions) for r in rows}) != len(rows)
         or tuple(row.row for row in value.rows) != rows
@@ -487,7 +519,7 @@ def validate_archive(root: Path, files: dict[str, bytes], policy: CloudPolicy) -
                 raise DurableError("archive_plan_or_approval_identity_mismatch")
             if isinstance(artifact, AnalysisApproval):
                 if not (
-                    Path(artifact.registry_path).is_absolute()
+                    PurePosixPath(artifact.registry_path).is_absolute()
                     or PureWindowsPath(artifact.registry_path).is_absolute()
                 ):
                     raise DurableError("archive_approval_operator_path_invalid")
