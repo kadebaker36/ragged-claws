@@ -48,6 +48,7 @@ from ragged_claws.models import (
 )
 from ragged_claws.research.build import build
 from ragged_claws.research.examples import prepare_sec
+from ragged_claws.research.models import Snapshot
 from ragged_claws.research.snapshot import digest, encoded, environment, freeze, verify_snapshot
 from ragged_claws.storage import (
     CanonicalParquetStore,
@@ -696,4 +697,129 @@ def test_provenance_graph_cycle_or_depth_limit_fails_before_upload(
     objects = TracedObjects()
     with pytest.raises(DurableError, match="cyclic_provenance|provenance_depth_bound"):
         publish(objects, layout, expected_parent=None, policy=INVENTED)
+    assert not objects.puts
+
+
+def complete_root_and_snapshot(tmp_path: Path) -> tuple[DataLayout, Snapshot]:
+    prepared = tmp_path / "prepared"
+    prepare_sec(
+        prepared,
+        ROOT / "tests/fixtures/sec/0000950170-24-105263.txt",
+        ROOT / "tests/fixtures/sec/provenance.json",
+        ROOT / "research/hypotheses/sec-p-s-v1.json",
+        as_of=NOW,
+    )
+    snapshot = freeze(prepared, tmp_path / "frozen")
+    layout = DataLayout(tmp_path / "candidate")
+    shutil.copytree(prepared / "data", layout.root)
+    shutil.copytree(tmp_path / "frozen", layout.snapshots / str(snapshot.snapshot_id))
+    return layout, snapshot
+
+
+@pytest.mark.parametrize(
+    "missing", ["raw", "raw_manifest", "provenance", "source_observation", "entity"]
+)
+def test_operational_layout_cannot_borrow_archived_dependencies(
+    tmp_path: Path, missing: str
+) -> None:
+    layout, _ = complete_root_and_snapshot(tmp_path)
+    # Only freshly generated temporary candidates are changed; the complete archive remains intact.
+    if missing in {"raw", "raw_manifest"}:
+        target = layout.raw if missing == "raw" else layout.raw_manifests
+        assert target.resolve().is_relative_to(tmp_path.resolve())
+        for path in target.rglob("*"):
+            if path.is_file():
+                path.unlink()
+    else:
+        (layout.curated / f"{missing}.parquet").unlink()
+    objects = TracedObjects()
+    with pytest.raises(DurableError):
+        publish(objects, layout, expected_parent=None, policy=PUBLIC)
+    assert not objects.puts and not objects.values
+
+
+def test_complete_root_and_matching_research_archive_restore_independently(tmp_path: Path) -> None:
+    layout, snapshot = complete_root_and_snapshot(tmp_path)
+    frozen = layout.snapshots / str(snapshot.snapshot_id)
+    build(frozen, layout.research, layout.research / "registry")
+    objects = MemoryObjects()
+    first = publish(objects, layout, expected_parent=None, policy=PUBLIC)
+    with restore(objects, first.generation.generation_id) as restored:
+        root_store = CanonicalParquetStore(restored.layout, read_only=True)
+        snapshot_store = CanonicalParquetStore(
+            DataLayout(restored.layout.snapshots / str(snapshot.snapshot_id) / "data"),
+            read_only=True,
+        )
+        assert root_store.load(Event) == snapshot_store.load(Event)
+        assert len(root_store.load(Event)) == 3
+        assert root_store.load(Provenance) == snapshot_store.load(Provenance)
+        assert publish(
+            objects, restored.layout, expected_parent=first.generation.generation_id, policy=PUBLIC
+        ).no_op
+
+
+def test_snapshot_only_generation_does_not_implicitly_repair_empty_operational_root(
+    tmp_path: Path,
+) -> None:
+    layout, snapshot = complete_root_and_snapshot(tmp_path)
+    for scope in (layout.raw, layout.staging, layout.curated):
+        assert scope.resolve().is_relative_to(tmp_path.resolve())
+        for path in scope.rglob("*"):
+            if path.is_file():
+                path.unlink()
+    objects = MemoryObjects()
+    result = publish(objects, layout, expected_parent=None, policy=PUBLIC)
+    with restore(objects, result.generation.generation_id) as restored:
+        assert CanonicalParquetStore(restored.layout, read_only=True).load(Event) == ()
+        archived = DataLayout(restored.layout.snapshots / str(snapshot.snapshot_id) / "data")
+        assert len(CanonicalParquetStore(archived, read_only=True).load(Event)) == 3
+        assert not tuple(restored.layout.curated.glob("*.parquet"))
+
+
+def test_frozen_context_cannot_borrow_complete_root_provenance(tmp_path: Path) -> None:
+    layout, snapshot = complete_root_and_snapshot(tmp_path)
+    (layout.snapshots / str(snapshot.snapshot_id) / "data/curated/provenance.parquet").unlink()
+    objects = TracedObjects()
+    with pytest.raises(DurableError):
+        publish(objects, layout, expected_parent=None, policy=PUBLIC)
+    assert not objects.puts
+
+
+def test_scoped_research_cannot_borrow_unrelated_root_provenance(tmp_path: Path) -> None:
+    layout, snapshot = complete_root_and_snapshot(tmp_path)
+    build(
+        layout.snapshots / str(snapshot.snapshot_id), layout.research, layout.research / "registry"
+    )
+    root_store = CanonicalParquetStore(layout)
+    original = root_store.load(Provenance)[0]
+    extra = original.model_copy(
+        update={
+            "provenance_id": UUID(int=800008),
+            "parent_provenance_ids": (original.provenance_id,),
+        }
+    )
+    root_store.persist(Provenance, (extra,))
+    output = layout.research / str(snapshot.snapshot_id)
+    result_store = CanonicalParquetStore(DataLayout(output))
+    values = result_store.load(Provenance)
+    changed = values[0].model_copy(
+        update={
+            "parent_provenance_ids": (*values[0].parent_provenance_ids, extra.provenance_id),
+        }
+    )
+    # Reconstruct only a newly-created test result and its checksum seal, so this probes closure
+    # rather than a trivial checksum mismatch. The frozen inputs are never rewritten.
+    result_store.path_for(Provenance).unlink()
+    result_store.persist(Provenance, (changed, *values[1:]))
+    sealed = {
+        p.relative_to(output).as_posix(): digest(p.read_bytes())
+        for p in output.rglob("*")
+        if p.is_file() and p.name != "result.json"
+    }
+    (output / "result.json").write_bytes(
+        encoded({"snapshot_id": str(snapshot.snapshot_id), "files": sealed})
+    )
+    objects = TracedObjects()
+    with pytest.raises(DurableError, match="orphan_canonical_evidence_reference"):
+        publish(objects, layout, expected_parent=None, policy=PUBLIC)
     assert not objects.puts

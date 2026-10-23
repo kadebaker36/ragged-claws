@@ -45,6 +45,14 @@ successful owned workspace is cleaned when its context ends; a failed/indetermin
 retained privately with a failure receipt, including any unpublished inspection journals. It is
 never automatically uploaded as a failure artifact or treated as validated authoritative state.
 
+Dependency closure follows actual loader locations: the operational root and each frozen
+`snapshots/UUID/data` layout must independently contain their own canonical references and exact
+raw/manifests. An archive cannot supply a missing root file, and the root cannot supply a missing
+archive dependency. A scoped research result may use its own records plus only the explicit matching
+frozen inputs named by its snapshot manifest, never unrelated root/other-snapshot records. Global
+unique-record counts remain inventory summaries, not closure authority. Snapshot-only generations
+with an empty operational root are supported; restore does not implicitly copy archive files into it.
+
 ## Publication ordering and failure semantics
 
 `run_pipeline` checks the expected parent, restores it into owned temporary state, invokes existing

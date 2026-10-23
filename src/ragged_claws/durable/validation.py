@@ -3,7 +3,7 @@
 import json
 import os
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid5
@@ -165,6 +165,42 @@ class Validated:
     record_counts: dict[str, int]
 
 
+@dataclass
+class EvidenceContext:
+    """Dependencies visible to one normal filesystem loader, not a generation-wide union."""
+
+    records: dict[type[BaseModel], dict[str, BaseModel]] = field(
+        default_factory=lambda: {model: {} for model, _ in CANONICAL}
+    )
+    models: list[BaseModel] = field(default_factory=list)
+    manifests: list[RawCaptureManifest] = field(default_factory=list)
+    raw_hashes: set[str] = field(default_factory=set)
+    bundles: list[LittleSisBundle] = field(default_factory=list)
+
+
+def _evidence_scope(parts: tuple[str, ...]) -> str:
+    if parts[0] == "snapshots":
+        UUID(parts[1])
+        return "/".join(parts[:3])  # snapshots/UUID/data
+    if parts[0] == "research":
+        UUID(parts[1])
+        return "/".join(parts[:2])  # research/UUID (registry is handled separately)
+    return ""
+
+
+def _scoped_research(frozen: EvidenceContext, result: EvidenceContext) -> EvidenceContext:
+    """Only a result's explicit matching frozen inputs may supply its external dependencies."""
+    return EvidenceContext(
+        records={
+            model: {**frozen.records[model], **result.records[model]} for model, _ in CANONICAL
+        },
+        models=[*frozen.models, *result.models],
+        manifests=[*frozen.manifests, *result.manifests],
+        raw_hashes=frozen.raw_hashes | result.raw_hashes,
+        bundles=[*frozen.bundles, *result.bundles],
+    )
+
+
 def _parquet_expansion(path: Path) -> int:
     meta = pq.read_metadata(path)
     expanded = sum(
@@ -255,11 +291,10 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
     store = CanonicalParquetStore(DataLayout(root), read_only=True)
     curated_specs = {store.path_for(m).name: (m, key) for m, key in CANONICAL}
     records: dict[type[BaseModel], dict[str, BaseModel]] = {m: {} for m, _ in CANONICAL}
-    all_models: list[BaseModel] = []
+    # The union remains useful for identity conflicts/counts, never dependency closure.
+    contexts = {"": EvidenceContext()}
     envelopes: dict[str, dict[str, str]] = {}
-    manifests: list[RawCaptureManifest] = []
     bundles: list[LittleSisBundle] = []
-    raw_hashes: set[str] = set()
     frozen: set[Path] = set()
     reports: set[Path] = set()
     journals: dict[str, dict[str, Any]] = {}
@@ -283,9 +318,13 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
         elif len(parts) == 3 and parts[0] == "research" and parts[-1] == "research_rows.parquet":
             model, key = ResearchRow, "row_id"
         if model is not None:
+            scope = _evidence_scope(parts)
+            context = contexts.setdefault(scope, EvidenceContext())
+            if scope.startswith("research/"):
+                reports.add(root / scope)
             loaded = _read_parquet(path, model, key, kind)
             envelopes[name] = {str(getattr(r, key)): r.model_dump_json() for r in loaded}
-            all_models.extend(loaded)
+            context.models.extend(loaded)
             if kind == "curated":
                 for record in loaded:
                     identity = str(getattr(record, key))
@@ -293,13 +332,17 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
                     if old is not None and old != record:
                         raise DurableError("canonical_identity_payload_conflict")
                     records[model][identity] = record
+                    context.records[model][identity] = record
             bundles.extend(r for r in loaded if isinstance(r, LittleSisBundle))
+            context.bundles.extend(r for r in loaded if isinstance(r, LittleSisBundle))
             continue
         raw_parts = parts[3:] if parts[:1] == ("snapshots",) and parts[2:3] == ("data",) else parts
         if raw_parts[:2] == ("raw", "objects") and len(raw_parts) == 4:
             if raw_parts[2] != raw_parts[3][:2] or digest(content) != raw_parts[3]:
                 raise DurableError("raw_content_address_mismatch")
-            raw_hashes.add(raw_parts[3])
+            contexts.setdefault(_evidence_scope(parts), EvidenceContext()).raw_hashes.add(
+                raw_parts[3]
+            )
             if content.lstrip()[:1] in (b"{", b"["):
                 metadata_secrets(json_value(content))
             continue
@@ -311,7 +354,9 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
             manifest_id = uuid5(RAW_CAPTURE_NAMESPACE, encoded(provisional).decode().rstrip("\n"))
             if raw_parts[-1] != f"{manifest.capture_id}.json" or manifest_id != manifest.capture_id:
                 raise DurableError("raw_manifest_identity_mismatch")
-            manifests.append(manifest)
+            contexts.setdefault(_evidence_scope(parts), EvidenceContext()).manifests.append(
+                manifest
+            )
             continue
         if len(parts) >= 3 and parts[0] == "snapshots":
             UUID(parts[1])
@@ -348,30 +393,19 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
                 raise DurableError("unsupported_journal_file")
             continue
         raise DurableError("file_not_in_validated_allowlist")
-    observed = [o for o in records[SourceObservation].values() if isinstance(o, SourceObservation)]
-    _rights(policy, observed, manifests, bundles)
-    for manifest in manifests:
-        if manifest.content_hash.value not in raw_hashes:
-            raise DurableError("manifest_raw_dependency_missing")
-    if raw_hashes != {m.content_hash.value for m in manifests}:
-        raise DurableError("raw_object_without_retention_manifest")
-    for observation in observed:
-        if observation.raw_content_hash.value not in raw_hashes or not any(
-            m.content_hash == observation.raw_content_hash
-            and m.provider_namespace == observation.provider_namespace
-            and m.source_family == observation.lineage.source_family
-            and m.adapter_version == observation.adapter_version
-            and m.parser_version == observation.parser_version
-            and m.retention_class == observation.retention_class
-            and m.license_name == observation.license_name
-            for m in manifests
-        ):
-            raise DurableError("observation_raw_manifest_dependency_missing")
-    _lineage(records, all_models)
+    _validate_context(contexts[""], policy)
     for parent in frozen:
+        scope = parent.relative_to(root).as_posix() + "/data"
+        _validate_context(contexts.setdefault(scope, EvidenceContext()), policy)
         _historical_snapshot(parent)
     for parent in reports:
         _research_result(parent, frozen)
+        scope = parent.relative_to(root).as_posix()
+        frozen_scope = f"snapshots/{parent.name}/data"
+        _validate_context(
+            _scoped_research(contexts[frozen_scope], contexts.setdefault(scope, EvidenceContext())),
+            policy,
+        )
     _journals(journals)
     # Re-read after parsing: upload bytes must be precisely the validated stable input.
     if files != capture_layout(root):
@@ -385,6 +419,31 @@ def _validate_layout(root: Path, policy: CloudPolicy) -> Validated:
         )
     )
     return Validated(files, envelopes, notices, {m.__name__: len(v) for m, v in records.items()})
+
+
+def _validate_context(context: EvidenceContext, policy: CloudPolicy) -> None:
+    observed = [
+        o for o in context.records[SourceObservation].values() if isinstance(o, SourceObservation)
+    ]
+    _rights(policy, observed, context.manifests, context.bundles)
+    for manifest in context.manifests:
+        if manifest.content_hash.value not in context.raw_hashes:
+            raise DurableError("manifest_raw_dependency_missing")
+    if context.raw_hashes != {m.content_hash.value for m in context.manifests}:
+        raise DurableError("raw_object_without_retention_manifest")
+    for observation in observed:
+        if observation.raw_content_hash.value not in context.raw_hashes or not any(
+            m.content_hash == observation.raw_content_hash
+            and m.provider_namespace == observation.provider_namespace
+            and m.source_family == observation.lineage.source_family
+            and m.adapter_version == observation.adapter_version
+            and m.parser_version == observation.parser_version
+            and m.retention_class == observation.retention_class
+            and m.license_name == observation.license_name
+            for m in context.manifests
+        ):
+            raise DurableError("observation_raw_manifest_dependency_missing")
+    _lineage(context.records, context.models)
 
 
 def _rights(
