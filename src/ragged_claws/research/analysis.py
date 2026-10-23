@@ -13,7 +13,7 @@ from ragged_claws.research.analysis_gate import (
 )
 from ragged_claws.research.analysis_math import analyze_horizon, costs
 from ragged_claws.research.analysis_models import AnalysisApproval, AnalysisPlan, Evaluation
-from ragged_claws.research.build import assemble, markdown, report_for
+from ragged_claws.research.build import assemble, completed_coverage, markdown, report_for
 from ragged_claws.research.models import Protocol, ResearchReport, ResearchRow, Snapshot
 from ragged_claws.research.protocol import finish_attempt, start_attempt
 from ragged_claws.research.snapshot import (
@@ -40,6 +40,7 @@ def verified_result(
     A user can reseal corrupt files, so file hashes alone cannot validate outcomes.
     This runs only after the real inspection gates; old environment mismatches fail.
     """
+    completed_coverage(snapshot)
     seal = json.loads((result / "result.json").read_bytes())
     actual = {
         p.relative_to(result).as_posix(): digest(p.read_bytes())

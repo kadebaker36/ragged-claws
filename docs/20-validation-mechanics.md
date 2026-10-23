@@ -27,6 +27,12 @@ corrupt result is rejected. There is no CSV/vendor-return calculator or current 
 filter. Synthetic provenance anywhere cannot become real support by changing mode.
 Old environment snapshots remain recoverable, but cannot execute under new code.
 
+Semantic verification also reuses the builder's `completed_coverage` precondition before
+reading result rows or reassembling returns: the cutoff must be an XNYS regular session
+whose close is at or before the declared as-of. Recomputed seals cannot authorize an
+unfinished or future cutoff. Valid completed cutoffs retain the engine's complete and
+right-censored statuses; evaluation does not rewrite them to conceal invalid timing.
+
 Every evaluation preserves the entire original report and ResearchRows, including
 all denominators, statuses/reasons, timing, features/unavailable features, identities,
 listings, evidence, primary families, normalized vendor count and Outcome provenance.
