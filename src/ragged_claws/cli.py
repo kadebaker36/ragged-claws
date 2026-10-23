@@ -143,12 +143,25 @@ def research_build(
     snapshot: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
     output: Annotated[Path, typer.Option()],
     registry: Annotated[Path, typer.Option()],
+    analysis_plan: Annotated[Path | None, typer.Option()] = None,
+    analysis_approval: Annotated[Path | None, typer.Option()] = None,
 ) -> None:
     """Build version-scoped research Parquet/report; validation requires a matching registration."""
+    from ragged_claws.research.analysis_models import AnalysisApproval, AnalysisPlan
     from ragged_claws.research.build import build
 
     try:
-        report = build(snapshot, output, registry)
+        report = build(
+            snapshot,
+            output,
+            registry,
+            analysis_plan=AnalysisPlan.model_validate_json(analysis_plan.read_bytes())
+            if analysis_plan
+            else None,
+            analysis_approval=AnalysisApproval.model_validate_json(analysis_approval.read_bytes())
+            if analysis_approval
+            else None,
+        )
     except (ValueError, OSError, PersistenceError) as exc:
         research_failure(exc, "rejected_build")
         return
@@ -163,6 +176,71 @@ def research_build(
             }
         )
     )
+
+
+@app.command("research-evaluate")
+def research_evaluate(
+    snapshot: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+    result: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    plan: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option()],
+    registry: Annotated[Path, typer.Option()],
+    approval: Annotated[Path | None, typer.Option()] = None,
+) -> None:
+    """Evaluate a sealed research result under an explicit proposal; no investment verdict."""
+    from ragged_claws.research.analysis import evaluate
+
+    try:
+        value = evaluate(snapshot, result, plan, output, registry, approval)
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "analysis_rejected")
+        return
+    typer.echo(
+        json.dumps(
+            {
+                "evaluation_id": str(value.evaluation_id),
+                "conditional_verdict": value.conditional_verdict,
+                "investment_validation": value.investment_validation,
+            }
+        )
+    )
+
+
+@app.command("analysis-offline-demo")
+def analysis_offline_demo(
+    output: Annotated[Path, typer.Option()],
+    proposal: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+) -> None:
+    """Build/evaluate four invented cases; 5000 issuer resamples, no network or approval."""
+    from ragged_claws.research.analysis import evaluate
+    from ragged_claws.research.analysis_demo import Case, prepare_demo
+    from ragged_claws.research.build import build
+    from ragged_claws.research.snapshot import freeze
+
+    cases: tuple[Case, ...] = ("positive", "negative", "one_arm_missing", "no_complete")
+    try:
+        results = {}
+        for case in cases:
+            target = output / case
+            prepare_demo(target / "prepared", proposal, case)
+            snapshot = freeze(target / "prepared", target / "frozen")
+            build(target / "frozen", target / "research", target / "registry")
+            value = evaluate(
+                target / "frozen",
+                target / "research" / str(snapshot.snapshot_id),
+                target / "analysis-plan.json",
+                target / "analyses",
+                target / "registry",
+            )
+            results[case] = {
+                "conditional_verdict": value.conditional_verdict,
+                "evaluation_id": str(value.evaluation_id),
+                "investment_validation": value.investment_validation,
+            }
+    except (ValueError, OSError, PersistenceError) as exc:
+        research_failure(exc, "analysis_demo_rejected")
+        return
+    typer.echo(json.dumps({"boundary": "INVENTED_ENGINEERING_ONLY", "cases": results}))
 
 
 @app.command("research-register")

@@ -1,0 +1,10 @@
+{
+  "notice": "Previously frozen public SEC diagnostic, no invented identities/prices, no real validation inspection. Exact prior bytes.",
+  "files": {
+    "snapshot.json": "030ec2cfda5cef59963ab18d179df64b365fecace45e03acd8c204ee12be25a6",
+    "protocol.json": "140d25432a88b0349dfcb5f84f30f0eb53caf702ab8aae7076a9b0f54964f768",
+    "report.json": "e15ddec7235c7532d3221b006d8d00ca7a361466de7454009d111d71ac757d37",
+    "attempt.started.json": "2a821ad6871bb37e87d2f28054197048842aef634a4f1d92f7f658b513f17723",
+    "attempt.finished.json": "71f54af01c03ef80c417bc88dacf8ebc6405a146522632d8341574e26237f5c6"
+  }
+}

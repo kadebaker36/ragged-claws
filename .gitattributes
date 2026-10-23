@@ -11,6 +11,9 @@
 # Preserve exact recorded SEC response bytes and hashes on every platform.
 tests/fixtures/sec/*.txt binary
 
+# Original versioned research artifact bytes remain reconstructible on both CI platforms.
+tests/fixtures/research/history-v1/*.json binary
+
 # Exact CC BY-SA LittleSis responses; metadata remains ordinary text.
 tests/fixtures/littlesis/recorded-1565630.json binary
 tests/fixtures/littlesis/recorded-297069.json binary
