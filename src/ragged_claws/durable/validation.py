@@ -128,6 +128,8 @@ def read_local(path: Path) -> bytes:
 
 
 def capture_layout(root: Path) -> dict[str, bytes]:
+    if (root / "analyses").exists() or (root / "research" / "analyses").exists():
+        raise DurableError("analysis_artifacts_require_reviewed_durable_format")
     if root.is_symlink() or not root.is_dir():
         raise DurableError("unsafe_layout_root")
     result: dict[str, bytes] = {}

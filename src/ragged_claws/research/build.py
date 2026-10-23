@@ -33,9 +33,16 @@ from ragged_claws.models import (
 from ragged_claws.models.base import JsonScalar
 from ragged_claws.outcomes import ForwardOutcomeEngine, OutcomeCalculationError
 from ragged_claws.outcomes.engine import RETURN_CONTEXT
+from ragged_claws.research.analysis_gate import (
+    check_price_contract,
+    journal_scope,
+    require_analysis_approval,
+)
+from ragged_claws.research.analysis_models import AnalysisApproval, AnalysisPlan
 from ragged_claws.research.models import (
     Distribution,
     HorizonReport,
+    Protocol,
     ResearchReport,
     ResearchRow,
     Snapshot,
@@ -678,7 +685,14 @@ def markdown(report: ResearchReport) -> bytes:
     return "\n".join(lines).encode()
 
 
-def build(root: Path, output: Path, registry: Path) -> ResearchReport:
+def build(
+    root: Path,
+    output: Path,
+    registry: Path,
+    *,
+    analysis_plan: AnalysisPlan | None = None,
+    analysis_approval: AnalysisApproval | None = None,
+) -> ResearchReport:
     snapshot = Snapshot.model_validate_json((root / "snapshot.json").read_bytes())
     if snapshot.config.output_rights == "private_only":
         private_root(registry)
@@ -689,17 +703,28 @@ def build(root: Path, output: Path, registry: Path) -> ResearchReport:
     attempt = start_attempt(registry, snapshot)
     inspected = False
     try:
+        if snapshot.config.mode == "validation":
+            protocol = Protocol.model_validate_json((root / "protocol.json").read_bytes())
+            require_registration(snapshot, protocol, root, registry)
+            journal_scope(attempt, analysis_plan, None)
+            require_analysis_approval(
+                snapshot, protocol, root, registry, analysis_plan, analysis_approval, attempt
+            )
+        # Verification/parsing can expose prices even when a later gate fails.
+        # Both real phases must retain that potential inspection; authorization
+        # denials above remain uninspected because they precede this boundary.
+        inspected = snapshot.config.mode in ("discovery", "validation")
         snapshot = verify_snapshot(root)
         inputs = read_inputs(root)
+        if analysis_plan is not None:
+            check_price_contract(inputs, analysis_plan)
         output_rights(inputs.config, inputs.get(SourceObservation), output)
         output_rights(inputs.config, inputs.get(SourceObservation), registry)
         check_configuration(inputs.protocol, inputs.config)
         completed_coverage(snapshot)
         registered = False
         if inputs.config.mode == "validation":
-            require_registration(snapshot, inputs.protocol, root, registry)
             registered = True
-        inspected = inputs.config.mode in ("discovery", "validation")
         rows, provenance = assemble(inputs, snapshot)
         report = report_for(inputs, snapshot, rows, registered)
         target = output / str(snapshot.snapshot_id)

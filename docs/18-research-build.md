@@ -2,6 +2,11 @@
 
 **Status:** bounded M1 engineering slice for #10; not an investment-validation result.
 
+The original descriptive slice below is preserved as context. The separate
+[analysis mechanics](20-validation-mechanics.md) now implement explicit proposal
+costs/cluster calculations and add a separate supervisor analysis approval to real
+validation builds. v1 bytes remain unchanged; v2 is an unaccepted clarification.
+
 The builder joins frozen canonical events/evidence, explicitly reviewed identity bindings,
 point-in-time features and the existing `ForwardOutcomeEngine`. It writes descriptive 20/60/90
 regular-session absolute, SPY and SPY-relative outcomes. It does not implement portfolio returns,

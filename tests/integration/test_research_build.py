@@ -381,10 +381,10 @@ def test_registration_exact_match_mismatches_and_prior_inspection_gate(tmp_path:
     )
     frozen = tmp_path / "frozen"
     freeze(prepared, frozen)
-    report = build(frozen, tmp_path / "output", registry)
-    assert (
-        report.protocol_status == "registered" and report.input_events == 0
-    )  # no real outcome inspection
+    with pytest.raises(ResearchError, match="separate supervisor analysis approval"):
+        build(frozen, tmp_path / "output", registry)
+    # Old registrations remain readable, but cannot authorize a newly added analysis.
+    assert not (tmp_path / "output").exists()
     with pytest.raises(ResearchError, match="immutable"):
         register(
             protocol,
@@ -394,6 +394,9 @@ def test_registration_exact_match_mismatches_and_prior_inspection_gate(tmp_path:
             attest_uninspected=True,
         )
     renamed = protocol.model_copy(update={"hypothesis_id": "renamed-after-inspection"})
+    # Independently declared test inspection still prevents a renamed untouched claim.
+    inspection = start_attempt(registry, verify_snapshot(frozen))
+    finish_attempt(inspection, inspected=True, success=True)
     with pytest.raises(ResearchError, match="previously or potentially inspected"):
         register(
             renamed,

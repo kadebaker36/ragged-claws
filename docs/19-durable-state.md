@@ -1,5 +1,10 @@
 # Validated durable generations and inactive runtime
 
+New [analysis artifacts and scope sidecars](20-validation-mechanics.md) are explicitly
+unsupported by this durable format. Export rejects them; preserve local persistent
+history until a separately reviewed format/failure-audit change. Prior generations
+remain recoverable without changing their manifests or hashes.
+
 **Status:** bounded offline engineering for #15. No R2 account, bucket, credentials, GitHub secrets,
 production acquisition or schedule is configured or validated. #15 remains open. Local recovery
 tests are not real R2 recovery, research validation, elapsed forward observation or funding readiness.
