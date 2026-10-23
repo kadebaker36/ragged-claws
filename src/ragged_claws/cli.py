@@ -107,6 +107,21 @@ def durable_local_inspect(
         raise typer.Exit(2) from None
 
 
+@app.command("analysis-archive-offline-demo")
+def analysis_archive_offline_demo(output: Annotated[Path, typer.Option()]) -> None:
+    """Archive invented evaluations/history with local fake objects; no cloud or real research."""
+    from ragged_claws.durable.analysis_demo import archive_demo
+    from ragged_claws.durable.models import DurableError
+
+    try:
+        result = archive_demo(output)
+    except (ValueError, OSError, PersistenceError) as exc:
+        reasons = exc.reasons if isinstance(exc, DurableError) else {"invalid_archive_input": 1}
+        typer.echo(json.dumps({"rejected": 1, "reasons": reasons}))
+        raise typer.Exit(2) from None
+    typer.echo(json.dumps(result))
+
+
 @app.command("research-prepare-synthetic")
 def research_prepare_synthetic(
     protocol: Annotated[Path, typer.Option(exists=True, dir_okay=False)],

@@ -1,9 +1,10 @@
 # Validated durable generations and inactive runtime
 
-New [analysis artifacts and scope sidecars](20-validation-mechanics.md) are explicitly
-unsupported by this durable format. Export rejects them; preserve local persistent
-history until a separately reviewed format/failure-audit change. Prior generations
-remain recoverable without changing their manifests or hashes.
+The additive [analysis archive extension](23-analysis-archive.md) supports pinned
+analysis artifacts and scope sidecars under an explicit private archival review.
+Layouts without that extension still reject those files. Prior generations remain
+recoverable without changing manifests, serialization defaults or hashes. This
+extension does not provide durable audit of unpublished ephemeral inspections.
 
 **Status:** bounded offline engineering for #15. No R2 account, bucket, credentials, GitHub secrets,
 production acquisition or schedule is configured or validated. #15 remains open. Local recovery
@@ -68,6 +69,12 @@ new IDs: existing IDs must retain identical validated payloads. All raw files, f
 scoped research results and journal/registration files are immutable. Same state is a no-op, not a
 new generation. A policy change requires separate namespace review rather than silently changing
 the rights of an existing history.
+
+File retention also preserves inspection knowledge: a previously published real start without
+a finish cannot gain an uninspected denial or a finish narrowing its potential interval.
+Publication compares the parent; pinned restore enforces this against all ancestors using
+the retained immutable starts. Initial pre-read denials remain valid, and an inspected
+completion covering the published interval is supported. No reconciliation override is added.
 
 All local rights/lineage/schema/parent-conflict checks finish before the first PUT. File bytes are
 captured and checked for changes during validation; uploads use those exact validated bytes.
