@@ -107,6 +107,13 @@ Denials/failures are retained, and post-inspection failures conservatively cover
 entire potentially observed price interval. Outputs use deterministic IDs and write-once
 bytes, so negative or insufficient results cannot be overwritten by a favorable rerun.
 
+The shared builder marks both discovery and validation as potentially inspected before
+snapshot verification or input parsing can read prices. A later verification, price-contract,
+or completed-coverage failure therefore retains inspection history and prevents an overlapping
+renamed/versioned validation proposal from claiming untouched status. Validation authorization
+denials still occur before that boundary and remain uninspected. This hardens an existing
+shared discovery boundary; the completed-coverage verifier correction did not introduce it.
+
 These files are operator attestations, not cryptographic authorization, proof that no
 external inspection occurred, or permission for a developer to self-approve.
 `research-register` alone is insufficient. No real registration, acceptance or real

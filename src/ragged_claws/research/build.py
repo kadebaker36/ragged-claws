@@ -710,7 +710,10 @@ def build(
             require_analysis_approval(
                 snapshot, protocol, root, registry, analysis_plan, analysis_approval, attempt
             )
-            inspected = True  # Price payload verification can itself expose outcomes.
+        # Verification/parsing can expose prices even when a later gate fails.
+        # Both real phases must retain that potential inspection; authorization
+        # denials above remain uninspected because they precede this boundary.
+        inspected = snapshot.config.mode in ("discovery", "validation")
         snapshot = verify_snapshot(root)
         inputs = read_inputs(root)
         if analysis_plan is not None:
@@ -722,7 +725,6 @@ def build(
         registered = False
         if inputs.config.mode == "validation":
             registered = True
-        inspected = inputs.config.mode in ("discovery", "validation")
         rows, provenance = assemble(inputs, snapshot)
         report = report_for(inputs, snapshot, rows, registered)
         target = output / str(snapshot.snapshot_id)
