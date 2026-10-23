@@ -1,0 +1,30 @@
+# INACTIVE: outside .github/workflows. No production acquisition or secrets are configured.
+# All future manual/scheduled workflows mutating this state MUST use this same literal group.
+name: Durable production runtime (inactive review template)
+on:
+  workflow_dispatch:
+# A real schedule is intentionally absent pending separate operational review.
+permissions:
+  contents: read
+concurrency:
+  group: ragged-claws-durable-production
+  cancel-in-progress: false
+jobs:
+  runtime:
+    if: ${{ false }} # Deliberate activation gate, even if this file is copied into workflows.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - run: uv sync --frozen
+      - name: Offline rehearsal only; cloud runtime is not activated
+        run: uv run ragged-claws durable-offline-demo --output "$RUNNER_TEMP/durable-offline-rehearsal"
+# No upload-artifact step. No secrets, pull_request_target, acquisition or cloud command.
+# Before activation, reviewed account/rights/recovery/credential scoping and a production
+# operation/transport configuration are required; this rehearsal is not a production job.

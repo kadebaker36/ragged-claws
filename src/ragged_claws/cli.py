@@ -55,6 +55,58 @@ def research_prepare_sec(
     typer.echo("Recorded SEC diagnostic inputs prepared; no price access or validation performed.")
 
 
+@app.command("durable-offline-demo")
+def durable_offline_demo(output: Annotated[Path, typer.Option()]) -> None:
+    """Public SEC recovery/failure rehearsal using local fake objects; no R2 or source requests."""
+    from ragged_claws.durable.demo import recovery_demo
+    from ragged_claws.durable.models import DurableError
+
+    try:
+        result = recovery_demo(output)
+    except (ValueError, OSError, PersistenceError) as exc:
+        reasons = exc.reasons if isinstance(exc, DurableError) else {"invalid_durable_input": 1}
+        typer.echo(json.dumps({"rejected": 1, "reasons": reasons}))
+        raise typer.Exit(2) from None
+    typer.echo(
+        json.dumps(
+            {
+                "boundary": result["boundary"],
+                "generation": result["authoritative_generation"],
+                "events": result["restored_event_count"],
+                "report": str(output / "recovery.json"),
+            }
+        )
+    )
+
+
+@app.command("durable-local-inspect")
+def durable_local_inspect(
+    objects: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    generation: Annotated[str, typer.Option()],
+) -> None:
+    """Verify one pinned local-fake generation in an owned temporary layout."""
+    from ragged_claws.durable.models import DurableError
+    from ragged_claws.durable.objects import LocalObjects
+    from ragged_claws.durable.sync import restore
+
+    try:
+        with restore(LocalObjects(objects), generation) as value:
+            typer.echo(
+                json.dumps(
+                    {
+                        "boundary": "LOCAL_FAKE_OBJECTS_NOT_REAL_R2",
+                        "generation": value.generation.generation_id,
+                        "parent": value.generation.parent_id,
+                        "records": value.validated.record_counts,
+                    }
+                )
+            )
+    except (ValueError, OSError, PersistenceError) as exc:
+        reasons = exc.reasons if isinstance(exc, DurableError) else {"invalid_durable_input": 1}
+        typer.echo(json.dumps({"rejected": 1, "reasons": reasons}))
+        raise typer.Exit(2) from None
+
+
 @app.command("research-prepare-synthetic")
 def research_prepare_synthetic(
     protocol: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
@@ -94,6 +146,7 @@ def research_build(
 ) -> None:
     """Build version-scoped research Parquet/report; validation requires a matching registration."""
     from ragged_claws.research.build import build
+
     try:
         report = build(snapshot, output, registry)
     except (ValueError, OSError, PersistenceError) as exc:
@@ -123,6 +176,7 @@ def research_register(
     """Seal an accepted protocol only after explicit separate supervisor review; not automatic."""
     from ragged_claws.research.models import Protocol
     from ragged_claws.research.protocol import register
+
     try:
         value = register(
             Protocol.model_validate_json(protocol.read_bytes()),

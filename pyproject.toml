@@ -15,6 +15,7 @@ dependencies = [
     "pydantic>=2.11,<3",
     "pyarrow>=21,<23",
     "typer>=0.16,<1",
+    "boto3>=1.40,<2",
 ]
 
 [project.scripts]
