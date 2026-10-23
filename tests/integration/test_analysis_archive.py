@@ -3,9 +3,10 @@
 import importlib
 import json
 import shutil
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
+from uuid import uuid4, uuid5
 
 import pytest
 
@@ -27,14 +28,22 @@ from ragged_claws.durable.objects import (
     ObjectValue,
 )
 from ragged_claws.durable.sync import POINTER_KEY, generation_id, publish, restore
-from ragged_claws.durable.validation import capture_layout, validate_layout
+from ragged_claws.durable.validation import (
+    _research_result,
+    capture_layout,
+    entries,
+    validate_layout,
+)
 from ragged_claws.research.analysis import render
 from ragged_claws.research.analysis_models import AnalysisApproval, AnalysisPlan, Evaluation
 from ragged_claws.research.models import Period, Protocol, Snapshot
-from ragged_claws.research.protocol import register
+from ragged_claws.research.protocol import finish_attempt, register, start_attempt
 from ragged_claws.research.snapshot import (
+    NAMESPACE,
     ResearchError,
+    digest,
     encoded,
+    freeze,
     model_hash,
     verify_snapshot,
     write_once,
@@ -502,3 +511,219 @@ def test_row_inventory_and_relationships_do_not_need_return_recomputation(
         rows = (rows[0].model_copy(update={"status": "complete", "outcome": None}), *rows[1:])
     with pytest.raises(DurableError, match="archive_row"):
         _row_contract(rows, snapshot, events)
+
+
+@pytest.mark.parametrize("which", ["positive", "insufficient"])
+def test_initial_successful_analysis_cannot_omit_evaluation(
+    archive: tuple[Path, dict[str, Any]], tmp_path: Path, which: str
+) -> None:
+    root, detail = clone(archive, tmp_path / "candidate")
+    for name in ("evaluation.json", "evaluation.md"):
+        (root / "research/analyses" / detail[which] / name).unlink()
+    for path in (root / SEALS).glob("*.json"):
+        path.unlink()
+    seal_archive(root, POLICY, absolute_paths_reviewed=True)
+    objects = MemoryObjects()
+    with pytest.raises(DurableError, match="successful_analysis_evaluation"):
+        publish(objects, DataLayout(root), expected_parent=None, policy=POLICY)
+    assert not objects.values
+
+
+def test_nonempty_builder_result_still_requires_row_envelope(
+    archive: tuple[Path, dict[str, Any]], tmp_path: Path
+) -> None:
+    root, detail = clone(archive, tmp_path / "candidate")
+    result = root / "research" / detail["snapshot"]
+    (result / "research_rows.parquet").unlink()
+    seal = json.loads((result / "result.json").read_bytes())
+    seal["files"].pop("research_rows.parquet")
+    (result / "result.json").write_bytes(encoded(seal))
+    with pytest.raises(DurableError, match="rows_missing_for_nonempty_inputs"):
+        _research_result(result, {root / "snapshots" / detail["snapshot"]})
+
+
+def isolated_crash(archive: tuple[Path, dict[str, Any]], root: Path) -> Path:
+    source, detail = archive
+    shutil.copytree(
+        source / "snapshots" / detail["empty_snapshot"],
+        root / "snapshots" / detail["empty_snapshot"],
+    )
+    crash = next(
+        p
+        for p in (source / ATTEMPTS).glob("*.started.json")
+        if not p.with_name(p.name.replace(".started.json", ".finished.json")).exists()
+    )
+    target = root / ATTEMPTS / crash.name
+    write_once(target, crash.read_bytes())
+    return target
+
+
+def test_published_crash_cannot_be_downgraded_by_appended_finish(
+    archive: tuple[Path, dict[str, Any]], tmp_path: Path
+) -> None:
+    root = tmp_path / "candidate"
+    start = isolated_crash(archive, root)
+    seal_archive(root, POLICY, absolute_paths_reviewed=True)
+    objects = MemoryObjects()
+    initial = publish(objects, DataLayout(root), expected_parent=None, policy=POLICY)
+    original = objects.get(POINTER_KEY, limit=4096)
+    finish_attempt(start, inspected=False, success=False)
+    seal_archive(root, POLICY, absolute_paths_reviewed=True)
+    with pytest.raises(DurableError, match="potential_inspection_downgraded"):
+        publish(
+            objects,
+            DataLayout(root),
+            expected_parent=initial.generation.generation_id,
+            policy=POLICY,
+        )
+    assert objects.get(POINTER_KEY, limit=4096) == original
+    # A forged child with correct file hashes must also reject on pinned restore.
+    candidate = validate_layout(root, POLICY)
+    forged = initial.generation.model_copy(
+        update={
+            "parent_id": initial.generation.generation_id,
+            "files": entries(candidate),
+        }
+    )
+    forged = forged.model_copy(update={"generation_id": generation_id(forged)})
+    for entry in forged.files:
+        if f"blobs/{entry.sha256}" not in objects.values:
+            objects.put(f"blobs/{entry.sha256}", candidate.files[entry.path], expected_etag=None)
+    objects.put(f"generations/{forged.generation_id}.json", encoded(forged), expected_etag=None)
+    with (
+        pytest.raises(DurableError, match="potential_inspection_downgraded"),
+        restore(objects, forged.generation_id),
+    ):
+        pytest.fail("pinned restore must reject a semantic downgrade")
+    with restore(objects, initial.generation.generation_id) as old:
+        assert not list((old.layout.root / ATTEMPTS).glob("*.finished.json"))
+
+
+def test_initial_pre_read_denial_is_retained_without_a_false_potential_history(
+    archive: tuple[Path, dict[str, Any]], tmp_path: Path
+) -> None:
+    root = tmp_path / "candidate"
+    start = isolated_crash(archive, root)
+    finish_attempt(start, inspected=False, success=False)
+    seal_archive(root, POLICY, absolute_paths_reviewed=True)
+    objects = MemoryObjects()
+    first = publish(objects, DataLayout(root), expected_parent=None, policy=POLICY)
+    with restore(objects, first.generation.generation_id) as old:
+        assert old.validated.files == capture_layout(root)
+
+
+@pytest.mark.parametrize("full_interval", [True, False])
+def test_published_inflight_attempt_can_complete_only_with_inspected_full_interval(
+    archive: tuple[Path, dict[str, Any]],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    full_interval: bool,
+) -> None:
+    source, detail = archive
+    prepared = tmp_path / "prepared"
+    prepared.mkdir()
+    frozen_source = source / "snapshots" / detail["empty_snapshot"]
+    for name in ("config", "protocol", "controls", "prices", "origins"):
+        shutil.copyfile(frozen_source / f"{name}.json", prepared / f"{name}.json")
+    from ragged_claws.research.models import BuildConfig
+
+    config = BuildConfig.model_validate_json((prepared / "config.json").read_bytes()).model_copy(
+        update={
+            "coverage_through": date(2019, 12, 31) if full_interval else date(2024, 6, 28),
+            "as_of": datetime(2024, 7, 1, tzinfo=UTC),
+        }
+    )
+    (prepared / "config.json").write_bytes(encoded(config))
+    frozen = tmp_path / "frozen"
+    snapshot = freeze(prepared, frozen)
+    root = tmp_path / "candidate"
+    shutil.copytree(frozen, root / "snapshots" / str(snapshot.snapshot_id))
+    start = start_attempt(root / "research/registry", snapshot)
+    seal_archive(root, POLICY, absolute_paths_reviewed=True)
+    objects = MemoryObjects()
+    first = publish(objects, DataLayout(root), expected_parent=None, policy=POLICY)
+    # Resume the same test writer immediately after its original start was published.
+    builder = importlib.import_module("ragged_claws.research.build")
+    monkeypatch.setattr(builder, "start_attempt", lambda *_: start)
+    builder.build(frozen, root / "research", root / "research/registry")
+    finish = json.loads(start.with_name(start.name.replace("started", "finished")).read_bytes())
+    assert finish["success"] and finish["outcome_inspection"]
+    seal_archive(root, POLICY, absolute_paths_reviewed=True)
+    if not full_interval:
+        with pytest.raises(DurableError, match="potential_inspection_downgraded"):
+            publish(
+                objects,
+                DataLayout(root),
+                expected_parent=first.generation.generation_id,
+                policy=POLICY,
+            )
+        return
+    second = publish(
+        objects, DataLayout(root), expected_parent=first.generation.generation_id, policy=POLICY
+    )
+    with restore(objects, second.generation.generation_id) as recovered:
+        assert recovered.validated.files == capture_layout(root)
+
+
+@pytest.mark.parametrize("bound", [False, True])
+def test_successful_scope_approval_ambiguity_requires_exact_attempt_bindings(
+    archive: tuple[Path, dict[str, Any]], tmp_path: Path, bound: bool
+) -> None:
+    root, detail = clone(archive, tmp_path / "candidate")
+    value = Evaluation.model_validate_json(
+        (root / "research/analyses" / detail["positive"] / "evaluation.json").read_bytes()
+    )
+    approval = AnalysisApproval.model_validate_json(
+        (root / APPROVALS / f"{value.approval_sha256}.json").read_bytes()
+    ).model_copy(update={"supervisor_reference": "fixture://OTHER-INVENTED-APPROVAL"})
+    write_once(root / APPROVALS / f"{model_hash(approval)}.json", encoded(approval))
+    identity = uuid5(
+        NAMESPACE,
+        digest(
+            encoded(
+                {
+                    "snapshot": model_hash(
+                        Snapshot.model_validate_json(
+                            (
+                                root / "snapshots" / str(value.snapshot_id) / "snapshot.json"
+                            ).read_bytes()
+                        )
+                    ),
+                    "result": value.result_sha256,
+                    "plan": value.plan_sha256,
+                    "approval": model_hash(approval),
+                }
+            )
+        ),
+    )
+    other = value.model_copy(
+        update={"approval_sha256": model_hash(approval), "evaluation_id": identity}
+    )
+    write_once(root / "research/analyses" / str(identity) / "evaluation.json", encoded(other))
+    write_once(root / "research/analyses" / str(identity) / "evaluation.md", render(other))
+    bindings = None
+    if bound:
+        scope_path = next(
+            p
+            for p in (root / ATTEMPTS).glob("*.analysis.json")
+            if json.loads(p.read_bytes())["plan_sha256"] == value.plan_sha256
+        )
+        previous = scope_path.name.removesuffix(".analysis.json")
+        new = str(uuid4())
+        for suffix in (".started.json", ".analysis.json", ".finished.json"):
+            raw = (root / ATTEMPTS / (previous + suffix)).read_bytes()
+            if suffix == ".started.json":
+                start = json.loads(raw)
+                start["attempt_id"] = new
+                raw = encoded(start)
+            write_once(root / ATTEMPTS / (new + suffix), raw)
+        assert value.approval_sha256 is not None
+        bindings = {previous: value.approval_sha256, new: model_hash(approval)}
+    seal_archive(root, POLICY, absolute_paths_reviewed=True, attempt_approvals=bindings)
+    if bound:
+        validate_layout(root, POLICY)
+    else:
+        with pytest.raises(
+            DurableError, match="successful_analysis_evaluation_missing_or_ambiguous"
+        ):
+            validate_layout(root, POLICY)

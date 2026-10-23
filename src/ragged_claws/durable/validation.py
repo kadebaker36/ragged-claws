@@ -678,7 +678,15 @@ def _research_result(root: Path, frozen: set[Path]) -> None:
     }
     if result != {"snapshot_id": str(snapshot.snapshot_id), "files": actual}:
         raise DurableError("research_result_manifest_mismatch")
-    rows = _read_parquet(root / "research_rows.parquet", ResearchRow, "row_id", "staging")
+    if (root / "research_rows.parquet").exists():
+        rows = _read_parquet(root / "research_rows.parquet", ResearchRow, "row_id", "staging")
+    else:
+        # The existing builder omits empty envelopes. Only an actually empty
+        # frozen Event population can support a result with no row file.
+        inputs = CanonicalParquetStore(DataLayout(matching[0] / "data"), read_only=True)
+        if inputs.load(Event):
+            raise DurableError("research_rows_missing_for_nonempty_inputs")
+        rows = ()
     for summary in report.horizons:
         selected = [
             r
@@ -758,6 +766,39 @@ def compare_parent(parent: Validated, candidate: Validated) -> None:
                 raise DurableError("canonical_or_staging_identity_conflict")
         else:
             raise DurableError("immutable_history_conflict")
+    preserve_potential_inspections(parent.files, candidate.files)
+
+
+def preserve_potential_inspections(previous: dict[str, bytes], current: dict[str, bytes]) -> None:
+    """A published interrupted real attempt cannot acquire a narrower denial later."""
+    from datetime import date
+
+    from ragged_claws.research.models import Period
+
+    for name, content in previous.items():
+        if not name.startswith("research/registry/attempts/") or not name.endswith(".started.json"):
+            continue
+        finish = name.removesuffix(".started.json") + ".finished.json"
+        start = json_value(content)
+        if start["mode"] not in ("discovery", "validation") or finish in previous:
+            continue
+        if finish not in current:
+            continue
+        ended = json_value(current[finish])
+        potential = Period.model_validate_json(encoded(start["period"]))
+        interval = (
+            Period.model_validate_json(encoded(ended["inspection_period"]))
+            if "inspection_period" in ended
+            else None
+        )
+        if (
+            ended.get("outcome_inspection") is not True
+            or interval is None
+            or interval.start > potential.start
+            or interval.end
+            < max(potential.end, date.fromisoformat(start["potential_coverage_end"]))
+        ):
+            raise DurableError("published_potential_inspection_downgraded")
 
 
 def entries(validated: Validated) -> tuple[FileEntry, ...]:

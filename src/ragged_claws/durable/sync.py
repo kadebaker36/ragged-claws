@@ -25,6 +25,7 @@ from ragged_claws.durable.validation import (
     entries,
     json_value,
     metadata_secrets,
+    preserve_potential_inspections,
     validate_layout,
 )
 from ragged_claws.research.snapshot import digest, encoded, environment, private_root
@@ -116,12 +117,21 @@ def restore(
     ancestor = generation
     seen = {identity}
     manifest_bytes = len(encoded(generation))
+    potential_starts: set[str] = set()
     while ancestor.parent_id is not None:
         if ancestor.parent_id in seen or len(seen) >= 4096:
             raise DurableError("cyclic_or_excessive_generation_history")
         seen.add(ancestor.parent_id)
         child = ancestor
         ancestor = load_generation(store, ancestor.parent_id)
+        ancestor_paths = {entry.path for entry in ancestor.files}
+        potential_starts.update(
+            path
+            for path in ancestor_paths
+            if path.startswith("research/registry/attempts/")
+            and path.endswith(".started.json")
+            and path.removesuffix(".started.json") + ".finished.json" not in ancestor_paths
+        )
         current_files = {entry.path: entry for entry in child.files}
         for entry in ancestor.files:
             if entry.path not in current_files or (
@@ -151,6 +161,11 @@ def restore(
             generation.record_counts,
         ):
             raise DurableError("generation_validation_metadata_mismatch")
+        # Ancestry already pins these exact immutable start bytes. Inspect only
+        # their retained meaning; no ancestor research or outcome execution.
+        preserve_potential_inspections(
+            {path: validated.files[path] for path in potential_starts}, validated.files
+        )
         yield Restored(layout, generation, validated)
 
 

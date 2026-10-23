@@ -257,7 +257,11 @@ def _row_contract(rows: tuple[ResearchRow, ...], snapshot: Snapshot, events: set
 
 
 def _evaluation(
-    value: Evaluation, root: Path, files: dict[str, bytes], records: dict[str, dict[str, Any]]
+    value: Evaluation,
+    root: Path,
+    files: dict[str, bytes],
+    records: dict[str, dict[str, Any]],
+    attempt_approvals: dict[str, str],
 ) -> None:
     snapshot_path = f"snapshots/{value.snapshot_id}/snapshot.json"
     result_path = f"research/{value.snapshot_id}/result.json"
@@ -451,6 +455,8 @@ def _evaluation(
         stem = name.removesuffix(".analysis.json")
         started = records.get(stem + ".started.json", {})
         finished = records.get(stem + ".finished.json", {})
+        if stem in attempt_approvals and attempt_approvals[stem] != value.approval_sha256:
+            continue
         if started.get("snapshot_id") == str(value.snapshot_id) and finished.get("success") is True:
             matched = True
     if not matched:
@@ -535,6 +541,7 @@ def validate_archive(root: Path, files: dict[str, bytes], policy: CloudPolicy) -
     journal_records(records, files)
     used_plans: set[str] = set()
     used_approvals: set[str] = set(attempt_approvals.values())
+    evaluations: dict[tuple[str, str, str], list[Evaluation]] = {}
     for name in sorted(special):
         if not name.startswith(ANALYSES) or not name.endswith("evaluation.json"):
             continue
@@ -546,13 +553,36 @@ def validate_archive(root: Path, files: dict[str, bytes], policy: CloudPolicy) -
         md = name.removesuffix("json") + "md"
         if files.get(md) != render(value):
             raise DurableError("archive_evaluation_markdown_mismatch")
-        _evaluation(value, root, files, records)
+        _evaluation(value, root, files, records, attempt_approvals)
+        evaluations.setdefault(
+            (str(value.snapshot_id), value.plan_sha256, value.result_sha256), []
+        ).append(value)
         used_plans.add(value.plan_sha256)
         if value.approval_sha256:
             used_approvals.add(value.approval_sha256)
     for name, scope in records.items():
         if name.endswith(".analysis.json") and scope.get("plan_sha256"):
             used_plans.add(scope["plan_sha256"])
+        if not name.endswith(".analysis.json"):
+            continue
+        stem = name.removesuffix(".analysis.json")
+        if (
+            records.get(stem + ".finished.json", {}).get("success") is not True
+            or scope["result_sha256"] is None
+        ):
+            continue  # Builder-only scope, denial or unfinished attempt; no Evaluation invented.
+        matches = evaluations.get(
+            (
+                records[stem + ".started.json"]["snapshot_id"],
+                scope["plan_sha256"],
+                scope["result_sha256"],
+            ),
+            [],
+        )
+        if stem in attempt_approvals:
+            matches = [v for v in matches if v.approval_sha256 == attempt_approvals[stem]]
+        if len(matches) != 1:
+            raise DurableError("successful_analysis_evaluation_missing_or_ambiguous")
     for name in special:
         if (
             name.startswith(ANALYSES)

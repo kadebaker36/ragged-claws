@@ -62,6 +62,15 @@ Post-read failures retain the conservative selection start through
 max(period end, coverage); true pre-read denials remain false. Interrupted real starts
 remain potentially inspected under the existing registration guard.
 
+A real start published without a finish establishes a conservative potential interval.
+A descendant may leave it unfinished or append an inspected finish covering that entire
+interval. It cannot append an uninspected denial or a narrower inspected interval to
+recover an untouched claim. This comparison runs before publication writes and against
+every pinned ancestor during restore, using immutable retained start bytes. Initial
+pre-read denials already containing both start and finish remain supported. No finish
+is synthesized and no exceptional reconciliation mechanism is introduced. A genuine
+completion that cannot retain the published interval fails closed pending separate review.
+
 Evaluations require matching frozen inputs/results, copied original rows, exact
 plan and optional approval, protocol/code/lock/runtime/origin hashes, the original
 UUIDv5 identity formula and a matching successful analysis scope/finish. Real modes
@@ -70,6 +79,16 @@ protocol/features/period/mode, feed/adjustment and frozen price-provider namespa
 An unrelated root or other snapshot cannot supply a missing dependency: the existing
 per-loader closure validators still run for root, each frozen input, and each result
 with only its explicitly matching frozen input.
+
+Closure is bidirectional: every successful analysis sidecar with a non-null result hash
+must resolve to exactly one retained, validated Evaluation JSON/Markdown in the same
+snapshot/plan/result context. Optional approval identity is part of the Evaluation ID.
+If otherwise identical scopes have different approvals, explicit existing attempt-to-approval
+bindings must resolve that ambiguity in both directions; unresolvable scopes reject.
+The builder's original sidecar has a null result hash and does not require an Evaluation.
+Denials and unfinished attempts do not acquire invented outputs. A successful empty
+builder result may omit its row envelope only when the matching frozen Event population
+is empty; nonempty inputs still require the row file.
 
 The parser checks the complete declared event/horizon inventory, deterministic row
 IDs, snapshot/event/outcome/status relationships, exact row copies, existing pure cost arithmetic, report distribution

@@ -70,6 +70,12 @@ scoped research results and journal/registration files are immutable. Same state
 new generation. A policy change requires separate namespace review rather than silently changing
 the rights of an existing history.
 
+File retention also preserves inspection knowledge: a previously published real start without
+a finish cannot gain an uninspected denial or a finish narrowing its potential interval.
+Publication compares the parent; pinned restore enforces this against all ancestors using
+the retained immutable starts. Initial pre-read denials remain valid, and an inspected
+completion covering the published interval is supported. No reconciliation override is added.
+
 All local rights/lineage/schema/parent-conflict checks finish before the first PUT. File bytes are
 captured and checked for changes during validation; uploads use those exact validated bytes.
 Immutable blob/manifest creation uses If-None-Match:*; a known conditional conflict permits only
