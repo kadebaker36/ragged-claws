@@ -75,6 +75,26 @@ def clock(value: Any) -> datetime:
         raise FigiAuditError("invalid aware evidence clock") from None
 
 
+def declared_input(repo: Path, name: str, expected: str) -> bytes:
+    """Recover only the exact pinned metadata bytes from its recognized Git LF form.
+
+    Source-response objects are never normalized. Both hashes and the post-reconstruction
+    hash are required; no semantic JSON equivalence or arbitrary newline variant suffices.
+    """
+    raw = (repo / name).read_bytes()
+    if digest(raw) == expected:
+        return raw
+    if (
+        name == "tests/fixtures/identity/sec-2024/evidence.json"
+        and expected == "e3bc2c08aeaa36cbe557725cca22d1bfd98fa15236d048a23b7f764aca782742"
+        and digest(raw) == "2f2db6e4f94d37164370aabf7948ed2bb7c9e5feee88c49a4e9b4f4590845f40"
+    ):
+        original = raw.replace(b"\n", b"\r\n")
+        if digest(original) == expected:
+            return original
+    raise FigiAuditError("changed source input")
+
+
 def _load_declaration(path: Path, repo: Path) -> dict[str, Any]:
     raw = path.read_bytes()
     if digest(raw) != DECLARATION_HASH:
@@ -89,14 +109,16 @@ def _load_declaration(path: Path, repo: Path) -> dict[str, Any]:
         if digest((repo / reference["path"]).read_bytes()) != reference["sha256"]:
             raise FigiAuditError("changed proposal/card")
     for name, sha in d["input_paths_sha256"].items():
-        if digest((repo / name).read_bytes()) != sha:
-            raise FigiAuditError("changed source input")
+        declared_input(repo, name, sha)
     p = json.loads((repo / d["proposal"]["path"]).read_bytes())
     c = json.loads((repo / d["coverage_card"]["path"]).read_bytes())
     if p["acquisition_authorized"] is not False or c["acquisition_authorized"] is not False:
         raise FigiAuditError("old proposal authorization changed")
     raw_source = (repo / "tests/fixtures/identity/sec-2024/0001104659-24-020016.txt").read_bytes()
-    evidence = json.loads((repo / "tests/fixtures/identity/sec-2024/evidence.json").read_bytes())
+    evidence_name = "tests/fixtures/identity/sec-2024/evidence.json"
+    evidence = json.loads(
+        declared_input(repo, evidence_name, d["input_paths_sha256"][evidence_name])
+    )
     for span in evidence["resources"][0]["reviewed_claim_spans"]:
         if raw_source[span["start"] : span["end_exclusive"]].decode() != span["exact_text"]:
             raise FigiAuditError("source claim span contradiction")

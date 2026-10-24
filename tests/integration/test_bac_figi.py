@@ -392,3 +392,33 @@ def test_orphan_raw_after_interrupt_is_not_interpreted_as_empty_result(tmp_path:
     assert result["receipt_phase"] == "checkpoint_only"
     assert result["candidate_diagnostic"] == {} and result["source_observation"] is None
     assert result["retained_capture_directory_bytes"] > len(FIXTURE.read_bytes())
+
+
+@pytest.mark.parametrize("changed", [False, True])
+def test_exact_git_metadata_representation_recovers_original_pin_only(
+    tmp_path: Path, changed: bool
+) -> None:
+    d = load_declaration(DECL, REPO)
+    clone = tmp_path / "clone"
+    paths = set(d["input_paths_sha256"]) | {d["proposal"]["path"], d["coverage_card"]["path"]}
+    for name in paths:
+        p = clone / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes((REPO / name).read_bytes())
+    metadata = clone / "tests/fixtures/identity/sec-2024/evidence.json"
+    lf = metadata.read_bytes().replace(b"\r\n", b"\n")
+    assert digest(lf) == "2f2db6e4f94d37164370aabf7948ed2bb7c9e5feee88c49a4e9b4f4590845f40"
+    metadata.write_bytes(lf + (b" " if changed else b""))
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, stream=httpx.ByteStream(FIXTURE.read_bytes()))
+
+    if changed:
+        with pytest.raises(FigiAuditError, match="changed source"):
+            acquire(DECL, clone, tmp_path / "out", transport=httpx.MockTransport(handler))
+        assert calls == [] and not (tmp_path / "out").exists()
+    else:
+        acquire(DECL, clone, tmp_path / "out", transport=httpx.MockTransport(handler))
+        assert len(calls) == 1 and metadata.read_bytes() == lf

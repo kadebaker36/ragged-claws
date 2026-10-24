@@ -18,6 +18,14 @@ POST body and URL already specified by the accepted proposal. A changed input, d
 unknown version fails before request/output. There is no default live CLI or discovery route.
 Fixture tests use an explicit MockTransport; Git contains invented responses only.
 
+The accepted metadata JSON was originally pinned with CRLF bytes, while Git's existing text
+policy stores its LF form. This loader recognizes only that exact metadata path and LF hash,
+reconstructs the original CRLF bytes in memory and requires the original pinned hash to match.
+Other bytes, paths and semantic-equivalence substitutions reject. No source response, metadata
+file, declaration, old pin or Git attribute is rewritten. The first hosted CI exposed this
+portability issue after the live capture; its failed logs and original reports remain preserved.
+The correction is offline only and does not renew the request budget.
+
 The official [API documentation](https://www.openfigi.com/api/documentation),
 [terms](https://www.openfigi.com/docs/terms-of-service) and
 [FAQ](https://www.openfigi.com/about/faq) were rechecked October 24, 2026. Direct API-document
