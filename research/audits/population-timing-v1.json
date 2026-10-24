@@ -1,0 +1,29 @@
+{
+  "format_version": "sec-population-timing-scope/1.0.0",
+  "audit_id": "sec-two-day-lexical-four-v1",
+  "base_commit": "2045a06c35f62244b29c2bf5b93014aec0967633",
+  "purpose": "Outcome-blind bounded archival collection diagnostic; not representative, inference, registration, paper observation or funding evidence",
+  "index_urls": [
+    "https://www.sec.gov/Archives/edgar/daily-index/2024/QTR3/master.20240910.idx",
+    "https://www.sec.gov/Archives/edgar/daily-index/2024/QTR3/master.20240911.idx"
+  ],
+  "selection": "Per valid index: all exact Form 4 rows; deduplicate exact references; fail conflicting accession/path metadata; first four unique accessions in ascending accession order, or all if fewer. No substitution for any failure, no-P/S or unresolved identity.",
+  "index_dates": ["2024-09-10", "2024-09-11"],
+  "form": "4",
+  "per_day_limit": 4,
+  "max_index_gets": 2,
+  "max_submission_gets": 8,
+  "max_index_bytes": 2097152,
+  "max_submission_bytes": 5242880,
+  "minimum_request_interval_seconds": 1,
+  "attempts_per_resource": 1,
+  "redirects": false,
+  "global_stop": "Any non200, challenge, transport failure or oversize stops remaining requests; retain attempted/unattempted and exact bounded response bytes. No retries, replacement, extra pages, searches or other dates.",
+  "submission_paths": "Only index Filename edgar/data/<decimal CIK>/<dashed accession>.txt; preserve exact locator and require accession agreement. Index CIK is filer context, never assumed issuer.",
+  "source_policy_urls": ["https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data", "https://www.sec.gov/files/about/webmaster-faq.htm"],
+  "user_agent": "Existing ignored SEC_USER_AGENT configuration only; loaded inside request process, never serialized",
+  "timing": "Preserve transaction, official filing date, raw acceptance, explicit America/New_York interpretation, acceptance+5min assumption, source-derived actionable open and this retrieval separately. First-ever publication/receipt and historical decision availability unknown; no actual decision/entry.",
+  "interval": "Hypothetical XNYS actionable-open through close of 60th regular session AFTER entry, entry index zero; closed endpoints; sweep opens before closes at equal timestamps. Unknown timing retained separately. No position, NAV, price or dollar capacity.",
+  "execution_prohibitions": ["prices", "outcomes", "inference", "registration", "paper_start", "provider_or_broker_access", "cloud_activation", "funds_or_orders"],
+  "historical_limit": "Indexes and bodies observed in 2026 may reflect corrections/removals; not proof of 2024 archive version, collector completeness or first-public time. Lexical subsample is biased. Unselected means uncollected, never zero events."
+}
