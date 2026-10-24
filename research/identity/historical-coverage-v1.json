@@ -1,0 +1,1049 @@
+{
+  "format_version": "historical-coverage-decision/1.0.0",
+  "decision_id": "four-body-historical-coverage-v1",
+  "status": "proposal_for_review_not_identity_acceptance",
+  "acquisition_authorized": false,
+  "base_commit": "f5002bab11449b59bacc0d5b505e8f3edcbfe4e3",
+  "review_date_utc": "2026-10-24",
+  "input_paths_sha256": {
+    "research/audits/four-body-v1.json": "c7a9025b8560d3119c95fae6068ccd0b909e3fb49e467018f416292f51825890",
+    "research/audits/four-body-reference-context-v1.json": "1ef82fe5a603d78e61b0bed1a1b31ebdedfbb1b2b40978f247ce51f80a016c81",
+    "tests/fixtures/sec-four-body/manifest.json": "b700daf143b15ba31082bfe8e405672d13f07f542f37645cc19a94bc25017b95",
+    "tests/fixtures/sec-four-body/objects/201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523": "201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+    "tests/fixtures/sec-four-body/objects/9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+    "tests/fixtures/sec-four-body/objects/88bf15669a9b9b5d274b9ea655374eeced809a04fad78c7162d93f11f02a486b": "88bf15669a9b9b5d274b9ea655374eeced809a04fad78c7162d93f11f02a486b",
+    "tests/fixtures/sec-four-body/objects/308ef02df7dd47c2819fed6beeb7a032e30de646ec9bf0ac52bcde6764690547": "308ef02df7dd47c2819fed6beeb7a032e30de646ec9bf0ac52bcde6764690547",
+    "tests/fixtures/identity/sec-2024/evidence.json": "e3bc2c08aeaa36cbe557725cca22d1bfd98fa15236d048a23b7f764aca782742",
+    "tests/fixtures/identity/sec-2024/0001104659-24-020016.txt": "252953852009256b2506304a8c213db7791243b5f6b524b4d271dda4897d6f71",
+    "tests/fixtures/identity/sec-2024/0000070858-24-000122-index.htm": "b60ee0e1f1c2d8a5946f4e93466b8a8022af0650e60de56ac9fff6a865a84e14",
+    "tests/fixtures/identity/sec-2024/10k-common-cover-row.html": "e678e8624730ecfa12611b8a03fedd58027f45c79e0df7cecdfe75688fcbac1b"
+  },
+  "external_retained_report": {
+    "artifact": "order16-corrected-report.json",
+    "sha256": "d0d51eeff4a6b718ff560f7e2aa5afe21682d74679d568b8c7b812ace02c01ca",
+    "inventory_sha256": "339f1a90d14aec033eb72a1802f1e60dfbfeeafa771a3590e64f26983c437c5a",
+    "original_head": "28ad8ea8653c94bc9cf4d01d83dbe43c1e80c294",
+    "supervisor_acceptance_sha256": "179f59a1c3b002a89f7bf4da8eb3b6dc7abfa4ee8ec781a506a26601cc090a93"
+  },
+  "denominators": {
+    "body_states": {
+      "captured": 4
+    },
+    "distinct_observed_event_issuers": 3,
+    "events_by_code_date_issuer": {
+      "S|2024-09-10|271534d6-e26a-562d-9e64-c15b168a60e8": 2,
+      "S|2024-09-10|56c90ac0-6c82-531a-977e-92db48843a69": 1,
+      "S|2024-09-10|5b7d2c72-a666-5733-9a6e-7b75d1552996": 6
+    },
+    "form4_reference_groups": 490,
+    "observed_events_by_code": {
+      "P": 0,
+      "S": 9
+    },
+    "parsed_filings": 4,
+    "parsed_no_events": 1,
+    "predeclared_candidates": 4,
+    "reporting_owner_occurrences": 4,
+    "row_exclusions": {
+      "non_transaction_holding": 1,
+      "unsupported_code:F": 1,
+      "unsupported_code:G": 1
+    },
+    "unique_observed_ps_events": 9,
+    "unresolved_listing_events": 9,
+    "unresolved_owner_occurrences": 4,
+    "unresolved_security_events": 9,
+    "unselected_uncollected_groups": 486,
+    "observed_zero_event_filings": [
+      "0000080420-24-000066"
+    ],
+    "second_index_state": "unattempted_unknown",
+    "population_events": null,
+    "earlier_BAC_events_separate_not_added": 3
+  },
+  "filing_matrix": [
+    {
+      "accession": "0000035527-24-000224",
+      "body_reference_url": "https://www.sec.gov/Archives/edgar/data/35527/0000035527-24-000224.txt",
+      "raw_path": "tests/fixtures/sec-four-body/objects/201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+      "raw_sha256": "201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+      "bytes": 7359,
+      "source_observation_id": "1ba4b1c8-d002-5821-87d9-49b6ad0a5c70",
+      "provenance_id": "7fd35c44-8bcd-5683-9393-8cb4a25af7e6",
+      "issuer_cik": "0000035527",
+      "issuer_name_raw": "FIFTH THIRD BANCORP",
+      "symbol_raw_metadata_only": "FITB",
+      "class_titles_raw": [
+        "Common Stock"
+      ],
+      "requirement_key": "0000035527:source-common-title",
+      "source_public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161231",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:12:31Z"
+      },
+      "official_filing_date": "2024-09-10",
+      "official_filing_precision": "day",
+      "observed_at": "2026-10-24T09:51:40.342160Z",
+      "retrieved_at": "2026-10-24T09:51:40.342160Z",
+      "canonical_issuer_claim_known_from": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "class_listing_known_from": null,
+      "source_label_availability": {
+        "effective_availability_at": "2024-09-10T20:17:31Z",
+        "effective_availability_date": null,
+        "policy": {
+          "delay": "PT5M",
+          "policy_id": "sec_acceptance_plus_five_minutes",
+          "policy_version": "1.0.0",
+          "rationale": "EDGAR acceptance plus an explicit five-minute research delay; SEC does not guarantee dissemination latency. This assumption does not measure first availability.",
+          "source_family": "sec.ownership"
+        },
+        "source_public_time": {
+          "partial_date": null,
+          "precision": "second",
+          "raw_value": "20240910161231",
+          "source_timezone": "America/New_York",
+          "timestamp": "2024-09-10T20:12:31Z"
+        },
+        "status": "exact"
+      },
+      "historical_first_collector_receipt": null,
+      "historical_decision_availability": "unknown",
+      "reporting_owner_occurrences": 1,
+      "unresolved_owner_ciks": [
+        "0001831881"
+      ],
+      "event_ids": [
+        "5107e231-7210-502d-b1cb-7f5a88a3c9d6",
+        "8814055a-cfed-5d5c-bc30-b98205cbd1ea"
+      ],
+      "event_count": 2,
+      "zero_event_filing": false,
+      "excluded_rows": [
+        {
+          "coordinate": "nonDerivativeTable/nonDerivativeTransaction[3]",
+          "kind": "nonDerivativeTransaction",
+          "code": "G",
+          "transaction_date": "2024-09-09",
+          "security_title": "Common Stock",
+          "exclusion_reason": "unsupported_code:G"
+        }
+      ],
+      "hypothetical_support_set": "supports-v1"
+    },
+    {
+      "accession": "0000060086-24-000179",
+      "body_reference_url": "https://www.sec.gov/Archives/edgar/data/60086/0000060086-24-000179.txt",
+      "raw_path": "tests/fixtures/sec-four-body/objects/9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "raw_sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "bytes": 13532,
+      "source_observation_id": "8b637504-8387-5f50-90f9-6af260a1cb9f",
+      "provenance_id": "b3f49ed1-5fc0-56ae-b98d-367f94d6eb65",
+      "issuer_cik": "0000060086",
+      "issuer_name_raw": "LOEWS CORP",
+      "symbol_raw_metadata_only": "L",
+      "class_titles_raw": [
+        "Common Stock"
+      ],
+      "requirement_key": "0000060086:source-common-title",
+      "source_public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161646",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:16:46Z"
+      },
+      "official_filing_date": "2024-09-10",
+      "official_filing_precision": "day",
+      "observed_at": "2026-10-24T09:51:41.204749Z",
+      "retrieved_at": "2026-10-24T09:51:41.204749Z",
+      "canonical_issuer_claim_known_from": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "class_listing_known_from": null,
+      "source_label_availability": {
+        "effective_availability_at": "2024-09-10T20:21:46Z",
+        "effective_availability_date": null,
+        "policy": {
+          "delay": "PT5M",
+          "policy_id": "sec_acceptance_plus_five_minutes",
+          "policy_version": "1.0.0",
+          "rationale": "EDGAR acceptance plus an explicit five-minute research delay; SEC does not guarantee dissemination latency. This assumption does not measure first availability.",
+          "source_family": "sec.ownership"
+        },
+        "source_public_time": {
+          "partial_date": null,
+          "precision": "second",
+          "raw_value": "20240910161646",
+          "source_timezone": "America/New_York",
+          "timestamp": "2024-09-10T20:16:46Z"
+        },
+        "status": "exact"
+      },
+      "historical_first_collector_receipt": null,
+      "historical_decision_availability": "unknown",
+      "reporting_owner_occurrences": 1,
+      "unresolved_owner_ciks": [
+        "0001009306"
+      ],
+      "event_ids": [
+        "9b0e8778-d275-597b-b342-4e80e645275b",
+        "e706c178-27b7-5f09-a967-3bdf83edd6dc",
+        "52e8553a-c4f1-50b3-aa2d-b8d56bb9d113",
+        "20a2c166-1140-533e-854f-95c412987af9",
+        "23b2cf65-776b-5fd1-a6f4-5301aca0c5c5",
+        "e28a9169-3014-5199-8ef7-348875443294"
+      ],
+      "event_count": 6,
+      "zero_event_filing": false,
+      "excluded_rows": [
+        {
+          "coordinate": "nonDerivativeTable/nonDerivativeHolding[7]",
+          "kind": "nonDerivativeHolding",
+          "code": null,
+          "transaction_date": null,
+          "security_title": "Common Stock",
+          "exclusion_reason": "non_transaction_holding"
+        }
+      ],
+      "hypothetical_support_set": "supports-v1"
+    },
+    {
+      "accession": "0000080420-24-000066",
+      "body_reference_url": "https://www.sec.gov/Archives/edgar/data/80420/0000080420-24-000066.txt",
+      "raw_path": "tests/fixtures/sec-four-body/objects/88bf15669a9b9b5d274b9ea655374eeced809a04fad78c7162d93f11f02a486b",
+      "raw_sha256": "88bf15669a9b9b5d274b9ea655374eeced809a04fad78c7162d93f11f02a486b",
+      "bytes": 4906,
+      "source_observation_id": "8dfa62c9-95ab-57e7-a76f-7ce63d1f8267",
+      "provenance_id": "4cf13148-6f6d-5df9-9fe8-174b01335d10",
+      "issuer_cik": "0000080420",
+      "issuer_name_raw": "POWELL INDUSTRIES INC",
+      "symbol_raw_metadata_only": "POWL",
+      "class_titles_raw": [
+        "Common Stock"
+      ],
+      "requirement_key": "0000080420:source-common-title",
+      "source_public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910162033",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:20:33Z"
+      },
+      "official_filing_date": "2024-09-10",
+      "official_filing_precision": "day",
+      "observed_at": "2026-10-24T09:51:42.052239Z",
+      "retrieved_at": "2026-10-24T09:51:42.052239Z",
+      "canonical_issuer_claim_known_from": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "class_listing_known_from": null,
+      "source_label_availability": {
+        "effective_availability_at": "2024-09-10T20:25:33Z",
+        "effective_availability_date": null,
+        "policy": {
+          "delay": "PT5M",
+          "policy_id": "sec_acceptance_plus_five_minutes",
+          "policy_version": "1.0.0",
+          "rationale": "EDGAR acceptance plus an explicit five-minute research delay; SEC does not guarantee dissemination latency. This assumption does not measure first availability.",
+          "source_family": "sec.ownership"
+        },
+        "source_public_time": {
+          "partial_date": null,
+          "precision": "second",
+          "raw_value": "20240910162033",
+          "source_timezone": "America/New_York",
+          "timestamp": "2024-09-10T20:20:33Z"
+        },
+        "status": "exact"
+      },
+      "historical_first_collector_receipt": null,
+      "historical_decision_availability": "unknown",
+      "reporting_owner_occurrences": 1,
+      "unresolved_owner_ciks": [
+        "0002025220"
+      ],
+      "event_ids": [],
+      "event_count": 0,
+      "zero_event_filing": true,
+      "excluded_rows": [
+        {
+          "coordinate": "nonDerivativeTable/nonDerivativeTransaction[1]",
+          "kind": "nonDerivativeTransaction",
+          "code": "F",
+          "transaction_date": "2024-09-06",
+          "security_title": "Common Stock",
+          "exclusion_reason": "unsupported_code:F"
+        }
+      ],
+      "hypothetical_support_set": null
+    },
+    {
+      "accession": "0000101778-24-000120",
+      "body_reference_url": "https://www.sec.gov/Archives/edgar/data/101778/0000101778-24-000120.txt",
+      "raw_path": "tests/fixtures/sec-four-body/objects/308ef02df7dd47c2819fed6beeb7a032e30de646ec9bf0ac52bcde6764690547",
+      "raw_sha256": "308ef02df7dd47c2819fed6beeb7a032e30de646ec9bf0ac52bcde6764690547",
+      "bytes": 5290,
+      "source_observation_id": "7fc8900a-4bd9-599d-8a20-b76c5238d8d2",
+      "provenance_id": "bab80d3e-ee8f-527d-80f1-ae70b4e72289",
+      "issuer_cik": "0000101778",
+      "issuer_name_raw": "MARATHON OIL CORP",
+      "symbol_raw_metadata_only": "MRO",
+      "class_titles_raw": [
+        "Common Stock"
+      ],
+      "requirement_key": "0000101778:source-common-title",
+      "source_public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910163024",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:30:24Z"
+      },
+      "official_filing_date": "2024-09-10",
+      "official_filing_precision": "day",
+      "observed_at": "2026-10-24T09:51:43.052286Z",
+      "retrieved_at": "2026-10-24T09:51:43.052286Z",
+      "canonical_issuer_claim_known_from": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "class_listing_known_from": null,
+      "source_label_availability": {
+        "effective_availability_at": "2024-09-10T20:35:24Z",
+        "effective_availability_date": null,
+        "policy": {
+          "delay": "PT5M",
+          "policy_id": "sec_acceptance_plus_five_minutes",
+          "policy_version": "1.0.0",
+          "rationale": "EDGAR acceptance plus an explicit five-minute research delay; SEC does not guarantee dissemination latency. This assumption does not measure first availability.",
+          "source_family": "sec.ownership"
+        },
+        "source_public_time": {
+          "partial_date": null,
+          "precision": "second",
+          "raw_value": "20240910163024",
+          "source_timezone": "America/New_York",
+          "timestamp": "2024-09-10T20:30:24Z"
+        },
+        "status": "exact"
+      },
+      "historical_first_collector_receipt": null,
+      "historical_decision_availability": "unknown",
+      "reporting_owner_occurrences": 1,
+      "unresolved_owner_ciks": [
+        "0001811127"
+      ],
+      "event_ids": [
+        "4b33a28f-022e-5e29-8415-31b835cbbc9e"
+      ],
+      "event_count": 1,
+      "zero_event_filing": false,
+      "excluded_rows": [],
+      "hypothetical_support_set": "supports-v1"
+    }
+  ],
+  "source_event_matrix": [
+    {
+      "event_id": "5107e231-7210-502d-b1cb-7f5a88a3c9d6",
+      "accession": "0000035527-24-000224",
+      "issuer_entity_id": "271534d6-e26a-562d-9e64-c15b168a60e8",
+      "issuer_cik": "0000035527",
+      "source_document": "wk-form4_1725999144.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[1]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 9,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-09",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-09",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161231",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:12:31Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "de31967e-477f-5f4b-afdd-0cc972de9864"
+      ],
+      "source_observation_ids": [
+        "1ba4b1c8-d002-5821-87d9-49b6ad0a5c70"
+      ],
+      "raw_sha256": "201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+      "provenance_id": "7fd35c44-8bcd-5683-9393-8cb4a25af7e6",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000035527:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "8814055a-cfed-5d5c-bc30-b98205cbd1ea",
+      "accession": "0000035527-24-000224",
+      "issuer_entity_id": "271534d6-e26a-562d-9e64-c15b168a60e8",
+      "issuer_cik": "0000035527",
+      "source_document": "wk-form4_1725999144.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[2]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 9,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-09",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-09",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161231",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:12:31Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "e47bbe96-bbbe-5f7d-9e0e-9a69ceb596e9"
+      ],
+      "source_observation_ids": [
+        "1ba4b1c8-d002-5821-87d9-49b6ad0a5c70"
+      ],
+      "raw_sha256": "201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+      "provenance_id": "7fd35c44-8bcd-5683-9393-8cb4a25af7e6",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000035527:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "9b0e8778-d275-597b-b342-4e80e645275b",
+      "accession": "0000060086-24-000179",
+      "issuer_entity_id": "5b7d2c72-a666-5733-9a6e-7b75d1552996",
+      "issuer_cik": "0000060086",
+      "source_document": "wk-form4_1725999399.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[1]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 6,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-06",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-06",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161646",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:16:46Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "bfe48695-b54b-555d-9321-354d473573d3"
+      ],
+      "source_observation_ids": [
+        "8b637504-8387-5f50-90f9-6af260a1cb9f"
+      ],
+      "raw_sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "provenance_id": "b3f49ed1-5fc0-56ae-b98d-367f94d6eb65",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000060086:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "e706c178-27b7-5f09-a967-3bdf83edd6dc",
+      "accession": "0000060086-24-000179",
+      "issuer_entity_id": "5b7d2c72-a666-5733-9a6e-7b75d1552996",
+      "issuer_cik": "0000060086",
+      "source_document": "wk-form4_1725999399.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[2]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 6,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-06",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-06",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161646",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:16:46Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "47b31e07-4afa-5fa6-95d5-103cb422164f"
+      ],
+      "source_observation_ids": [
+        "8b637504-8387-5f50-90f9-6af260a1cb9f"
+      ],
+      "raw_sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "provenance_id": "b3f49ed1-5fc0-56ae-b98d-367f94d6eb65",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000060086:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "52e8553a-c4f1-50b3-aa2d-b8d56bb9d113",
+      "accession": "0000060086-24-000179",
+      "issuer_entity_id": "5b7d2c72-a666-5733-9a6e-7b75d1552996",
+      "issuer_cik": "0000060086",
+      "source_document": "wk-form4_1725999399.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[3]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 6,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-06",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-06",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161646",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:16:46Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "ca7caad3-7b96-5554-baa6-66a10394b015"
+      ],
+      "source_observation_ids": [
+        "8b637504-8387-5f50-90f9-6af260a1cb9f"
+      ],
+      "raw_sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "provenance_id": "b3f49ed1-5fc0-56ae-b98d-367f94d6eb65",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000060086:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "20a2c166-1140-533e-854f-95c412987af9",
+      "accession": "0000060086-24-000179",
+      "issuer_entity_id": "5b7d2c72-a666-5733-9a6e-7b75d1552996",
+      "issuer_cik": "0000060086",
+      "source_document": "wk-form4_1725999399.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[4]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 6,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-06",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-06",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161646",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:16:46Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "f38f61fa-ee14-533c-b9dd-35901ef40d5f"
+      ],
+      "source_observation_ids": [
+        "8b637504-8387-5f50-90f9-6af260a1cb9f"
+      ],
+      "raw_sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "provenance_id": "b3f49ed1-5fc0-56ae-b98d-367f94d6eb65",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000060086:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "23b2cf65-776b-5fd1-a6f4-5301aca0c5c5",
+      "accession": "0000060086-24-000179",
+      "issuer_entity_id": "5b7d2c72-a666-5733-9a6e-7b75d1552996",
+      "issuer_cik": "0000060086",
+      "source_document": "wk-form4_1725999399.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[5]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 6,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-06",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-06",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161646",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:16:46Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "89465256-a3f4-5f53-be3a-abb415270b8c"
+      ],
+      "source_observation_ids": [
+        "8b637504-8387-5f50-90f9-6af260a1cb9f"
+      ],
+      "raw_sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "provenance_id": "b3f49ed1-5fc0-56ae-b98d-367f94d6eb65",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000060086:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "e28a9169-3014-5199-8ef7-348875443294",
+      "accession": "0000060086-24-000179",
+      "issuer_entity_id": "5b7d2c72-a666-5733-9a6e-7b75d1552996",
+      "issuer_cik": "0000060086",
+      "source_document": "wk-form4_1725999399.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[6]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 6,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-06",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-06",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910161646",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:16:46Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "4cae2684-711d-5adb-85c5-938d3dc98d17"
+      ],
+      "source_observation_ids": [
+        "8b637504-8387-5f50-90f9-6af260a1cb9f"
+      ],
+      "raw_sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "provenance_id": "b3f49ed1-5fc0-56ae-b98d-367f94d6eb65",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000060086:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    },
+    {
+      "event_id": "4b33a28f-022e-5e29-8415-31b835cbbc9e",
+      "accession": "0000101778-24-000120",
+      "issuer_entity_id": "56c90ac0-6c82-531a-977e-92db48843a69",
+      "issuer_cik": "0000101778",
+      "source_document": "wk-form4_1726000216.xml",
+      "source_row": "nonDerivativeTable/nonDerivativeTransaction[1]",
+      "security_title_raw": "Common Stock",
+      "transaction_code": "S",
+      "occurrence_time": {
+        "partial_date": {
+          "day": 6,
+          "month": 9,
+          "precision": "day",
+          "raw_value": "2024-09-06",
+          "year": 2024
+        },
+        "precision": "day",
+        "raw_value": "2024-09-06",
+        "source_timezone": null,
+        "timestamp": null
+      },
+      "public_time": {
+        "partial_date": null,
+        "precision": "second",
+        "raw_value": "20240910163024",
+        "source_timezone": "America/New_York",
+        "timestamp": "2024-09-10T20:30:24Z"
+      },
+      "actionable_source_label": "2024-09-11T13:30:00Z",
+      "event_evidence_ids": [
+        "a8f37b62-1bda-5d52-906c-51cb31aa7684"
+      ],
+      "source_observation_ids": [
+        "7fc8900a-4bd9-599d-8a20-b76c5238d8d2"
+      ],
+      "raw_sha256": "308ef02df7dd47c2819fed6beeb7a032e30de646ec9bf0ac52bcde6764690547",
+      "provenance_id": "bab80d3e-ee8f-527d-80f1-ae70b4e72289",
+      "security_id": null,
+      "listing_id": null,
+      "identity_status": "unresolved",
+      "requirement_key": "0000101778:source-common-title",
+      "benchmark_requirement_key": "SPY-unresolved-benchmark",
+      "hypothetical_support_set": "supports-v1",
+      "actual_decision": null,
+      "actual_policy_entry": null
+    }
+  ],
+  "supports_v1": {
+    "id": "supports-v1",
+    "calendar": "XNYS",
+    "calendar_package": "exchange_calendars",
+    "calendar_version": "4.13.2",
+    "timezone_package_version": "2026.4",
+    "convention": "entry open is session0; exit close is nth regular session AFTER entry; required union of explicit half-open date Listing intervals covers every elapsed session; entry-open/exit-close availability and actual receipt/decision remain separate",
+    "status": "hypothetical_source_label_requirements_only",
+    "windows": [
+      {
+        "horizon_sessions_after_entry": 20,
+        "entry_open_utc": "2024-09-11T13:30:00+00:00",
+        "exit_session": "2024-10-09",
+        "exit_close_utc": "2024-10-09T20:00:00+00:00",
+        "required_half_open_date_coverage": {
+          "start_inclusive": "2024-09-11",
+          "end_exclusive": "2024-10-10"
+        },
+        "required_price_observations": "entry session open and horizon exit close for resolved instrument and SPY; all intervening listing segments and elapsed/missing/terminal coverage must be audited; no price request authorized"
+      },
+      {
+        "horizon_sessions_after_entry": 60,
+        "entry_open_utc": "2024-09-11T13:30:00+00:00",
+        "exit_session": "2024-12-05",
+        "exit_close_utc": "2024-12-05T21:00:00+00:00",
+        "required_half_open_date_coverage": {
+          "start_inclusive": "2024-09-11",
+          "end_exclusive": "2024-12-06"
+        },
+        "required_price_observations": "entry session open and horizon exit close for resolved instrument and SPY; all intervening listing segments and elapsed/missing/terminal coverage must be audited; no price request authorized"
+      },
+      {
+        "horizon_sessions_after_entry": 90,
+        "entry_open_utc": "2024-09-11T13:30:00+00:00",
+        "exit_session": "2025-01-22",
+        "exit_close_utc": "2025-01-22T21:00:00+00:00",
+        "required_half_open_date_coverage": {
+          "start_inclusive": "2024-09-11",
+          "end_exclusive": "2025-01-23"
+        },
+        "required_price_observations": "entry session open and horizon exit close for resolved instrument and SPY; all intervening listing segments and elapsed/missing/terminal coverage must be audited; no price request authorized"
+      }
+    ],
+    "outcomes_created": 0,
+    "actual_elapsed_forward_observations": 0
+  },
+  "requirements": [
+    {
+      "key": "0000035527:source-common-title",
+      "scope": "four-body-events",
+      "issuer_cik": "0000035527",
+      "class_title_evidence": [
+        "Common Stock"
+      ],
+      "symbol_metadata": "FITB",
+      "permanent_security_identity": null,
+      "instrument_listing_identity": null,
+      "venue_text": null,
+      "exchange_mic": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "known_from": null,
+      "terminal_state": "unknown; no merger/delisting assertion",
+      "evidence_contract": "identity-and-coverage-v1",
+      "hypothetical_support_set": "supports-v1",
+      "benchmark": "SPY-unresolved-benchmark",
+      "acquisition_selected": false
+    },
+    {
+      "key": "0000060086:source-common-title",
+      "scope": "four-body-events",
+      "issuer_cik": "0000060086",
+      "class_title_evidence": [
+        "Common Stock"
+      ],
+      "symbol_metadata": "L",
+      "permanent_security_identity": null,
+      "instrument_listing_identity": null,
+      "venue_text": null,
+      "exchange_mic": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "known_from": null,
+      "terminal_state": "unknown; no merger/delisting assertion",
+      "evidence_contract": "identity-and-coverage-v1",
+      "hypothetical_support_set": "supports-v1",
+      "benchmark": "SPY-unresolved-benchmark",
+      "acquisition_selected": false
+    },
+    {
+      "key": "0000080420:source-common-title",
+      "scope": "zero-event-filing-only",
+      "issuer_cik": "0000080420",
+      "class_title_evidence": [
+        "Common Stock"
+      ],
+      "symbol_metadata": "POWL",
+      "permanent_security_identity": null,
+      "instrument_listing_identity": null,
+      "venue_text": null,
+      "exchange_mic": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "known_from": null,
+      "terminal_state": "unknown; no merger/delisting assertion",
+      "evidence_contract": "identity-and-coverage-v1",
+      "hypothetical_support_set": null,
+      "benchmark": null,
+      "acquisition_selected": false
+    },
+    {
+      "key": "0000101778:source-common-title",
+      "scope": "four-body-events",
+      "issuer_cik": "0000101778",
+      "class_title_evidence": [
+        "Common Stock"
+      ],
+      "symbol_metadata": "MRO",
+      "permanent_security_identity": null,
+      "instrument_listing_identity": null,
+      "venue_text": null,
+      "exchange_mic": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "known_from": null,
+      "terminal_state": "unknown; no merger/delisting assertion",
+      "evidence_contract": "identity-and-coverage-v1",
+      "hypothetical_support_set": "supports-v1",
+      "benchmark": "SPY-unresolved-benchmark",
+      "acquisition_selected": false
+    },
+    {
+      "key": "SPY-unresolved-benchmark",
+      "scope": "mandatory M1 benchmark requirement only",
+      "symbol_label_not_identity": "SPY",
+      "issuer_cik": null,
+      "class_title_evidence": null,
+      "permanent_security_identity": null,
+      "instrument_listing_identity": null,
+      "exchange_mic": null,
+      "class_listing_valid_from": null,
+      "class_listing_valid_to": null,
+      "known_from": null,
+      "terminal_state": "unknown",
+      "evidence_contract": "identity-and-coverage-v1",
+      "hypothetical_support_set": "supports-v1",
+      "acquisition_selected": false
+    }
+  ],
+  "evidence_contract": {
+    "id": "identity-and-coverage-v1",
+    "security": "Sourced exact strong class identifier tied to correct issuer and class; permanent Security creation basis reviewed separately. CIK/name/title/symbol alone is insufficient.",
+    "listing": "Instrument/venue FIGI with authenticated layer or separately reviewed permanent creation basis tied to Security; official source-backed venue text to operating/segment MIC mapping for applicable date. Do not use composite/exchCode as MIC.",
+    "intervals": "Explicit half-open valid_from/valid_to bounds with source timing/precision; union covers entry through elapsed horizon exit inclusive, accounting for every class/venue/symbol change. Unknown endpoints remain unknown, never unbounded convenience.",
+    "knowledge": "Preserve source known/public, valid/effective and observed/review clocks separately. Retrospective identity reconstruction is not evidence of collector possession or an allowable historical decision feature.",
+    "transitions": "Retain predecessor/successor identity and effective dates from primary source. Same-Security renames need explicit listing_history; existing engine requires compatible MIC. Venue transfer or different-Security corporate action is not handled by silently concatenating bars.",
+    "terminal": "Source-backed terminal event/date and terms before classifying delisted/merged; absent bars are missing/unknown, not terminal proof or invented0/-100%/last-price return. Maintain unresolved/censored/missing/terminal records.",
+    "benchmark": "SPY is a requirement label only; independently resolve issuer/fund/class/Security/Listing, venue/MIC, dated interval and matching price convention. No symbol-created identity."
+  },
+  "source_documentation": [
+    {
+      "id": "sec-access",
+      "url": "https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data",
+      "sections": "Fair access; paths/indexes; corrections",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "Explicit source references and immutable capture; no completeness or historical identity guarantee."
+    },
+    {
+      "id": "figi-api",
+      "url": "https://www.openfigi.com/api/documentation",
+      "sections": "Introduction; rate limits; POST /v3/mapping; Mapping Job/response; ID_CUSIP",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "Unauthenticated mapping; one-job array; includeUnlistedEquities; FIGI fields and warning/error distinctions. No historical-validity parameter."
+    },
+    {
+      "id": "figi-overview",
+      "url": "https://www.openfigi.com/about/overview",
+      "sections": "Permanent; semantically meaningless",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "Permanent identifier differs from mutable descriptive metadata."
+    },
+    {
+      "id": "figi-terms",
+      "url": "https://www.openfigi.com/docs/terms-of-service",
+      "sections": "1 Public Domain Dedication;3 Disclaimer;6 Contributions",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "FIGI identifiers freely reusable; descriptions not guaranteed; no blanket rights claim for third-party identifiers."
+    },
+    {
+      "id": "figi-faq",
+      "url": "https://www.openfigi.com/about/faq",
+      "sections": "Third-party identifiers; Usage and Fees",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "FIGI symbology/metadata open; third-party proprietary identifiers are not returned due to licensing restrictions."
+    },
+    {
+      "id": "figi-allocation",
+      "url": "https://www.openfigi.com/about/allocation-rules",
+      "sections": "Equity; listed funds; levels of assignment",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "Share-class/global, composite/market and instrument/venue levels differ. Persistent FIGI after delisting does not date the delisting."
+    },
+    {
+      "id": "alpaca-bars",
+      "url": "https://docs.alpaca.markets/us/reference/stockbars",
+      "sections": "timeframe/start/end/limit/adjustment/asof/feed/page_token;401/403",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "Explicit request semantics and failures, not instrument entitlement or historical identity proof."
+    },
+    {
+      "id": "alpaca-plans",
+      "url": "https://docs.alpaca.markets/us/docs/about-market-data-api",
+      "sections": "Trading API subscriptions; Equities",
+      "access_date_utc": "2026-10-24",
+      "narrow_basis": "Basic/paid feed differences and advertised history since2016 are capabilities, not observed completeness or this user entitlement."
+    }
+  ],
+  "source_decision": {
+    "SEC": "Retained source issuer/row/title/symbol/date evidence and separate BAC CUSIP/cover assertion; not spanning identity, venue of P/S execution or price coverage. Existing reviewed public-filing reuse basis retained; no new source payload requested.",
+    "OpenFIGI": "Current candidate linkage at distinct identity levels only. No supported historical-validity parameter; no historical interval/CIK issuer proof inferred. Warning/no-result differs from provider error/unavailable. One anonymous proposal avoids keys and present-listing-only filtering.",
+    "Alpaca": "Advertised daily-bar/feed/asof/adjustment/pagination capabilities and history since2016 do not establish this account entitlement or specific historical listing/terminal/benchmark completeness. Before any bars: reviewed identity segments, per-segment explicit asof inside interval, feed/adjustment and page lineage, account/data agreement and private local retention/derivative permissions. Cloud/redistribution rights remain unverified."
+  },
+  "user_facts": {
+    "source": "Human-resume correction in MARKET-DATA-ACCESS-SETUP.md; no account inspection",
+    "signed_in": [
+      "Alpaca",
+      "Cloudflare",
+      "Quiver"
+    ],
+    "paid_subscription_confirmed_only": "Quiver",
+    "unverified": [
+      "exact API plan/agreement/entitlement",
+      "local API key readiness",
+      "bucket/retention/derivative/cloud/redistribution rights and setup"
+    ],
+    "capital_plan": "USD250October/500permonth affects affordability only, not validation or authority to invest"
+  },
+  "necessary_supervisor_inputs": {
+    "for_selected_anonymous_proposal": "Independent review and explicit later authorization; no missing credential/email/URL.",
+    "before_any_later_Alpaca_prices": [
+      "Confirm actual feed/plan entitlement and accepted data agreement for intended historical use, local retention and derivatives; separately clarify cloud/redistribution before any such use.",
+      "Confirm scoped private local key readiness without transmitting secret contents; do not infer readiness from sign-in or paid Quiver.",
+      "Supply/review historical class/listing/benchmark/transition evidence; documentation is not instrument coverage."
+    ]
+  },
+  "separate_BAC_scope": {
+    "issuer_cik": "0000070858",
+    "existing_class_candidate_identifier": {
+      "type": "CUSIP",
+      "value": "060505104"
+    },
+    "source_class": "Common Stock",
+    "existing_candidate_count": 1,
+    "event_count_separate": 3,
+    "event_bound_security_listing_count": 0,
+    "class_validity": "unknown",
+    "listing": "unresolved",
+    "new_canonical_records": 0
+  },
+  "one_next_proposal": {
+    "path": "research/identity/bac-openfigi-proposal-v1.json",
+    "sha256": "e9aa87f6d1a2e64404244e8c19f34005b94be55c984b2c451db1bf750fefc6fe",
+    "acquisition_authorized": false,
+    "reason": "Smallest already-sourced strong-identifier probe for missing FIGI candidate linkage; cannot close historical interval or any new9event binding.",
+    "next_action": "Supervisor review this decision and single-request declaration; if accepted, explicitly authorize only that new future anonymous request. No data request under this work order."
+  },
+  "boundaries": {
+    "canonical_records_created": 0,
+    "new_data_requests": 0,
+    "documentation_pages_reviewed": 8,
+    "production_changes": 0,
+    "research_build_outcome_registration_forward_cloud_activation": false,
+    "investment_validation": "not_evaluated",
+    "funding_ready": false
+  }
+}

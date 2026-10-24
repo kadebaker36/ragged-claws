@@ -1,0 +1,91 @@
+{
+  "format_version": "historical-identity-acquisition-proposal/1.0.0",
+  "proposal_id": "bac-cusip-openfigi-v1",
+  "acquisition_authorized": false,
+  "scope": "separate BAC diagnostic only; never add its3events to four-body9sales",
+  "question": "Does the existing SEC-sourced BAC common-stock CUSIP yield any unambiguous share-class/instrument FIGI candidate relationship in the current OpenFIGI response?",
+  "selection_basis": "Only retained dossier already has a sourced strong class identifier; select that typed identifier without outcomes, ticker search, venue/currency filters or current-universe selection.",
+  "input_paths_sha256": {
+    "tests/fixtures/identity/sec-2024/evidence.json": "e3bc2c08aeaa36cbe557725cca22d1bfd98fa15236d048a23b7f764aca782742",
+    "tests/fixtures/identity/sec-2024/0001104659-24-020016.txt": "252953852009256b2506304a8c213db7791243b5f6b524b4d271dda4897d6f71",
+    "tests/fixtures/identity/sec-2024/0000070858-24-000122-index.htm": "b60ee0e1f1c2d8a5946f4e93466b8a8022af0650e60de56ac9fff6a865a84e14",
+    "tests/fixtures/identity/sec-2024/10k-common-cover-row.html": "e678e8624730ecfa12611b8a03fedd58027f45c79e0df7cecdfe75688fcbac1b"
+  },
+  "input_claim": {
+    "issuer_cik": "0000070858",
+    "identifier_type": "CUSIP",
+    "value": "060505104",
+    "source_accession": "0001104659-24-020016",
+    "source_object_sha256": "252953852009256b2506304a8c213db7791243b5f6b524b4d271dda4897d6f71",
+    "byte_start": 2704,
+    "byte_end_exclusive": 2713,
+    "source_public_date": "2024-02-13",
+    "known_precision": "day",
+    "valid_from": null,
+    "valid_to": null
+  },
+  "requests": [
+    {
+      "ordinal": 1,
+      "method": "POST",
+      "url": "https://api.openfigi.com/v3/mapping",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Accept-Encoding": "identity"
+      },
+      "body_utf8_exact_no_newline": "[{\"idType\":\"ID_CUSIP\",\"idValue\":\"060505104\",\"includeUnlistedEquities\":true}]",
+      "body_sha256": "e4d4be923c0569d2345a70778fda762bf517e51e469ae61efaf8ecd8cb1e9ac0",
+      "body_bytes": 76,
+      "maximum_request_body_bytes": 512,
+      "maximum_response_entity_bytes": 1048576,
+      "maximum_response_header_bytes": 16384,
+      "attempts": 1
+    }
+  ],
+  "budget": {
+    "maximum_total_requests": 1,
+    "maximum_POSTs": 1,
+    "maximum_GETs": 0,
+    "maximum_jobs": 1,
+    "maximum_request_body_bytes_total": 512,
+    "maximum_response_entity_bytes_total": 1048576,
+    "maximum_response_header_bytes_total": 16384,
+    "maximum_receipt_bytes": 65536,
+    "maximum_retained_entity_plus_receipt_bytes": 1114112,
+    "minimum_start_interval_seconds": 3,
+    "serial_response_finish_before_next_start": true,
+    "timeout_seconds": 30,
+    "redirects": false,
+    "retries": 0,
+    "substitutions": false
+  },
+  "staged_selector": "No discovery stage. Verify all bound input hashes, exact CUSIP span/issuer/class and request-body hash before the single declared POST; mismatch stops with0requests. Any changed address/body/cap needs a new separately reviewed version before requests.",
+  "credentials": "none: no API key, cookie, Authorization, private contact or account access; no implicit config discovery",
+  "stop_policy": "Global stop on any transport/timeout/non200/401/403/429/redirect/challenge/oversize/privacy/JSON/shape/reference contradiction; no retry, alternate id, venue filter, enum GET, search, pagination or replacement. A complete no-result or ambiguous result also ends the one-request scope.",
+  "private_capture": "Fresh non-sync local AppData outside Git/cloud. Immutable content-addressed exact response entity bytes, request-body hash, UTC aware start/finish, status/content-type/safe rate-limit headers, byte count and completeness plus versioned append-only/checkpoint receipt. Partial bytes remain private; no header values/cookies/exception text or reflected sensitive body copied to public output. Do not mutate blocked raw; reject any public replay before output.",
+  "rights": "Identifiers are publicly reusable under FIGI terms; associated metadata open per FAQ, third-party identifier restrictions remain separate. Retain exact request/response privately for review; no Git/cloud/raw redistribution or implied vendor-data permission in this proposal.",
+  "validation": [
+    "Exactly1array job tied to the sole input; retain all returned candidates and null fields; no first-row or ticker/name selection.",
+    "Validate FIGI representations/layers; preserve shareClassFIGI/compositeFIGI/exchCode as provider assertions, not dated CIK association or MIC mapping.",
+    "Separate unavailable/denied/interrupted/oversize/invalid response, provider error, explicit no-result warning or empty valid data, ambiguous candidates, and candidate-only result. Existing parser errors remain unavailable, not no-result.",
+    "Multiple instruments can share a class: report full multiplicity; do not turn a single share-class group into a unique Listing. Missing class/composite values stay unknown.",
+    "No historical valid/known interval or event binding is created even on a unique candidate; observed time is future capture, not2024known time."
+  ],
+  "existing_consumers_after_separate_review": [
+    "RawStore/CaptureManifest and SourceObservation provenance boundary",
+    "parse_openfigi_mapping_response for candidate-only parsing; generic parser labels instrument_figi, but allocation level/venue meaning still needs review",
+    "IdentityCatalog and typed identifier helpers only after separately sourced subject, venue/MIC, validity and historical-knowledge decisions; no canonical application in this slice"
+  ],
+  "cannot_establish": [
+    "BAC September2024class/listing continuity or historical eligibility",
+    "exact venue/MIC or permanent Listing from a market composite",
+    "any binding/coverage for the separate four-body9events or SPY",
+    "prices/terminal returns/completeness/affordability/performance/forward evidence"
+  ],
+  "prerequisites": [
+    "Independent review and explicit later acquisition authorization; this proposal alone grants none.",
+    "Recheck same official API/terms immediately before later use; if access/rights change stop, do not create account or purchase.",
+    "No user secret is required for this anonymous one-job proposal; Alpaca/Quiver/cloud setup is not its dependency."
+  ]
+}
