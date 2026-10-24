@@ -14,6 +14,7 @@ from ragged_claws.ingestion.sec_audit import (
     HEADER,
     INDEX_URLS,
     AuditError,
+    IndexConflict,
     digest,
     encoded,
     filing_path,
@@ -45,7 +46,12 @@ def index(day: str, *, count: int = 6) -> bytes:
         f"315090|INVENTED other|8-K|{day}|edgar/data/315090/0000000003-24-000001.txt",
     ]
     return (
-        "Invented SEC daily master test fixture\n" + HEADER + "\n-----\n" + "\n".join(rows) + "\n"
+        "Invented SEC daily master test fixture\n"
+        + f"Last Data Received: Sep {int(day[-2:])}, 2024\n"
+        + HEADER
+        + "\n-----\n"
+        + "\n".join(rows)
+        + "\n"
     ).encode()
 
 
@@ -288,3 +294,78 @@ def test_manifest_rejects_fake_success_extra_url_and_attempt_after_stop(tmp_path
         path.write_bytes(encoded(manifest))
         with pytest.raises(AuditError):
             regenerate(SCOPE, captures, tmp_path / variant)
+
+
+def test_recorded_index_conflict_preserves_failed_acquisition_and_denominators(
+    tmp_path: Path,
+) -> None:
+    captures = ROOT / "tests/fixtures/sec-population/audit-v1"
+    manifest = json.loads((captures / "manifest.json").read_bytes())
+    raw = (captures / "objects" / manifest["resources"][0]["sha256"]).read_bytes()
+    assert len(raw) == 337624
+    assert digest(raw) == "ce75cb8eaa6d7f7fe5976aa4c8aa9e59c199b62c9025fa6cc769cc54cd1a7f5b"
+    with pytest.raises(IndexConflict) as failed:
+        parse_index(raw, "2024-09-10")
+    context = failed.value.context
+    assert context["physical_rows"] == 3857
+    assert context["form4_row_references"] == 1053
+    assert context["form4_unique_accession_labels"] == 490
+    assert len(context["conflicts"]) == 1128
+    report = regenerate(SCOPE, captures, tmp_path / "recorded")
+    assert report["acquisition"] == manifest  # Original rejection is not rewritten as a success.
+    assert report["index_frames"][0]["rejected_index_context"] == context
+    assert report["index_frames"][0]["unique_form4"] is None
+    assert report["index_frames"][1]["capture_status"] == "unattempted"
+    assert report["counts"]["selected_filings"] == 0
+    assert not report["complete_declared_acquisition"]
+    assert not report["events"] and report["potential_overlap"]["known_intervals"] == 0
+    assert not (tmp_path / "recorded/data/curated/event.parquet").exists()
+    with pytest.raises(AuditError, match="header day"):
+        parse_index(raw, "2024-09-11")
+
+
+def test_older_official_filing_date_is_separate_from_index_day() -> None:
+    raw = index("2024-09-10", count=1).replace(b"|2024-09-10|", b"|20240909|")
+    rows, _ = parse_index(raw, "2024-09-10")
+    assert rows[0].filed == "2024-09-09" and rows[0].filed_raw == "20240909"
+    assert rows[0].index_day == "2024-09-10"
+
+
+@pytest.mark.parametrize("variant", ["date", "form"])
+def test_body_index_date_type_mismatch_does_not_publish(tmp_path: Path, variant: str) -> None:
+    payloads = frame_payloads()
+    url = list(payloads)[2]
+    if variant == "date":
+        payloads[url] = payloads[url].replace(
+            b"FILED AS OF DATE:\t\t20240910", b"FILED AS OF DATE:\t\t20240909"
+        )
+    else:
+        payloads[url] = payloads[url].replace(
+            b"CONFORMED SUBMISSION TYPE:\t4", b"CONFORMED SUBMISSION TYPE:\t3"
+        )
+    captures = capture(tmp_path, payloads)
+    result = regenerate(SCOPE, captures, tmp_path / "out")
+    assert result["selected_filings"][0]["parse_state"] == "malformed"
+    assert result["selected_filings"][0]["events"] is None
+    assert result["counts"]["selected_filings"] == 8
+
+
+def test_transport_failure_is_single_attempt_and_no_contact_in_receipt(tmp_path: Path) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        raise httpx.ConnectError("invented private request context", request=request)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        manifest = acquire(
+            SCOPE,
+            tmp_path / "captures",
+            client=client,
+            user_agent="Invented audit test test@example.invalid",
+        )
+    assert calls == 1 and manifest["stop_reason"] == "transport_error"
+    assert b"example.invalid" not in encoded(manifest)
+    result = regenerate(SCOPE, tmp_path / "captures", tmp_path / "out")
+    assert not result["complete_declared_acquisition"]

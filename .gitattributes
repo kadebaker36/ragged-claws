@@ -23,3 +23,6 @@ tests/fixtures/identity/sec-2024/*.html binary
 tests/fixtures/littlesis/recorded-1565630.json binary
 tests/fixtures/littlesis/recorded-297069.json binary
 tests/fixtures/littlesis/recorded-position-page.json binary
+
+# Exact public SEC index response object (content-addressed, no text normalization).
+tests/fixtures/sec-population/audit-v1/objects/* binary

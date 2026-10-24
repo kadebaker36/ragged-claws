@@ -1,0 +1,38 @@
+{
+  "bytes_retained": 337624,
+  "declaration_commit": "744a6f22ed52dfa8f971e0e4cfb302d3a5cd45f4",
+  "declared_budget": {
+    "attempts_per_resource": 1,
+    "max_index_bytes": 2097152,
+    "max_index_gets": 2,
+    "max_submission_bytes": 5242880,
+    "max_submission_gets": 8,
+    "minimum_request_interval_seconds": 1,
+    "redirects": false
+  },
+  "format_version": "sec-population-timing/1.0.0",
+  "representation": "exact_response_entity_bytes",
+  "requests_attempted": 1,
+  "resources": [
+    {
+      "attempted_at": "2026-10-24T03:52:51.815784+00:00",
+      "complete_body": true,
+      "http_status": 200,
+      "index_parse_error": "missing or ambiguous index columns",
+      "kind": "index",
+      "retrieved_at": "2026-10-24T03:52:52.354817+00:00",
+      "sha256": "ce75cb8eaa6d7f7fe5976aa4c8aa9e59c199b62c9025fa6cc769cc54cd1a7f5b",
+      "size_bytes": 337624,
+      "state": "captured",
+      "url": "https://www.sec.gov/Archives/edgar/daily-index/2024/QTR3/master.20240910.idx"
+    },
+    {
+      "kind": "index",
+      "state": "unattempted",
+      "url": "https://www.sec.gov/Archives/edgar/daily-index/2024/QTR3/master.20240911.idx"
+    }
+  ],
+  "scope_sha256": "eb21d709277f968f1dbe8932d6ea0f0325f8b2a8251765c84bda9c51dc741634",
+  "source": "SEC EDGAR public archives",
+  "stop_reason": "invalid_index"
+}

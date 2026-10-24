@@ -17,6 +17,7 @@ import exchange_calendars as xcals  # type: ignore[import-untyped]
 from ragged_claws.ingestion.sec import ADAPTER_VERSION, PARSER_VERSION, SecForm4Adapter
 from ragged_claws.ingestion.sec_parser import SecParseError
 from ragged_claws.models import RetentionClass
+from ragged_claws.resolution import deterministic_entity_id_from_cik
 from ragged_claws.storage import DataLayout, capture_raw_bytes
 
 SCOPE_SHA256 = "eb21d709277f968f1dbe8932d6ea0f0325f8b2a8251765c84bda9c51dc741634"
@@ -26,7 +27,7 @@ INDEX_URLS = tuple(
     f"https://www.sec.gov/Archives/edgar/daily-index/2024/QTR3/master.202409{day}.idx"
     for day in (10, 11)
 )
-HEADER = "CIK|Company Name|Form Type|Date Filed|Filename"
+HEADER = "CIK|Company Name|Form Type|Date Filed|File Name"
 
 
 class AuditError(ValueError):
@@ -57,10 +58,37 @@ class IndexRow:
     filed: str
     filename: str
     accession: str
+    filed_raw: str
+    index_day: str
 
     @property
     def url(self) -> str:
         return "https://www.sec.gov/Archives/" + self.filename
+
+
+class IndexConflict(AuditError):
+    """A structurally read index cannot authorize selection under the declared rule."""
+
+    def __init__(self, rows: list[IndexRow], duplicates: int) -> None:
+        super().__init__("conflicting accession/path metadata; selection not authorized")
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for row in rows:
+            group = groups.setdefault(row.accession, [])
+            if asdict(row) not in group:
+                group.append(asdict(row))
+        self.context: dict[str, Any] = {
+            "status": "rejected_context_not_valid_sampling_frame",
+            "physical_rows": len(rows),
+            "exact_duplicate_rows": duplicates,
+            "forms": dict(sorted(Counter(r.form for r in rows).items())),
+            "form4_row_references": sum(r.form == "4" for r in rows),
+            "form4_unique_accession_labels": len({r.accession for r in rows if r.form == "4"}),
+            "filing_date_differs_from_index_day": sum(r.filed != r.index_day for r in rows),
+            "conflicts": {a: group for a, group in sorted(groups.items()) if len(group) > 1},
+            "references": [
+                {**asdict(r), "selection": "not_authorized_rejected_index"} for r in rows
+            ],
+        }
 
 
 def filing_path(filename: str, accession: str | None = None) -> str:
@@ -79,6 +107,12 @@ def parse_index(content: bytes, day: str) -> tuple[list[IndexRow], int]:
         lines = content.decode("utf-8-sig").splitlines()
     except UnicodeError as exc:
         raise AuditError("index encoding unsupported") from exc
+    if day not in ("2024-09-10", "2024-09-11"):
+        raise AuditError("index outside fixed audit days")
+    received = [line for line in lines if line.startswith("Last Data Received:")]
+    expected_received = f"Sep {int(day[-2:])}, 2024"
+    if len(received) != 1 or received[0].partition(":")[2].strip() != expected_received:
+        raise AuditError("index header day mismatch")
     if lines.count(HEADER) != 1:
         raise AuditError("missing or ambiguous index columns")
     start = lines.index(HEADER) + 1
@@ -87,6 +121,7 @@ def parse_index(content: bytes, day: str) -> tuple[list[IndexRow], int]:
     rows: list[IndexRow] = []
     by_accession: dict[str, IndexRow] = {}
     duplicates = 0
+    conflict = False
     for line in lines[start + 1 :]:
         if not line.strip():
             continue
@@ -95,24 +130,30 @@ def parse_index(content: bytes, day: str) -> tuple[list[IndexRow], int]:
             raise AuditError("malformed index row")
         cik, name, form, filed, filename = fields
         accession = filing_path(filename)
+        try:
+            filed_date = date.fromisoformat(filed)
+        except ValueError as exc:
+            raise AuditError("invalid index filing date") from exc
         if (
             not re.fullmatch(r"[0-9]{1,10}", cik)
             or not name.strip()
             or not form.strip()
-            or filed != day
+            or filed_date > date.fromisoformat(day)
             or int(filename.split("/")[2]) != int(cik)
-            or accession[11:13] != day[2:4]
         ):
             raise AuditError("index date/type/filer/path metadata contradiction")
-        row = IndexRow(cik, name, form, filed, filename, accession)
+        row = IndexRow(cik, name, form, filed_date.isoformat(), filename, accession, filed, day)
         previous = by_accession.get(accession)
         if previous is not None:
             if previous != row:
-                raise AuditError("conflicting accession/path metadata")
-            duplicates += 1
+                conflict = True
+            else:
+                duplicates += 1
         else:
             by_accession[accession] = row
         rows.append(row)
+    if conflict:
+        raise IndexConflict(rows, duplicates)
     return rows, duplicates
 
 
@@ -325,7 +366,23 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
                     )
                 except AuditError as exc:
                     frame["parse_error"] = str(exc)
+                    if isinstance(exc, IndexConflict):
+                        frame["rejected_index_context"] = exc.context
         frames.append(frame)
+    # The original acquisition may have stopped on an index parser rejection before it
+    # could declare body statuses. An offline parser fix can enumerate the fixed scope,
+    # but cannot create a GET, retry the acquisition or erase the original failed receipt.
+    for row in selected:
+        if row.url not in by_url and manifest["stop_reason"] is not None:
+            by_url[row.url] = {
+                "url": row.url,
+                "kind": "submission",
+                "state": "unattempted",
+                "accession": row.accession,
+                "index_day": row.index_day,
+                "index_filename": row.filename,
+                "status_basis": "offline_enumeration_after_acquisition_stop",
+            }
     if set(by_url) != allowed:
         raise AuditError("capture resources differ from deterministic declared selection")
     filings: list[dict[str, Any]] = []
@@ -335,7 +392,7 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
         if (
             record["kind"] != "submission"
             or record["accession"] != row.accession
-            or record["index_day"] != row.filed
+            or record["index_day"] != row.index_day
             or record["index_filename"] != row.filename
         ):
             raise AuditError("selected submission metadata mismatch")
@@ -371,9 +428,7 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
                         events=len(bundle.events),
                         no_qualifying_events=not bundle.events,
                         body_issuer_cik=filing.issuer_cik,
-                        issuer_id=str(bundle.events[0].issuer_entity_id)
-                        if bundle.events
-                        else str(bundle.entities[0].entity_id),
+                        issuer_id=str(deterministic_entity_id_from_cik(filing.issuer_cik)),
                         owners=[o.model_dump(mode="json") for o in filing.owners],
                         unresolved_owner_ciks=list(bundle.unresolved_owner_ciks),
                         rows=[r.model_dump(mode="json") for r in filing.rows],
@@ -396,7 +451,7 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
                                 "event_id": str(event.event_id),
                                 "accession": row.accession,
                                 "code": attrs["transaction_code"],
-                                "index_day": row.filed,
+                                "index_day": row.index_day,
                                 "issuer": str(event.issuer_entity_id),
                                 "transaction_time": event.occurrence_time.model_dump(mode="json")
                                 if event.occurrence_time
@@ -460,7 +515,11 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
             "events_unresolved_listing": len(events),
         },
         "potential_overlap": overlap(events),
-        "complete_declared_acquisition": all(r["state"] == "captured" for r in records)
+        "overlap_scope": "Captured, parsed P/S subset only; uncollected population overlap unknown",
+        "population_overlap": None,
+        "body_population_status": "unknown_where_uncollected_or_rejected",
+        "complete_declared_acquisition": manifest["stop_reason"] is None
+        and all(r["state"] == "captured" for r in records)
         and all("parse_error" not in f for f in frames)
         and all(f["parse_state"] == "parsed" for f in filings),
         "runtime": {
@@ -514,6 +573,15 @@ def render_report(report: dict[str, Any]) -> str:
             f"unique Form4={f['unique_form4']}; selected={f.get('selected', 'unknown')}; "
             f"forms={f.get('forms', 'unknown')}; error={f.get('parse_error', 'none')}."
         )
+        if "rejected_index_context" in f:
+            context = f["rejected_index_context"]
+            lines.append(
+                f"  Rejected context: physical rows={context['physical_rows']}; "
+                f"Form4 row references={context['form4_row_references']}; "
+                f"Form4 accession labels={context['form4_unique_accession_labels']}; "
+                f"conflicting accession groups={len(context['conflicts'])}. "
+                "These are source-label counts, not a valid sampled event population."
+            )
     lines.extend(
         [
             "",
