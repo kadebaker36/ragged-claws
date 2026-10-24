@@ -143,7 +143,7 @@ Use a fresh private non-sync AppData directory, immutable content-addressed exac
 honest attempt/finish/status/hash/size/completeness receipt. No credentials/cookies/actual contact
 or config discovery; no private headers/exception text in public metadata. Blocked bytes remain
 private and public replay rejects before output. Retain all error/no-result/candidate distinctions.
-Existing RawStore/CaptureManifest/SourceObservation lineage and pure
+Existing capture_raw_bytes/RawCaptureManifest/SourceObservation lineage and pure
 `parse_openfigi_mapping_response` can consume a later reviewed capture; there is no existing live
 OpenFIGI client. Any future bounded capture requires separate implementation review/authorization.
 Typed identifier helpers/IdentityCatalog cannot apply a Listing or claim until subject, layer,

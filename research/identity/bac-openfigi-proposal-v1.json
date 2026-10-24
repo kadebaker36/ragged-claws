@@ -73,7 +73,7 @@
     "No historical valid/known interval or event binding is created even on a unique candidate; observed time is future capture, not2024known time."
   ],
   "existing_consumers_after_separate_review": [
-    "RawStore/CaptureManifest and SourceObservation provenance boundary",
+    "capture_raw_bytes/RawCaptureManifest and SourceObservation provenance boundary",
     "parse_openfigi_mapping_response for candidate-only parsing; generic parser labels instrument_figi, but allocation level/venue meaning still needs review",
     "IdentityCatalog and typed identifier helpers only after separately sourced subject, venue/MIC, validity and historical-knowledge decisions; no canonical application in this slice"
   ],

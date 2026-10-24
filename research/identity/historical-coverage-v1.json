@@ -1032,7 +1032,7 @@
   },
   "one_next_proposal": {
     "path": "research/identity/bac-openfigi-proposal-v1.json",
-    "sha256": "e9aa87f6d1a2e64404244e8c19f34005b94be55c984b2c451db1bf750fefc6fe",
+    "sha256": "64aca74ed7607c3f7fd18dd8a0896f8091ce6c250b0fa1ccadc82d9adb1aeedc",
     "acquisition_authorized": false,
     "reason": "Smallest already-sourced strong-identifier probe for missing FIGI candidate linkage; cannot close historical interval or any new9event binding.",
     "next_action": "Supervisor review this decision and single-request declaration; if accepted, explicitly authorize only that new future anonymous request. No data request under this work order."
