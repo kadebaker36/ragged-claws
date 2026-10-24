@@ -475,6 +475,18 @@ def test_genuine_complete_empty_frames_remain_complete(tmp_path: Path) -> None:
     assert result["events"] == [] and result["selected_filings"] == []
 
 
+def test_genuine_complete_nonempty_capture_retains_all_events(tmp_path: Path) -> None:
+    captures = capture(tmp_path, frame_payloads())
+    result = regenerate(SCOPE, captures, tmp_path / "output")
+    assert result["complete_declared_acquisition"]
+    assert result["counts"]["selected_filings"] == 8
+    assert result["counts"]["parse_states"] == {"parsed": 8}
+    assert result["counts"]["unique_ps_events"] == 24
+    assert result["counts"]["submission_states"] == {"captured": 8}
+    assert result["counts"]["events_unresolved_security"] == 24
+    assert result["population_overlap"] is None
+
+
 @pytest.mark.parametrize("state", ["interrupted", "partial_transport"])
 def test_genuine_interrupted_and_partial_receipts_remain_incomplete(
     tmp_path: Path,
