@@ -369,3 +369,133 @@ def test_transport_failure_is_single_attempt_and_no_contact_in_receipt(tmp_path:
     assert b"example.invalid" not in encoded(manifest)
     result = regenerate(SCOPE, tmp_path / "captures", tmp_path / "out")
     assert not result["complete_declared_acquisition"]
+
+
+def empty_payloads() -> dict[str, bytes]:
+    return {
+        url: (
+            f"Invented empty index\nLast Data Received: Sep {day}, 2024\n" + HEADER + "\n-----\n"
+        ).encode()
+        for url, day in zip(INDEX_URLS, (10, 11), strict=True)
+    }
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["sha256", "size_bytes", "attempted_at", "retrieved_at", "http_status", "complete_body"],
+)
+def test_captured_empty_index_requires_all_evidence_fields(tmp_path: Path, field: str) -> None:
+    captures = capture(tmp_path, empty_payloads())
+    path = captures / "manifest.json"
+    manifest = json.loads(path.read_bytes())
+    del manifest["resources"][0][field]
+    path.write_bytes(encoded(manifest))
+    with pytest.raises(AuditError):
+        regenerate(SCOPE, captures, tmp_path / "output")
+    assert not (tmp_path / "output").exists()
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("sha256", None),
+        ("sha256", "not-a-hash"),
+        ("size_bytes", -1),
+        ("size_bytes", True),
+        ("retrieved_at", None),
+        ("retrieved_at", "bad-clock"),
+        ("http_status", None),
+        ("complete_body", "true"),
+    ],
+)
+def test_captured_metadata_cannot_be_null_or_coerced(
+    tmp_path: Path,
+    field: str,
+    value: object,
+) -> None:
+    captures = capture(tmp_path, empty_payloads())
+    path = captures / "manifest.json"
+    manifest = json.loads(path.read_bytes())
+    manifest["resources"][0][field] = value
+    path.write_bytes(encoded(manifest))
+    with pytest.raises(AuditError):
+        regenerate(SCOPE, captures, tmp_path / "output")
+
+
+@pytest.mark.parametrize("kind", ["index", "submission"])
+@pytest.mark.parametrize("failure", ["missing_hash", "absent_object", "directory_object"])
+def test_each_captured_resource_requires_usable_bound_bytes(
+    tmp_path: Path,
+    kind: str,
+    failure: str,
+) -> None:
+    captures = capture(tmp_path, frame_payloads())
+    path = captures / "manifest.json"
+    manifest = json.loads(path.read_bytes())
+    record = next(r for r in manifest["resources"] if r["kind"] == kind)
+    if failure == "missing_hash":
+        del record["sha256"]
+        path.write_bytes(encoded(manifest))
+    else:
+        obj = captures / "objects" / record["sha256"]
+        obj.unlink()
+        if failure == "directory_object":
+            obj.mkdir()
+    with pytest.raises(AuditError):
+        regenerate(SCOPE, captures, tmp_path / "output")
+
+
+@pytest.mark.parametrize("field", ["declaration_commit", "declared_budget"])
+@pytest.mark.parametrize("mutation", ["missing", "conflicting"])
+def test_receipt_identity_and_budget_must_match_scope(
+    tmp_path: Path,
+    field: str,
+    mutation: str,
+) -> None:
+    captures = capture(tmp_path, empty_payloads())
+    path = captures / "manifest.json"
+    manifest = json.loads(path.read_bytes())
+    if mutation == "missing":
+        del manifest[field]
+    elif field == "declaration_commit":
+        manifest[field] = "0" * 40
+    else:
+        manifest[field]["max_submission_gets"] = 1000
+    path.write_bytes(encoded(manifest))
+    with pytest.raises(AuditError):
+        regenerate(SCOPE, captures, tmp_path / "output")
+
+
+def test_genuine_complete_empty_frames_remain_complete(tmp_path: Path) -> None:
+    captures = capture(tmp_path, empty_payloads())
+    result = regenerate(SCOPE, captures, tmp_path / "output")
+    assert result["complete_declared_acquisition"]
+    assert [f["rows"] for f in result["index_frames"]] == [0, 0]
+    assert [f["unique_form4"] for f in result["index_frames"]] == [0, 0]
+    assert result["events"] == [] and result["selected_filings"] == []
+
+
+@pytest.mark.parametrize("state", ["interrupted", "partial_transport"])
+def test_genuine_interrupted_and_partial_receipts_remain_incomplete(
+    tmp_path: Path,
+    state: str,
+) -> None:
+    captures = capture(tmp_path, empty_payloads(), denied=INDEX_URLS[0])
+    path = captures / "manifest.json"
+    manifest = json.loads(path.read_bytes())
+    record = manifest["resources"][0]
+    if state == "interrupted":
+        start = record["attempted_at"]
+        record.clear()
+        record.update(url=INDEX_URLS[0], kind="index", state="interrupted", attempted_at=start)
+        manifest["bytes_retained"] = 0
+        manifest["stop_reason"] = "interrupted"
+    else:
+        record.update(state="transport_error", http_status=200, complete_body=False)
+        manifest["stop_reason"] = "transport_error"
+    path.write_bytes(encoded(manifest))
+    result = regenerate(SCOPE, captures, tmp_path / "output")
+    assert not result["complete_declared_acquisition"]
+    assert result["index_frames"][0]["rows"] is None
+    assert result["index_frames"][1]["capture_status"] == "unattempted"
+    assert result["events"] == [] and result["population_overlap"] is None

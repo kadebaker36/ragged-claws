@@ -121,6 +121,19 @@ duplicates/conflicts, unsafe locators, date/type contradictions, selection/no su
 uncollected versus empty, body issuer versus filer, unknown/late clocks, interval endpoints,
 repeat issuers, raw/hash lineage, replay/conflict and access/transport/size stop behavior.
 
+Receipt validation requires the original declaration commit and exact declared budget for
+acquisition receipts, including failed and interrupted acquisitions. The existing minimal
+missing-configuration receipt may omit the budget only with zero attempts, zero retained
+bytes and exclusively unattempted resources; a supplied budget must still match. Completed
+responses require an exact hash/object, bounded integer size, aware request/retrieval clocks,
+status and boolean completeness. Every such object is verified before output creation,
+including denied/partial response bytes. Missing or unusable evidence raises `AuditError`;
+it cannot become an empty or complete population. Interrupted checkpoints contain no
+invented response, and genuine complete empty indexes remain valid. Receipt consistency
+is an integrity check, not source authentication or proof of actual request chronology.
+The original parser-stop receipt and all earlier rejected outputs remain unchanged;
+corrections regenerate only into fresh external directories and do not restart acquisition.
+
 **Single next dependency:** supervisor review of the observed multi-CIK accession/path
 ambiguity and a separately versioned reference rule, before authorizing any more acquisition.
 The existing declaration is not silently relaxed or replaced. Population coverage, identity/

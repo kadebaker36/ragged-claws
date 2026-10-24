@@ -162,8 +162,13 @@ def select_four(rows: list[IndexRow]) -> list[IndexRow]:
     return [unique[a] for a in sorted(unique)[:4]]
 
 
-def timestamp(raw: str) -> datetime:
-    value = datetime.fromisoformat(raw)
+def timestamp(raw: object) -> datetime:
+    if not isinstance(raw, str):
+        raise AuditError("invalid capture clock")
+    try:
+        value = datetime.fromisoformat(raw)
+    except (TypeError, ValueError) as exc:
+        raise AuditError("invalid capture clock") from exc
     if value.tzinfo is None:
         raise AuditError("naive retrieval clock")
     return value.astimezone(UTC)
@@ -218,17 +223,50 @@ def read_object(root: Path, record: dict[str, Any], limit: int) -> bytes:
     if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{64}", sha):
         raise AuditError("invalid capture hash")
     path = root / "objects" / sha
-    if path.is_symlink() or path.stat().st_size > limit:
-        raise AuditError("unsafe/oversize captured object")
-    content = path.read_bytes()
+    try:
+        if (root / "objects").is_symlink() or path.is_symlink() or not path.is_file():
+            raise AuditError("absent or unsafe captured object")
+        if path.stat().st_size > limit:
+            raise AuditError("oversize captured object")
+        content = path.read_bytes()
+    except OSError as exc:
+        raise AuditError("captured object unavailable") from exc
     if digest(content) != sha or len(content) != record["size_bytes"]:
         raise AuditError("capture size/hash mismatch")
     timestamp(record["retrieved_at"])
     return content
 
 
-def validate_capture(records: list[dict[str, Any]], manifest: dict[str, Any]) -> None:
+def validate_capture(
+    records: list[dict[str, Any]], manifest: dict[str, Any], declaration: dict[str, Any]
+) -> None:
     """Validate attempt accounting independently of the acquisition implementation."""
+    if manifest.get("declaration_commit") != DECLARATION_COMMIT:
+        raise AuditError("receipt declaration identity mismatch")
+    budget = {
+        k: declaration[k]
+        for k in (
+            "max_index_gets",
+            "max_submission_gets",
+            "max_index_bytes",
+            "max_submission_bytes",
+            "minimum_request_interval_seconds",
+            "attempts_per_resource",
+            "redirects",
+        )
+    }
+    missing_config = manifest.get("stop_reason") == "missing_sec_user_agent"
+    if (not missing_config or "declared_budget" in manifest) and encoded(
+        manifest.get("declared_budget")
+    ) != encoded(budget):
+        raise AuditError("receipt declared budget mismatch")
+    for key in ("requests_attempted", "bytes_retained"):
+        if type(manifest.get(key)) is not int or manifest[key] < 0:
+            raise AuditError("invalid receipt accounting")
+    if "stop_reason" not in manifest:
+        raise AuditError("missing receipt stop context")
+    if missing_config and (manifest["requests_attempted"] != 0 or manifest["bytes_retained"] != 0):
+        raise AuditError("missing configuration receipt claims acquisition")
     states = {
         "unattempted",
         "interrupted",
@@ -245,25 +283,51 @@ def validate_capture(records: list[dict[str, Any]], manifest: dict[str, Any]) ->
     previous: datetime | None = None
     # Actual order is both indexes, then selected bodies, exactly as serialized.
     for record in records:
-        state = record["state"]
-        if state not in states:
+        if record.get("kind") not in ("index", "submission") or not isinstance(
+            record.get("url"), str
+        ):
+            raise AuditError("invalid capture resource identity")
+        state = record.get("state")
+        if not isinstance(state, str) or state not in states:
             raise AuditError("unknown acquisition state")
+        response_keys = ("sha256", "size_bytes", "retrieved_at", "http_status", "complete_body")
         if state == "unattempted":
-            if any(k in record for k in ("sha256", "retrieved_at", "http_status", "attempted_at")):
+            if any(k in record for k in (*response_keys, "attempted_at")):
                 raise AuditError("unattempted resource has response metadata")
             continue
+        if missing_config:
+            raise AuditError("missing configuration receipt contains attempted resource")
         if failed:
             raise AuditError("attempt after global stop")
-        start = timestamp(record["attempted_at"])
+        start = timestamp(record.get("attempted_at"))
         if previous is not None and (start - previous).total_seconds() < 1:
             raise AuditError("request spacing violates declared limit")
         previous = start
         attempted += 1
-        if state != "interrupted":
+        if state == "interrupted":
+            if any(k in record for k in response_keys):
+                raise AuditError("interrupted checkpoint has undeclared response evidence")
+        else:
+            if any(k not in record for k in response_keys):
+                raise AuditError("completed response lacks required raw evidence metadata")
+            sha = record["sha256"]
+            if not isinstance(sha, str) or re.fullmatch(r"[0-9a-f]{64}", sha) is None:
+                raise AuditError("invalid capture hash")
+            limit = declaration[
+                "max_index_bytes" if record["kind"] == "index" else "max_submission_bytes"
+            ]
+            if type(record["size_bytes"]) is not int or not 0 <= record["size_bytes"] <= limit:
+                raise AuditError("invalid capture byte size")
+            if type(record["complete_body"]) is not bool:
+                raise AuditError("invalid response completeness flag")
             if timestamp(record["retrieved_at"]) < start:
                 raise AuditError("retrieval precedes request")
             status = record["http_status"]
-            if state == "captured" and (status != 200 or not record["complete_body"]):
+            if not (type(status) is int and 100 <= status <= 599) and not (
+                state == "transport_error" and status is None
+            ):
+                raise AuditError("invalid response status")
+            if state == "captured" and (status != 200 or record["complete_body"] is not True):
                 raise AuditError("captured resource lacks complete HTTP200")
             if state == "denied" and status not in (401, 403, 429):
                 raise AuditError("invalid access-denial status")
@@ -293,12 +357,23 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
     if manifest["scope_sha256"] != SCOPE_SHA256 or manifest["format_version"] != AUDIT_VERSION:
         raise AuditError("capture scope/format mismatch")
     records: list[dict[str, Any]] = manifest["resources"]
-    validate_capture(records, manifest)
+    validate_capture(records, manifest, declaration)
     if [r["url"] for r in records[:2]] != list(INDEX_URLS):
         raise AuditError("index resource order/scope mismatch")
     by_url = {r["url"]: r for r in records}
     if len(by_url) != len(records):
         raise AuditError("duplicate acquisition resource")
+    # Every completed response, including partial/denied bytes, binds a verified object.
+    # Interrupted/unattempted checkpoints have no response and cannot supply empty data.
+    objects = {
+        r["url"]: read_object(
+            captures,
+            r,
+            declaration["max_index_bytes" if r["kind"] == "index" else "max_submission_bytes"],
+        )
+        for r in records
+        if r["state"] not in ("unattempted", "interrupted")
+    }
     output.mkdir(parents=True)
     layout = DataLayout(output / "data")
     adapter = SecForm4Adapter(layout)
@@ -320,8 +395,8 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
             "unique_form4": None,
             "references": [],
         }
-        if record.get("sha256") is not None:
-            content = read_object(captures, record, declaration["max_index_bytes"])
+        if record["state"] not in ("unattempted", "interrupted"):
+            content = objects[url]
             capture_raw_bytes(
                 layout,
                 content,
@@ -402,8 +477,8 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
             "events": None,
             "parse_state": "not_available",
         }
-        if record.get("sha256") is not None:
-            content = read_object(captures, record, declaration["max_submission_bytes"])
+        if record["state"] not in ("unattempted", "interrupted"):
+            content = objects[row.url]
             captured = adapter.capture(
                 content,
                 accession=row.accession,
@@ -521,6 +596,7 @@ def regenerate(scope: Path, captures: Path, output: Path) -> dict[str, Any]:
         "complete_declared_acquisition": manifest["stop_reason"] is None
         and all(r["state"] == "captured" for r in records)
         and all("parse_error" not in f for f in frames)
+        and all(f["rows"] is not None for f in frames)
         and all(f["parse_state"] == "parsed" for f in filings),
         "runtime": {
             "python": platform.python_version(),
