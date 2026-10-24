@@ -47,6 +47,18 @@ matching declaration commit and budget. Resource order and membership must match
 references. Acquisition stops on any access, size, transport, privacy or parser contradiction.
 Receipt stop reason must match the retained failed resource. Interrupted/unattempted remain unknown.
 All completed evidence and source header relationships are verified before canonical output.
+Serial receipt validation also requires each preceding completed response to finish no later
+than the next attempt, including an interrupted next attempt; one-second start spacing remains
+independently required. Slow serial responses are valid when these inequalities hold.
+
+A privacy-blocked receipt is private acquisition evidence. Offline replay rejects it with a
+fixed error before creating any output or reading its blocked object into the public replay.
+No blocked bytes, receipt metadata, PUBLIC raw capture, SourceObservation or canonical records
+are exported. The original private receipt and bytes remain untouched; attempted/blocked and
+unattempted states are preserved there, rather than reported as parsed zeros. This boundary
+was corrected after independent review found an invented reflected-contact export and an
+overlapping-clock receipt accepted by the initial implementation. Neither defect was observed
+in the four retained public fixtures, whose original receipt and bytes remain unchanged.
 
 Existing SecForm4Adapter alone maps/persists source observations, provenance, owners, rows,
 footnotes, events and evidence into existing raw/staging/Parquet. Repeated imports are idempotent;

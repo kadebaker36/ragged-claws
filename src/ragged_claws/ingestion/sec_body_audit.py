@@ -84,6 +84,7 @@ def verify_receipt(d: dict[str, Any], m: dict[str, Any], root: Path) -> dict[str
     attempted = retained = 0
     stopped = False
     previous: datetime | None = None
+    previous_finish: datetime | None = None
     terminal = {
         "captured",
         "denied",
@@ -99,6 +100,8 @@ def verify_receipt(d: dict[str, Any], m: dict[str, Any], root: Path) -> dict[str
         if any(record.get(k) != v for k, v in resource.items()):
             raise AuditError("resource order/identity mismatch")
         state = record.get("state")
+        if state == "privacy_blocked":
+            raise AuditError("privacy-blocked receipt is private evidence; replay refused")
         if state == "unattempted":
             if any(k in record for k in (*response_keys, "attempted_at")):
                 raise AuditError("unattempted resource claims response")
@@ -109,6 +112,8 @@ def verify_receipt(d: dict[str, Any], m: dict[str, Any], root: Path) -> dict[str
         start = timestamp(record.get("attempted_at"))
         if previous and (start - previous).total_seconds() < 1:
             raise AuditError("request interval below declared limit")
+        if previous_finish and start < previous_finish:
+            raise AuditError("serial attempt precedes prior response finish")
         previous = start
         attempted += 1
         if state == "interrupted":
@@ -134,6 +139,7 @@ def verify_receipt(d: dict[str, Any], m: dict[str, Any], root: Path) -> dict[str
         retrieved = timestamp(record["retrieved_at"])
         if retrieved < start:
             raise AuditError("retrieval precedes attempt")
+        previous_finish = retrieved
         if state in {"captured", "malformed", "challenge"} and status != 200:
             raise AuditError("body state requires HTTP200")
         if state in {"captured", "malformed"} and record["complete_body"] is not True:

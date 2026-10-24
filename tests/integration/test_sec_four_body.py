@@ -111,6 +111,14 @@ def test_global_stop_and_no_substitution(tmp_path: Path, variant: str) -> None:
     m = json.loads((captures / "manifest.json").read_bytes())
     assert m["requests_attempted"] == 2
     assert [r["state"] for r in m["resources"]][2:] == ["unattempted", "unattempted"]
+    if variant == "privacy":
+        before = {p: p.read_bytes() for p in captures.rglob("*") if p.is_file()}
+        with pytest.raises(AuditError, match="private evidence") as error:
+            regenerate(DECL, CONTEXT, captures, tmp_path / "out")
+        assert "test@example.invalid" not in str(error.value)
+        assert not (tmp_path / "out").exists()
+        assert all(p.read_bytes() == content for p, content in before.items())
+        return
     r = regenerate(DECL, CONTEXT, captures, tmp_path / "out")
     assert not r["complete_declared_capture"]
     assert r["filings"][1]["event_count"] is None and r["filings"][2]["event_count"] is None
@@ -273,3 +281,70 @@ def test_stop_reason_cannot_contradict_retained_failure(tmp_path: Path) -> None:
     path.write_bytes(encoded(m))
     with pytest.raises(AuditError, match="stop reason"):
         regenerate(DECL, CONTEXT, captures, tmp_path / "out")
+
+
+@pytest.mark.parametrize("overlap", [False, True])
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_serial_response_finish_including_interrupted_next_attempt(
+    tmp_path: Path, overlap: bool, interrupted: bool
+) -> None:
+    captures = capture(tmp_path)
+    path = captures / "manifest.json"
+    m = json.loads(path.read_bytes())
+    records = m["resources"]
+    # A slow first response may finish exactly at the next start; one-second start
+    # spacing alone cannot detect a response extending past that next start.
+    next_start = datetime.fromisoformat(records[1]["attempted_at"])
+    records[0]["retrieved_at"] = (next_start + timedelta(seconds=int(overlap))).isoformat()
+    if interrupted:
+        resources, _ = load_inputs(DECL, CONTEXT)
+        records[1] = {
+            **resources["resources"][1],
+            "state": "interrupted",
+            "attempted_at": next_start.isoformat(),
+        }
+        records[2:] = [{**r, "state": "unattempted"} for r in resources["resources"][2:]]
+        m.update(
+            requests_attempted=2,
+            bytes_retained=records[0]["size_bytes"],
+            stop_reason="interrupted",
+        )
+    path.write_bytes(encoded(m))
+    d, _ = load_inputs(DECL, CONTEXT)
+    if overlap:
+        with pytest.raises(AuditError, match="prior response finish"):
+            regenerate(DECL, CONTEXT, captures, tmp_path / "out")
+        assert not (tmp_path / "out").exists()
+    else:
+        responses = verify_receipt(d, m, captures)
+        assert len(responses) == (1 if interrupted else 4)
+
+
+def test_long_serial_response_preserves_start_spacing_and_incomplete_stop(tmp_path: Path) -> None:
+    captures = capture(tmp_path, variant="transport", fail_at=1)
+    path = captures / "manifest.json"
+    m = json.loads(path.read_bytes())
+    first, second = m["resources"][:2]
+    first["retrieved_at"] = (
+        datetime.fromisoformat(first["attempted_at"]) + timedelta(seconds=30)
+    ).isoformat()
+    second["attempted_at"] = first["retrieved_at"]
+    second["retrieved_at"] = (
+        datetime.fromisoformat(second["attempted_at"]) + timedelta(seconds=4)
+    ).isoformat()
+    path.write_bytes(encoded(m))
+    result = regenerate(DECL, CONTEXT, captures, tmp_path / "out")
+    assert not result["complete_declared_capture"]
+    assert result["filings"][1]["event_count"] is None
+    assert result["counts"]["body_states"] == {
+        "captured": 1, "transport_error": 1, "unattempted": 2
+    }
+    # A non-overlapping sequence still must satisfy the independent start limit.
+    first["retrieved_at"] = first["attempted_at"]
+    second["attempted_at"] = (
+        datetime.fromisoformat(first["attempted_at"]) + timedelta(milliseconds=999)
+    ).isoformat()
+    path.write_bytes(encoded(m))
+    with pytest.raises(AuditError, match="interval below"):
+        regenerate(DECL, CONTEXT, captures, tmp_path / "too-fast")
+    assert not (tmp_path / "too-fast").exists()
