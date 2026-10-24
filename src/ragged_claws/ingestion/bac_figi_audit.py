@@ -144,7 +144,7 @@ def private_path(path: Path) -> None:
         raise FigiAuditError("private non-sync local path required") from None
 
 
-def privacy_blocked(raw: bytes) -> bool:
+def _private_text(raw: bytes) -> bool:
     email = b"@" in raw and re.search(
         rb"(?i)[a-z0-9._%+-]{1,64}@[a-z0-9.-]{1,253}\.[a-z]{2,63}", raw
     )
@@ -152,6 +152,30 @@ def privacy_blocked(raw: bytes) -> bool:
         rb'(?i)"(?:authorization|cookie|set-cookie|x-openfigi-apikey|api[_ -]?key)"\s*:', raw
     )
     return bool(email or secret_key)
+
+
+def privacy_blocked(raw: bytes) -> bool:
+    """Apply the same bounded boundary to raw text and decoded JSON strings/keys."""
+    if _private_text(raw):
+        return True
+    try:
+        document = json.loads(raw.decode("utf8"), object_pairs_hook=_pairs)
+    except (ValueError, UnicodeError, RecursionError):
+        # The envelope validator rejects malformed/deep JSON without copying its fields.
+        return False
+    pending = [document]
+    while pending:
+        value = pending.pop()
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if _private_text((json.dumps(key) + ":").encode("utf8")):
+                    return True
+                pending.extend((key, child))
+        elif isinstance(value, list):
+            pending.extend(value)
+        elif isinstance(value, str) and _private_text(value.encode("utf8", errors="surrogatepass")):
+            return True
+    return False
 
 
 def _pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -286,6 +310,16 @@ def receipt_file(root: Path) -> Path:
 
 
 def _verify_receipt(d: dict[str, Any], root: Path) -> tuple[dict[str, Any], bytes | None, Any]:
+    if (
+        sum(p.stat().st_size for p in root.rglob("*.json") if p.is_file())
+        > d["budget"]["maximum_receipt_bytes"]
+    ):
+        raise FigiAuditError("cumulative receipt evidence exceeds bound")
+    if (
+        sum(p.stat().st_size for p in root.rglob("*") if p.is_file())
+        > d["budget"]["maximum_retained_entity_plus_receipt_bytes"]
+    ):
+        raise FigiAuditError("retained acquisition evidence exceeds total bound")
     receipt_path = receipt_file(root)
     if receipt_path.stat().st_size > d["budget"]["maximum_receipt_bytes"]:
         raise FigiAuditError("receipt exceeds bound")
@@ -404,12 +438,9 @@ def _verify_receipt(d: dict[str, Any], root: Path) -> tuple[dict[str, Any], byte
     ):
         raise FigiAuditError("raw/reference/lineage contradiction")
     if response_state(raw, m, d) != state:
+        if privacy_blocked(raw):
+            raise FigiAuditError("private blocked response cannot be replayed")
         raise FigiAuditError("response contradicts receipt state")
-    if (
-        sum(p.stat().st_size for p in root.rglob("*") if p.is_file())
-        > d["budget"]["maximum_retained_entity_plus_receipt_bytes"]
-    ):
-        raise FigiAuditError("retained acquisition evidence exceeds total bound")
     return m, raw, manifest
 
 

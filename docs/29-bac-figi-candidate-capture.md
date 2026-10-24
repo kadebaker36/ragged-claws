@@ -69,6 +69,15 @@ consume the attempt and stop. No-result, provider error, ambiguity and partial m
 this scope. Privacy-blocked bytes stay immutable in private evidence; replay rejects them before
 creating output. All replay paths are private, and raw payloads are never copied to Git/cloud.
 
+Independent review found two additional offline boundaries requiring correction. Replay now
+counts all cumulative JSON receipt/checkpoint/manifest evidence against 65,536 bytes, matching
+acquisition accounting, and applies the total-retention cap even to checkpoint-only paths.
+Privacy checks scan decoded JSON keys and string values as well as raw byte text, so escaped
+contacts or secret-key names cannot become derivative content. Iterative traversal avoids a
+second recursive walk; malformed/deep JSON still fails without copying provider fields. The
+original actual capture was under cap and had no decoded contacts. Its bytes and old receipts
+remain untouched; these corrections do not imply exposure or renew acquisition authority.
+
 ## Candidate interpretation and private replay
 
 Validate the one-job envelope before calling the existing pure candidate parser. Exactly one

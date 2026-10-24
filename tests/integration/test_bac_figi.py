@@ -422,3 +422,77 @@ def test_exact_git_metadata_representation_recovers_original_pin_only(
     else:
         acquire(DECL, clone, tmp_path / "out", transport=httpx.MockTransport(handler))
         assert len(calls) == 1 and metadata.read_bytes() == lf
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        b'[{"data":[{"figi":"BBG000000001","name":"INVENTED test\\u0040example.invalid"}]}]',
+        b'[{"data":[{"figi":"BBG000000001","name":"test\\u0040example\\u002einvalid"}]}]',
+        b'[{"data":[{"figi":"BBG000000001","api\\u005fkey":"INVENTED"}]}]',
+        b'[{"data":[{"figi":"BBG000000001","name":"\\"api\\u005fkey\\":\\"INVENTED\\""}]}]',
+    ],
+)
+def test_decoded_privacy_blocks_new_capture_and_old_flagged_false_receipt(
+    tmp_path: Path, raw: bytes
+) -> None:
+    root = capture(tmp_path, raw)
+    path = root / "receipt.json"
+    m = json.loads(path.read_bytes())
+    assert m["state"] == "privacy_blocked" and m["privacy_blocked"] is True
+    # Simulate an old invented receipt whose byte-only review missed the escaped value.
+    m.update(state="captured", stop_reason="captured", privacy_blocked=False)
+    path.write_bytes(encoded(m))
+    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    with pytest.raises(FigiAuditError, match="blocked") as error:
+        regenerate(DECL, REPO, root, tmp_path / "report")
+    assert "test@example.invalid" not in str(error.value)
+    assert "INVENTED" not in str(error.value)
+    assert not (tmp_path / "report").exists()
+    assert {p: p.read_bytes() for p in root.rglob("*") if p.is_file()} == before
+
+
+def test_benign_decoded_unicode_metadata_remains_candidate_only(tmp_path: Path) -> None:
+    raw = b'[{"data":[{"figi":"BBG000000001","name":"INV\\u0045NTED \\ud800"}]}]'
+    root = capture(tmp_path, raw)
+    result = regenerate(DECL, REPO, root, tmp_path / "report")
+    assert result["receipt"]["state"] == "captured"
+    assert result["candidate_diagnostic"]["source_rows"][0]["provider_fields"]["name"].startswith(
+        "INVENTED"
+    )
+    assert result["canonical_identity_records_created"] == 0
+
+
+@pytest.mark.parametrize("checkpoint", ["unattempted", "interrupted"])
+@pytest.mark.parametrize("budget", ["metadata", "total"])
+def test_checkpoint_only_replay_enforces_cumulative_bounds(
+    tmp_path: Path, checkpoint: str, budget: str
+) -> None:
+    root = capture(tmp_path, failure="interrupt")
+    if checkpoint == "unattempted":
+        (root / "checkpoint-interrupted.json").unlink()
+        (root / "orphan-manifest.json").write_bytes(b"{}")
+    if budget == "metadata":
+        for p in root.glob("*.json"):
+            p.write_bytes(b" " * 33000 + p.read_bytes())
+            assert p.stat().st_size < 65536
+        assert sum(p.stat().st_size for p in root.rglob("*") if p.is_file()) < 1114112
+    else:
+        (root / "orphan-private-response").write_bytes(b"x" * 1114113)
+    with pytest.raises(FigiAuditError, match="bound"):
+        regenerate(DECL, REPO, root, tmp_path / "report")
+    assert not (tmp_path / "report").exists()
+
+
+def test_cumulative_metadata_boundary_includes_manifest_and_checkpoints(tmp_path: Path) -> None:
+    root = capture(tmp_path)
+    current = sum(p.stat().st_size for p in root.rglob("*.json"))
+    other = root / "orphan-metadata.json"
+    other.write_bytes(b" " * (65536 - current - 2) + b"{}")
+    assert sum(p.stat().st_size for p in root.rglob("*.json")) == 65536
+    result = regenerate(DECL, REPO, root, tmp_path / "at-bound")
+    assert result["receipt"]["state"] == "captured"
+    other.write_bytes(other.read_bytes() + b" ")
+    with pytest.raises(FigiAuditError, match="cumulative receipt"):
+        regenerate(DECL, REPO, root, tmp_path / "over-bound")
+    assert not (tmp_path / "over-bound").exists()
