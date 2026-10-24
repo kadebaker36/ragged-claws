@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime, timedelta
 from urllib.parse import urlsplit
@@ -93,7 +94,12 @@ class SecForm4Adapter:
     ) -> RawCaptureManifest:
         locator = urlsplit(source_locator)
         if locator.hostname == "www.sec.gov" and (
-            f"/{accession.replace('-', '')}/" not in locator.path
+            (
+                f"/{accession.replace('-', '')}/" not in locator.path
+                and re.fullmatch(
+                    rf"/Archives/edgar/data/[0-9]+/{re.escape(accession)}\.txt", locator.path
+                ) is None
+            )
             or (locator.path.endswith(".txt") and not locator.path.endswith(f"/{accession}.txt"))
         ):
             raise SecParseError("source URL/accession contradiction")
