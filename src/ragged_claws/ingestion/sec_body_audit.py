@@ -166,6 +166,11 @@ def verify_receipt(d: dict[str, Any], m: dict[str, Any], root: Path) -> dict[str
         raise AuditError("incomplete acquisition lacks stop reason")
     if m["stop_reason"] not in terminal | {None, "interrupted", "missing_sec_user_agent"}:
         raise AuditError("unknown stop reason")
+    failures = [r["state"] for r in records if r["state"] not in {"captured", "unattempted"}]
+    if failures and m["stop_reason"] != failures[-1]:
+        raise AuditError("stop reason contradicts resource failure")
+    if not failures and m["stop_reason"] not in {None, "missing_sec_user_agent"}:
+        raise AuditError("stop reason lacks supporting resource state")
     if m["stop_reason"] == "missing_sec_user_agent" and attempted:
         raise AuditError("missing configuration claims request")
     return responses
@@ -258,6 +263,10 @@ def regenerate(declaration: Path, context: Path, captures: Path, output: Path) -
             "parsed_filings": len(parsed),
             "parsed_no_events": sum(f["no_qualifying_events"] for f in parsed),
             "unique_observed_ps_events": len(events),
+            "observed_events_by_code": {
+                code: sum(e["code"] == code for e in events) for code in ("P", "S")
+            },
+            "distinct_observed_event_issuers": len({e["issuer"] for e in events}),
             "events_by_code_date_issuer": dict(
                 sorted(
                     Counter(f"{e['code']}|{e['filed_as_of']}|{e['issuer']}" for e in events).items()
@@ -305,11 +314,22 @@ def regenerate(declaration: Path, context: Path, captures: Path, output: Path) -
         ],
     }
     (output / "report.json").write_bytes(encoded(result))
+    details = "\n".join(
+        f"| {f['source_reference']['accession']} | {f['source_reference']['state']} | "
+        f"{f['event_count'] if f['event_count'] is not None else 'unknown'} |"
+        for f in filings
+    )
     (output / "report.md").write_text(
         "# Four-body outcome-blind diagnostic\n\n"
         + "```json\n"
         + json.dumps(result["counts"], indent=2)
         + "\n```\n\n"
+        + "| Accession | Body state | Observed P/S events |\n| --- | --- | ---: |\n"
+        + details
+        + "\n\nHypothetical public-label supports only:\n\n```json\n"
+        + json.dumps(result["potential_supports"], indent=2)
+        + "\n```\n\n"
+        + "No actual decision or policy entry; 486 unselected groups remain uncollected.\n\n"
         + "\n".join("- " + s for s in result["limits"])
         + "\n",
         encoding="utf8",

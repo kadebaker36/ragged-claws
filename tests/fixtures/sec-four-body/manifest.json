@@ -1,0 +1,75 @@
+{
+  "bytes_retained": 31087,
+  "declaration_commit": "1e5d80583cc8549530cb5f34609d2c602c73ec57",
+  "declaration_sha256": "c7a9025b8560d3119c95fae6068ccd0b909e3fb49e467018f416292f51825890",
+  "declared_budget": {
+    "attempts_per_resource": 1,
+    "maximum_gets": 4,
+    "maximum_resource_bytes": 5242880,
+    "maximum_total_bytes": 20971520,
+    "minimum_interval_seconds": 1,
+    "redirects": false
+  },
+  "format_version": "sec-four-body-capture/1.0.0",
+  "requests_attempted": 4,
+  "resources": [
+    {
+      "accession": "0000035527-24-000224",
+      "attempted_at": "2026-10-24T09:51:39.955549+00:00",
+      "complete_body": true,
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "http_status": 200,
+      "private_contact_reflected": false,
+      "retrieved_at": "2026-10-24T09:51:40.342160+00:00",
+      "sha256": "201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+      "size_bytes": 7359,
+      "state": "captured",
+      "url": "https://www.sec.gov/Archives/edgar/data/35527/0000035527-24-000224.txt"
+    },
+    {
+      "accession": "0000060086-24-000179",
+      "attempted_at": "2026-10-24T09:51:40.956845+00:00",
+      "complete_body": true,
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "http_status": 200,
+      "private_contact_reflected": false,
+      "retrieved_at": "2026-10-24T09:51:41.204749+00:00",
+      "sha256": "9ce888991f5af998e201f2e2f13be2a833b2d3590b15eade120ae05aa783f0a0",
+      "size_bytes": 13532,
+      "state": "captured",
+      "url": "https://www.sec.gov/Archives/edgar/data/60086/0000060086-24-000179.txt"
+    },
+    {
+      "accession": "0000080420-24-000066",
+      "attempted_at": "2026-10-24T09:51:41.958348+00:00",
+      "complete_body": true,
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "http_status": 200,
+      "private_contact_reflected": false,
+      "retrieved_at": "2026-10-24T09:51:42.052239+00:00",
+      "sha256": "88bf15669a9b9b5d274b9ea655374eeced809a04fad78c7162d93f11f02a486b",
+      "size_bytes": 4906,
+      "state": "captured",
+      "url": "https://www.sec.gov/Archives/edgar/data/80420/0000080420-24-000066.txt"
+    },
+    {
+      "accession": "0000101778-24-000120",
+      "attempted_at": "2026-10-24T09:51:42.962617+00:00",
+      "complete_body": true,
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "http_status": 200,
+      "private_contact_reflected": false,
+      "retrieved_at": "2026-10-24T09:51:43.052286+00:00",
+      "sha256": "308ef02df7dd47c2819fed6beeb7a032e30de646ec9bf0ac52bcde6764690547",
+      "size_bytes": 5290,
+      "state": "captured",
+      "url": "https://www.sec.gov/Archives/edgar/data/101778/0000101778-24-000120.txt"
+    }
+  ],
+  "stop_reason": null,
+  "transport": "serial bounded httpx entity bytes, one attempt, no redirects"
+}

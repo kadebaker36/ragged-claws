@@ -227,3 +227,49 @@ def test_missing_configuration_interrupted_and_interval_oracle(tmp_path: Path) -
     assert support["exit"] == "2024-12-05T21:00:00+00:00"
     s = overlap([{**support, "issuer": "same"}, {**support, "issuer": "same"}])
     assert s["peak_event_supports"] == 2 and s["peak_repeat_issuer_excess_supports"] == 1
+
+
+def test_recorded_four_bodies_and_source_rows(tmp_path: Path) -> None:
+    recorded = ROOT / "tests/fixtures/sec-four-body"
+    r = regenerate(DECL, CONTEXT, recorded, tmp_path / "out")
+    assert r["complete_declared_capture"]
+    assert r["counts"]["observed_events_by_code"] == {"P": 0, "S": 9}
+    assert r["counts"]["distinct_observed_event_issuers"] == 3
+    assert [f["event_count"] for f in r["filings"]] == [2, 6, 0, 1]
+    assert [len(f["bundle"]["filing"]["rows"]) for f in r["filings"]] == [3, 7, 1, 1]
+    assert r["counts"]["row_exclusions"] == {
+        "non_transaction_holding": 1,
+        "unsupported_code:F": 1,
+        "unsupported_code:G": 1,
+    }
+    assert r["potential_supports"]["peak_event_supports"] == 9
+    assert r["potential_supports"]["peak_repeat_issuer_excess_supports"] == 6
+
+
+def test_resealed_bad_body_cannot_publish_any_canonical_state(tmp_path: Path) -> None:
+    import hashlib
+
+    captures = capture(tmp_path)
+    path = captures / "manifest.json"
+    m = json.loads(path.read_bytes())
+    ref = m["resources"][3]
+    raw = (captures / "objects" / ref["sha256"]).read_bytes()
+    changed = raw.replace(ref["accession"].encode(), b"0000000001-24-000001")
+    sha = hashlib.sha256(changed).hexdigest()
+    (captures / "objects" / sha).write_bytes(changed)
+    m["bytes_retained"] += len(changed) - ref["size_bytes"]
+    ref.update(sha256=sha, size_bytes=len(changed))
+    path.write_bytes(encoded(m))
+    with pytest.raises(AuditError):
+        regenerate(DECL, CONTEXT, captures, tmp_path / "out")
+    assert not (tmp_path / "out").exists()
+
+
+def test_stop_reason_cannot_contradict_retained_failure(tmp_path: Path) -> None:
+    captures = capture(tmp_path, variant="denied")
+    path = captures / "manifest.json"
+    m = json.loads(path.read_bytes())
+    m["stop_reason"] = "transport_error"
+    path.write_bytes(encoded(m))
+    with pytest.raises(AuditError, match="stop reason"):
+        regenerate(DECL, CONTEXT, captures, tmp_path / "out")
