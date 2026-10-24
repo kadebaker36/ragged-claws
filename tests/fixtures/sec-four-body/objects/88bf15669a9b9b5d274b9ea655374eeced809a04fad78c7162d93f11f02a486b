@@ -1,0 +1,165 @@
+<SEC-DOCUMENT>0000080420-24-000066.txt : 20240910
+<SEC-HEADER>0000080420-24-000066.hdr.sgml : 20240910
+<ACCEPTANCE-DATETIME>20240910162033
+ACCESSION NUMBER:		0000080420-24-000066
+CONFORMED SUBMISSION TYPE:	4
+PUBLIC DOCUMENT COUNT:		1
+CONFORMED PERIOD OF REPORT:	20240906
+FILED AS OF DATE:		20240910
+DATE AS OF CHANGE:		20240910
+
+REPORTING-OWNER:	
+
+	OWNER DATA:	
+		COMPANY CONFORMED NAME:			Mauney William Marshall Jr
+		CENTRAL INDEX KEY:			0002025220
+		ORGANIZATION NAME:           	
+
+	FILING VALUES:
+		FORM TYPE:		4
+		SEC ACT:		1934 Act
+		SEC FILE NUMBER:	001-12488
+		FILM NUMBER:		241290328
+
+	MAIL ADDRESS:	
+		STREET 1:		8550 MOSLEY ROAD
+		CITY:			HOUSTON
+		STATE:			TX
+		ZIP:			77075
+
+ISSUER:		
+
+	COMPANY DATA:	
+		COMPANY CONFORMED NAME:			POWELL INDUSTRIES INC
+		CENTRAL INDEX KEY:			0000080420
+		STANDARD INDUSTRIAL CLASSIFICATION:	SWITCHGEAR & SWITCHBOARD APPARATUS [3613]
+		ORGANIZATION NAME:           	04 Manufacturing
+		IRS NUMBER:				880106100
+		STATE OF INCORPORATION:			NV
+		FISCAL YEAR END:			0930
+
+	BUSINESS ADDRESS:	
+		STREET 1:		8550 MOSLEY DR
+		STREET 2:		POST OFFICE BOX 12818
+		CITY:			HOUSTON
+		STATE:			TX
+		ZIP:			77075
+		BUSINESS PHONE:		7139446900
+
+	MAIL ADDRESS:	
+		STREET 1:		8550 MOSLEY DRIVE P O BOX 12818
+		STREET 2:		8550 MOSLEY DRIVE P O BOX 12818
+		CITY:			HOUSTON
+		STATE:			TX
+		ZIP:			77075
+
+	FORMER COMPANY:	
+		FORMER CONFORMED NAME:	PROCESS SYSTEMS INC
+		DATE OF NAME CHANGE:	19780926
+</SEC-HEADER>
+<DOCUMENT>
+<TYPE>4
+<SEQUENCE>1
+<FILENAME>wk-form4_1725999626.xml
+<DESCRIPTION>FORM 4
+<TEXT>
+<XML>
+<?xml version="1.0"?>
+<ownershipDocument>
+
+    <schemaVersion>X0508</schemaVersion>
+
+    <documentType>4</documentType>
+
+    <periodOfReport>2024-09-06</periodOfReport>
+
+    <notSubjectToSection16>0</notSubjectToSection16>
+
+    <issuer>
+        <issuerCik>0000080420</issuerCik>
+        <issuerName>POWELL INDUSTRIES INC</issuerName>
+        <issuerTradingSymbol>POWL</issuerTradingSymbol>
+    </issuer>
+
+    <reportingOwner>
+        <reportingOwnerId>
+            <rptOwnerCik>0002025220</rptOwnerCik>
+            <rptOwnerName>Mauney William Marshall Jr</rptOwnerName>
+        </reportingOwnerId>
+        <reportingOwnerAddress>
+            <rptOwnerStreet1>8550 MOSLEY ROAD</rptOwnerStreet1>
+            <rptOwnerStreet2></rptOwnerStreet2>
+            <rptOwnerCity>HOUSTON</rptOwnerCity>
+            <rptOwnerState>TX</rptOwnerState>
+            <rptOwnerZipCode>77075</rptOwnerZipCode>
+            <rptOwnerStateDescription></rptOwnerStateDescription>
+        </reportingOwnerAddress>
+        <reportingOwnerRelationship>
+            <isDirector>0</isDirector>
+            <isOfficer>1</isOfficer>
+            <isTenPercentOwner>0</isTenPercentOwner>
+            <isOther>0</isOther>
+            <officerTitle>Vice President, R&amp;D</officerTitle>
+        </reportingOwnerRelationship>
+    </reportingOwner>
+
+    <aff10b5One>0</aff10b5One>
+
+    <nonDerivativeTable>
+        <nonDerivativeTransaction>
+            <securityTitle>
+                <value>Common Stock</value>
+            </securityTitle>
+            <transactionDate>
+                <value>2024-09-06</value>
+            </transactionDate>
+            <deemedExecutionDate>
+                <value>2024-09-06</value>
+            </deemedExecutionDate>
+            <transactionCoding>
+                <transactionFormType>4</transactionFormType>
+                <transactionCode>F</transactionCode>
+                <equitySwapInvolved>0</equitySwapInvolved>
+            </transactionCoding>
+            <transactionAmounts>
+                <transactionShares>
+                    <value>770</value>
+                </transactionShares>
+                <transactionPricePerShare>
+                    <value>0</value>
+                </transactionPricePerShare>
+                <transactionAcquiredDisposedCode>
+                    <value>D</value>
+                </transactionAcquiredDisposedCode>
+            </transactionAmounts>
+            <postTransactionAmounts>
+                <sharesOwnedFollowingTransaction>
+                    <value>6420</value>
+                    <footnoteId id="F1"/>
+                </sharesOwnedFollowingTransaction>
+            </postTransactionAmounts>
+            <ownershipNature>
+                <directOrIndirectOwnership>
+                    <value>D</value>
+                </directOrIndirectOwnership>
+            </ownershipNature>
+        </nonDerivativeTransaction>
+    </nonDerivativeTable>
+
+    <derivativeTable></derivativeTable>
+
+    <footnotes>
+        <footnote id="F1">Includes shares that have a time-based vesting provision.</footnote>
+    </footnotes>
+
+    <remarks></remarks>
+
+    <ownerSignature>
+        <signatureName>Michael W. Metcalf, Power of Attorney for William Marshall Mauney, Jr.</signatureName>
+        <signatureDate>2024-09-10</signatureDate>
+    </ownerSignature>
+</ownershipDocument>
+</XML>
+</TEXT>
+</DOCUMENT>
+</SEC-DOCUMENT>

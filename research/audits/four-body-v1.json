@@ -1,0 +1,55 @@
+{
+  "authority": "Work order16, 2026-10-24 09:45 UTC; separate new bounded acquisition, no reuse of old budget",
+  "base": "7536df7570e3078ecbbbb973ce56e11a74d6a047",
+  "budget": {
+    "attempts_per_resource": 1,
+    "maximum_gets": 4,
+    "maximum_resource_bytes": 5242880,
+    "maximum_total_bytes": 20971520,
+    "minimum_interval_seconds": 1,
+    "redirects": false
+  },
+  "contact": "Existing ignored SEC UA only, read within request process; never serialize private value/header",
+  "declaration_id": "four-body-20240910-v1",
+  "format_version": "sec-four-body-declaration/1.0.0",
+  "interval": "Existing XNYS source-label supports, closed endpoints; entry0 and exit close60sessions AFTER entry. Unknown timing retained; no positions/returns/capacity.",
+  "original_index_sha256": "ce75cb8eaa6d7f7fe5976aa4c8aa9e59c199b62c9025fa6cc769cc54cd1a7f5b",
+  "original_receipt_sha256": "fc3dac95ddba67b5c2633cd4ce37c2a6d26d1ec23582be975143ed8d52115aaf",
+  "prior_versions": "V1/v2 scope, authorization flags, receipts/raw/failures and semantics immutable; this is a separate declaration",
+  "prohibitions": [
+    "market_prices_outcomes",
+    "ResearchBuild_AnalysisPlan_inference_registration",
+    "paper_start_forward_clock",
+    "provider_account_cloud_schedule_charge_funds_orders"
+  ],
+  "reference_context_sha256": "1ef82fe5a603d78e61b0bed1a1b31ebdedfbb1b2b40978f247ce51f80a016c81",
+  "reference_rule_sha256": "d76f8ff1e41aa0b4ecf261b2dd87e13c50f7f431c271f2688cb44f4702410765",
+  "resources": [
+    {
+      "accession": "0000035527-24-000224",
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "url": "https://www.sec.gov/Archives/edgar/data/35527/0000035527-24-000224.txt"
+    },
+    {
+      "accession": "0000060086-24-000179",
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "url": "https://www.sec.gov/Archives/edgar/data/60086/0000060086-24-000179.txt"
+    },
+    {
+      "accession": "0000080420-24-000066",
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "url": "https://www.sec.gov/Archives/edgar/data/80420/0000080420-24-000066.txt"
+    },
+    {
+      "accession": "0000101778-24-000120",
+      "filed_as_of": "2024-09-10",
+      "form": "4",
+      "url": "https://www.sec.gov/Archives/edgar/data/101778/0000101778-24-000120.txt"
+    }
+  ],
+  "stop": "Any non200/denial/429/challenge/transport/oversize or invalid/contradictory body stops remaining resources. No retry/resume/substitution/alternate/index/directory/XML/search/provider request. Valid no-P/S continues without replacement.",
+  "timing": "America/New_York acceptance interpretation and existing acceptance+5min assumption; original source labels separate from actual2026retrieval. First public/collector receipt and historical decisions unknown, no actual entries."
+}

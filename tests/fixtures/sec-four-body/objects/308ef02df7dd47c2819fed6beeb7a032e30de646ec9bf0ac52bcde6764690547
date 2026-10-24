@@ -1,0 +1,165 @@
+<SEC-DOCUMENT>0000101778-24-000120.txt : 20240910
+<SEC-HEADER>0000101778-24-000120.hdr.sgml : 20240910
+<ACCEPTANCE-DATETIME>20240910163024
+ACCESSION NUMBER:		0000101778-24-000120
+CONFORMED SUBMISSION TYPE:	4
+PUBLIC DOCUMENT COUNT:		1
+CONFORMED PERIOD OF REPORT:	20240906
+FILED AS OF DATE:		20240910
+DATE AS OF CHANGE:		20240910
+
+REPORTING-OWNER:	
+
+	OWNER DATA:	
+		COMPANY CONFORMED NAME:			Henderson Michael A
+		CENTRAL INDEX KEY:			0001811127
+		ORGANIZATION NAME:           	
+
+	FILING VALUES:
+		FORM TYPE:		4
+		SEC ACT:		1934 Act
+		SEC FILE NUMBER:	001-05153
+		FILM NUMBER:		241290431
+
+	MAIL ADDRESS:	
+		STREET 1:		C/O MARATHON OIL CORPORATION
+		STREET 2:		5555 SAN FELIPE ST
+		CITY:			HOUSTON
+		STATE:			TX
+		ZIP:			77056
+
+ISSUER:		
+
+	COMPANY DATA:	
+		COMPANY CONFORMED NAME:			MARATHON OIL CORP
+		CENTRAL INDEX KEY:			0000101778
+		STANDARD INDUSTRIAL CLASSIFICATION:	CRUDE PETROLEUM & NATURAL GAS [1311]
+		ORGANIZATION NAME:           	01 Energy & Transportation
+		IRS NUMBER:				250996816
+		STATE OF INCORPORATION:			DE
+		FISCAL YEAR END:			1231
+
+	BUSINESS ADDRESS:	
+		STREET 1:		P O BOX 3128
+		CITY:			HOUSTON
+		STATE:			TX
+		ZIP:			77253-3128
+		BUSINESS PHONE:		7136296600
+
+	MAIL ADDRESS:	
+		STREET 1:		990 TOWN AND COUNTRY BOULEVARD
+		CITY:			HOUSTON
+		STATE:			TX
+		ZIP:			77024-2217
+
+	FORMER COMPANY:	
+		FORMER CONFORMED NAME:	USX CORP
+		DATE OF NAME CHANGE:	19920703
+
+	FORMER COMPANY:	
+		FORMER CONFORMED NAME:	UNITED STATES STEEL CORP/DE
+		DATE OF NAME CHANGE:	19860714
+</SEC-HEADER>
+<DOCUMENT>
+<TYPE>4
+<SEQUENCE>1
+<FILENAME>wk-form4_1726000216.xml
+<DESCRIPTION>FORM 4
+<TEXT>
+<XML>
+<?xml version="1.0"?>
+<ownershipDocument>
+
+    <schemaVersion>X0508</schemaVersion>
+
+    <documentType>4</documentType>
+
+    <periodOfReport>2024-09-06</periodOfReport>
+
+    <notSubjectToSection16>0</notSubjectToSection16>
+
+    <issuer>
+        <issuerCik>0000101778</issuerCik>
+        <issuerName>MARATHON OIL CORP</issuerName>
+        <issuerTradingSymbol>MRO</issuerTradingSymbol>
+    </issuer>
+
+    <reportingOwner>
+        <reportingOwnerId>
+            <rptOwnerCik>0001811127</rptOwnerCik>
+            <rptOwnerName>Henderson Michael A</rptOwnerName>
+        </reportingOwnerId>
+        <reportingOwnerAddress>
+            <rptOwnerStreet1>C/O MARATHON OIL CORPORATION</rptOwnerStreet1>
+            <rptOwnerStreet2>990 TOWN &amp; COUNTRY BOULEVARD</rptOwnerStreet2>
+            <rptOwnerCity>HOUSTON</rptOwnerCity>
+            <rptOwnerState>TX</rptOwnerState>
+            <rptOwnerZipCode>77024</rptOwnerZipCode>
+            <rptOwnerStateDescription></rptOwnerStateDescription>
+        </reportingOwnerAddress>
+        <reportingOwnerRelationship>
+            <isDirector>0</isDirector>
+            <isOfficer>1</isOfficer>
+            <isTenPercentOwner>0</isTenPercentOwner>
+            <isOther>0</isOther>
+            <officerTitle>Executive VP, Operations</officerTitle>
+        </reportingOwnerRelationship>
+    </reportingOwner>
+
+    <aff10b5One>0</aff10b5One>
+
+    <nonDerivativeTable>
+        <nonDerivativeTransaction>
+            <securityTitle>
+                <value>Common Stock</value>
+            </securityTitle>
+            <transactionDate>
+                <value>2024-09-06</value>
+            </transactionDate>
+            <transactionCoding>
+                <transactionFormType>4</transactionFormType>
+                <transactionCode>S</transactionCode>
+                <equitySwapInvolved>0</equitySwapInvolved>
+            </transactionCoding>
+            <transactionAmounts>
+                <transactionShares>
+                    <value>38000</value>
+                </transactionShares>
+                <transactionPricePerShare>
+                    <value>27.2079</value>
+                    <footnoteId id="F1"/>
+                </transactionPricePerShare>
+                <transactionAcquiredDisposedCode>
+                    <value>D</value>
+                </transactionAcquiredDisposedCode>
+            </transactionAmounts>
+            <postTransactionAmounts>
+                <sharesOwnedFollowingTransaction>
+                    <value>76828</value>
+                </sharesOwnedFollowingTransaction>
+            </postTransactionAmounts>
+            <ownershipNature>
+                <directOrIndirectOwnership>
+                    <value>D</value>
+                </directOrIndirectOwnership>
+            </ownershipNature>
+        </nonDerivativeTransaction>
+    </nonDerivativeTable>
+
+    <derivativeTable></derivativeTable>
+
+    <footnotes>
+        <footnote id="F1">The price reported in Column 4 is a weighted average price. These shares were sold in multiple transactions at prices ranging from $27.200 to $27.220, inclusive. The reporting person undertakes to provide to Marathon Oil Corporation, any security holder of Marathon Oil Corporation, or the staff of the Securities and Exchange Commission, upon request, full information regarding the number of shares sold at each separate price within the range set forth herein.</footnote>
+    </footnotes>
+
+    <remarks></remarks>
+
+    <ownerSignature>
+        <signatureName>John D. Montanti, Attorney-in-Fact for Michael A. Henderson</signatureName>
+        <signatureDate>2024-09-10</signatureDate>
+    </ownerSignature>
+</ownershipDocument>
+</XML>
+</TEXT>
+</DOCUMENT>
+</SEC-DOCUMENT>
