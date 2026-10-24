@@ -1,0 +1,66 @@
+{
+  "format_version": "bac-figi-acquisition/1.0.0",
+  "implementation_version": "bac-figi-capture/1.0.0",
+  "authority_work_order_sha256": "f21909c9ed15246fe2bb703e2b443c4e4b1aa8820f6bdc0589c18fcf70b3733f",
+  "scope": "One anonymous current BAC CUSIP mapping candidate capture only; no historical identities, claims, bindings or outcomes.",
+  "proposal": {
+    "path": "research/identity/bac-openfigi-proposal-v1.json",
+    "sha256": "64aca74ed7607c3f7fd18dd8a0896f8091ce6c250b0fa1ccadc82d9adb1aeedc"
+  },
+  "coverage_card": {
+    "path": "research/identity/historical-coverage-v1.json",
+    "sha256": "da5ea06cd48584af0416faacb8f932dfa53226ba36f7b0c685cb780481b24145"
+  },
+  "input_paths_sha256": {
+    "tests/fixtures/identity/sec-2024/evidence.json": "e3bc2c08aeaa36cbe557725cca22d1bfd98fa15236d048a23b7f764aca782742",
+    "tests/fixtures/identity/sec-2024/0001104659-24-020016.txt": "252953852009256b2506304a8c213db7791243b5f6b524b4d271dda4897d6f71",
+    "tests/fixtures/identity/sec-2024/0000070858-24-000122-index.htm": "b60ee0e1f1c2d8a5946f4e93466b8a8022af0650e60de56ac9fff6a865a84e14",
+    "tests/fixtures/identity/sec-2024/10k-common-cover-row.html": "e678e8624730ecfa12611b8a03fedd58027f45c79e0df7cecdfe75688fcbac1b"
+  },
+  "request": {
+    "ordinal": 1,
+    "method": "POST",
+    "url": "https://api.openfigi.com/v3/mapping",
+    "headers": {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Accept-Encoding": "identity"
+    },
+    "body_utf8_exact_no_newline": "[{\"idType\":\"ID_CUSIP\",\"idValue\":\"060505104\",\"includeUnlistedEquities\":true}]",
+    "body_sha256": "e4d4be923c0569d2345a70778fda762bf517e51e469ae61efaf8ecd8cb1e9ac0",
+    "body_bytes": 76,
+    "maximum_request_body_bytes": 512,
+    "maximum_response_entity_bytes": 1048576,
+    "maximum_response_header_bytes": 16384,
+    "attempts": 1
+  },
+  "budget": {
+    "maximum_total_requests": 1,
+    "maximum_POSTs": 1,
+    "maximum_GETs": 0,
+    "maximum_jobs": 1,
+    "maximum_request_body_bytes_total": 512,
+    "maximum_response_entity_bytes_total": 1048576,
+    "maximum_response_header_bytes_total": 16384,
+    "maximum_receipt_bytes": 65536,
+    "maximum_retained_entity_plus_receipt_bytes": 1114112,
+    "minimum_start_interval_seconds": 3,
+    "serial_response_finish_before_next_start": true,
+    "timeout_seconds": 30,
+    "redirects": false,
+    "retries": 0,
+    "substitutions": false
+  },
+  "header_counting": "Sum len(name)+len(value) for every parsed httpx response.headers.raw field occurrence, duplicates included; excludes status line, colon/space/CRLF, HTTP2 framing, TLS and wire overhead. Count is measured before body processing. Exceeding16KiB stops with incomplete body. No response header values retained.",
+  "anonymous_transport": "Fresh httpx Request has only Host and Content-Length plus declared3application headers. Fresh client/transport, retries0, trust_envFalse, no auth/cookies/browser/proxy/config/contact reuse. Explicit certifi CA context avoids ambient SSL key-log/certificate settings.",
+  "timeout_semantics": "httpx30second connect/read/write/pool timeout; no total network-wire duration guarantee. Attempt/finish clocks and elapsed monotonic checks at headers and each delivered raw chunk retain actual timing; elapsed>=30seconds stops as timeout.",
+  "completion": "At entity cap without EOF proof, retain exact bounded prefix and classify oversize/incomplete; no cropped complete-body or complete-candidate claim.",
+  "maximum_derivative_report_bytes": 8388608,
+  "derivative_bound_scope": "Total bytes of private report.json, report.md and output-hashes.json, including embedded SourceObservation/RawCaptureManifest and input/code/lock/runtime metadata. Raw acquisition object/manifest/receipt remain in capture root and are not copied to derivative output. On overflow publish only bounded report_unavailable diagnostic, no cropped rows/counts.",
+  "stop_policy": "Global stop on any transport/timeout/non200/401/403/429/redirect/challenge/oversize/privacy/JSON/shape/reference contradiction; no retry, alternate id, venue filter, enum GET, search, pagination or replacement. A complete no-result or ambiguous result also ends the one-request scope.",
+  "privacy_policy": "Fresh non-sync local AppData outside Git/cloud. Immutable content-addressed exact response entity bytes, request-body hash, UTC aware start/finish, status/content-type/safe rate-limit headers, byte count and completeness plus versioned append-only/checkpoint receipt. Partial bytes remain private; no header values/cookies/exception text or reflected sensitive body copied to public output. Do not mutate blocked raw; reject any public replay before output.",
+  "candidate_only": true,
+  "private_only": true,
+  "acquisition_authorized_by_new_work_order": true,
+  "old_proposal_and_card_authorization_flags": "remain false and unchanged"
+}
