@@ -1,0 +1,29 @@
+{
+  "format_version": "sec-accession-reference-rule/2.0.0",
+  "rule_id": "sec-accession-reference-v2",
+  "status": "proposal_offline_reference_review",
+  "not_preregistered": true,
+  "acquisition_authorized": false,
+  "original_scope_sha256": "eb21d709277f968f1dbe8932d6ea0f0325f8b2a8251765c84bda9c51dc741634",
+  "original_declaration_commit": "744a6f22ed52dfa8f971e0e4cfb302d3a5cd45f4",
+  "original_receipt_sha256": "fc3dac95ddba67b5c2633cd4ce37c2a6d26d1ec23582be975143ed8d52115aaf",
+  "original_raw_sha256": "ce75cb8eaa6d7f7fe5976aa4c8aa9e59c199b62c9025fa6cc769cc54cd1a7f5b",
+  "review_index_url": "https://www.sec.gov/Archives/edgar/daily-index/2024/QTR3/master.20240910.idx",
+  "review_index_day": "2024-09-10",
+  "group_key": "Complete validated dashed accession only; submission reference identity, not economic Event or entity identity",
+  "structural_requirements": "Reuse v1 literal-path/index validation: exact SEC Archives relative submission path, index CIK numerically agrees with path CIK, filename accession agrees with group key, valid raw filed date no later than index day; preserve all raw values",
+  "critical_group_agreement": ["exact_form_type", "normalized_official_filing_date", "index_day", "literal_filename_accession_and_index_CIK_path_binding"],
+  "permitted_variants": ["index_CIK", "index_name", "literal_CIK_path", "equivalent_raw_date_representation"],
+  "retention": "Every physical source row and original position, raw line/date/name/CIK/path; exact duplicate multiplicity and distinct reference variants; no canonical identity merge or extra independent signal",
+  "conflicts": "Retain and reject incompatible groups with explicit reasons. Any critical group conflict blocks the entire index first-four proposal; never skip a difficult group to fill four slots. Malformed/unsafe index structures fail explicitly.",
+  "locator_proposal": "At most one address per compatible group: lowest numeric index CIK, then literal filename; no name/role/body/yield/identity/outcome input. This is a proposed capture address, not issuer or proof of alias-byte equivalence.",
+  "first_four_proposal": "Only if no critical conflicts: first four distinct exact Form4 accession groups in ascending accession order, or all if fewer. No amendments/other forms. Proposed future candidates only; all bodies remain unacquired and unauthorized.",
+  "later_body_requirements": "Separate authorization required. Existing parser must validate body/header accession/form/official date and derive issuer/owners independently. Multiple captured variants with contradictory bytes require explicit version/conflict handling, never last-write-wins.",
+  "v1_compatibility": "Offline reinterpretation of pinned original evidence only. Do not amend v1 declaration, receipt, stop reason, raw bytes, parser/rejection or prior results. September11 stays unattempted/unknown. No v2 acquisition or request chronology is created.",
+  "official_sources": [
+    {"url": "https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data", "sections": ["Using the EDGAR index files", "Paths and directory structure / Accession number", "Post-acceptance corrections and deletions"], "claim_limit": "Accession denotes accepted submission; index paths locate complete text; prefix may be submitting agent. Does not guarantee observed different-CIK paths have equal bytes."},
+    {"url": "https://www.sec.gov/files/about/webmaster-faq.htm", "sections": ["Does the accession number pattern have any meaning?", "How can I understand EDGAR Timestamps?", "Do you have a file that maps company ticker / CIK / company name?"], "claim_limit": "Submitting agent and source clock distinctions; current ticker convenience files do not establish historical security/listing identity."}
+  ],
+  "unknown_populations": ["second_index", "filing_bodies", "economic_events", "issuer_owner_security_listing_identity", "first_public_receipt_decision_timing", "prices_outcomes", "holding_overlap"],
+  "investment_validation": "not_evaluated"
+}
