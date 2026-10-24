@@ -16,7 +16,7 @@ representative sampling frame, market-wide census or proof of historical complet
 
 Budget: two index GETs, eight complete-submission GETs, one attempt/resource, serially,
 at most one request/second; 2MiB/index and5MiB/submission, no redirect/retry/replacement.
-The declaration also stops globally on transport, oversized content or invalid index.
+The helper also stops globally on transport, oversized content or invalid index.
 No directory pages, searches, other dates, providers or access workarounds are allowed.
 The narrow callable acquisition helper has no default live command/config discovery.
 Only an external one-shot operator script loaded the existing ignored SEC UA inside its
