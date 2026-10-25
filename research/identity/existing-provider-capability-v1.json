@@ -1,0 +1,459 @@
+{
+  "format_version": "existing-provider-capability-decision/1.0.0",
+  "decision_id": "alpaca-quiver-access-v1",
+  "status": "proposal",
+  "preregistration_status": "not_preregistered",
+  "evaluation_status": "not_evaluated",
+  "acquisition_authorized": false,
+  "maximum_data_requests": 0,
+  "review_date_utc": "2026-10-25",
+  "base_commit": "bef75ad557f13e266cfe904920591549a3416a9b",
+  "work_order_sha256": "7a240695ae78c93533507f25bd99fa51f302f7e373a3842fe80d00a36e8c7f9c",
+  "input_paths_sha256": {
+    "src/ragged_claws/ingestion/quiver_access.py": "4610f1e6571b19418b56c8a2bce4f1e1e567f31d949c116a2f36f0622b467559",
+    "src/ragged_claws/ingestion/quiver.py": "67fd72c0ede6104a02ad8c7d7489cae20bd6542f430e56af41656f95272316e2",
+    "src/ragged_claws/ingestion/quiver_parser.py": "f403f67dc5926a9d75239bd9dca2bd63d3ea83b495c91d237cb46f4d5a3a6128",
+    "src/ragged_claws/ingestion/quiver_models.py": "8ee956967654698bbf5c22650b38a17d7584ed549da31d8aea12832db30b76c3",
+    "src/ragged_claws/market_data/alpaca.py": "51204b8dbe034faefc91fa82568c8fbd9f05b91db5b1fe4d640ca389bcc28189",
+    "src/ragged_claws/market_data/models.py": "bf40344a2cc75e64da99e19c5ee2b553ef2a25b19e5b8ffa57e00b8b5ae92941",
+    "src/ragged_claws/market_data/listings.py": "4664e1fba73b9bec61b9cb9e02f599340e54e6b8c65862aa615d31aff4e53d8a",
+    "tests/unit/test_quiver.py": "04d81b2ea73bd0592ffdc8f6f37015b15aa54ac67b10e59246a44f2b8df33504",
+    "tests/integration/test_quiver_live_smoke.py": "702dc296158c19cd92f99acb4fc92e3cfd258e97c9ba0679761181b223368174",
+    "tests/integration/test_alpaca_market_data.py": "a37d59840a3670f7a9225a9fec29b6fb8d7b9a49f2324369777fcf3208480ee8",
+    "docs/13-market-data-and-outcome-methodology.md": "f994edce8b244233e892f09fabe18955c4b20951ce401257b50d3b7d30b3f0cb",
+    "docs/14-identity-and-security-resolution.md": "776c4f90e881d075a52cff3b5c4723221890bd634b97323a51518a9293a4710c",
+    "docs/17-quiver-context.md": "90cc7a04ea8b94c9ba0ad8193a4aa4d72536b39edf95ba2dbd174e425ed9e6be",
+    "docs/28-historical-coverage-decision.md": "22dca24c0685ce54b8452f394d2b708d822c9c7004a6c7defabf2a77ac49dd53",
+    "docs/30-historical-identity-acquisition-plan.md": "fc1dcac65a8d81884907c28dde2e6ddb515a8cd065279ec11990ab5bceeb3d67",
+    "research/identity/fifth-third-sec-identity-proposal-v1.json": "2aad7f3f4a9f922eac51b081deb0cd2a711de4ff8fc0c4d742176e2d3cb1296a",
+    "research/identity/historical-coverage-v1.json": "da5ea06cd48584af0416faacb8f932dfa53226ba36f7b0c685cb780481b24145",
+    "research/identity/bac-figi-acquisition-v1.json": "e307471485149f17e3f507e46eb62d23a495c3545498916a0a6af445b2b59344"
+  },
+  "retained_documentation_schema": {
+    "url": "https://api.quiverquant.com/docs/schema.json",
+    "artifact": "quiver-reviewed-schema.json",
+    "raw_sha256": "72b5c480c44494371c318c88072319795bf8440600998d81d297b5cd3de17af2",
+    "bytes": 238296,
+    "openapi": "3.0.3",
+    "API_info_version": "v1",
+    "retrieved_at": "2026-10-22T22:13:44.310511Z",
+    "acquisition_metadata_sha256": "6c06f6eac3a2a65a8cfa59785ff116ebfe04e224e4a8fd07592e7991f950c9a0",
+    "current_schema_retrieved_again": false,
+    "current_live_shape_and_entitlement": "not_verified"
+  },
+  "official_public_documentation": [
+    {
+      "url": "https://docs.alpaca.markets/us/reference/stockbars",
+      "sections": [
+        "overview",
+        "Query Params: symbols/start/end/limit/adjustment/asof/feed"
+      ],
+      "result": "read",
+      "capability": "historical symbol aggregates, explicit adjustment and symbol-asof aliasing; not a permanent Listing or historical knowledge certificate",
+      "read_date_utc": "2026-10-25"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/reference/corporateactions-1",
+      "sections": [
+        "overview and Warning",
+        "Query Params: symbols/cusips/types/start/end/data_quality/pagination"
+      ],
+      "result": "read",
+      "capability": "dated action records, including name/merger categories; process-date querying, delayed availability and incomplete-record caveats; no continuous historical master guarantee",
+      "read_date_utc": "2026-10-25"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/docs/about-market-data-api",
+      "sections": [
+        "Subscription Plans",
+        "Trading API Subscriptions: Equities"
+      ],
+      "result": "read",
+      "capability": "advertised Basic/feed/history scope; not this user entitlement or empirical completeness",
+      "read_date_utc": "2026-10-25"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/llms.txt",
+      "sections": [
+        "Trading API Assets navigation",
+        "Market Data API navigation"
+      ],
+      "result": "navigation_only",
+      "capability": "Get Assets described as master list available for Alpaca trade/data consumption; detailed asset response/permanence semantics not verified here",
+      "read_date_utc": "2026-10-25"
+    },
+    {
+      "url": "https://api.quiverquant.com/pricing/",
+      "sections": [
+        "Hobbyist advertised datasets",
+        "MCP tool count and noncommercial label"
+      ],
+      "result": "read",
+      "capability": "advertising only; does not prove existing paid product is an API subscription or grant endpoint/retention rights",
+      "read_date_utc": "2026-10-25"
+    },
+    {
+      "url": "https://www.quiverquant.com/termsofservice/",
+      "sections": [
+        "5 Intellectual Property Rights",
+        "6 Prohibition on Commercial Use, Data Redistribution, and Republication",
+        "24 Entire Agreement"
+      ],
+      "result": "read",
+      "page_modified": "2026-06-25",
+      "capability": "website restrictions and separate API License Agreement; actual applicable API agreement not inspected",
+      "read_date_utc": "2026-10-25"
+    },
+    {
+      "url": "https://www.quiverquant.com/api-setup/",
+      "sections": [
+        "Step 1: Get your Quiver API key",
+        "Step 3: documentation/authentication explanation only"
+      ],
+      "result": "read",
+      "capability": "official API service/key setup guidance; payment demo and data-request code were not followed",
+      "read_date_utc": "2026-10-25"
+    }
+  ],
+  "unavailable_documentation": [
+    {
+      "url": "https://docs.alpaca.markets/reference/get-v2-assets",
+      "status": "404"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/docs/assets",
+      "status": "unavailable"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/reference/get-v2-assets-1.md",
+      "status": "unavailable"
+    },
+    {
+      "url": "https://docs.alpaca.markets/us/docs/working-with-assets.md",
+      "status": "unavailable"
+    },
+    {
+      "url": "https://api.quiverquant.com/docs/",
+      "status": "no readable body in web tool; retained exact public schema used instead; current shape not revalidated"
+    }
+  ],
+  "historical_identity_contract": {
+    "issuer": "typed issuer identity distinct from Security/class and venue Listing",
+    "security": "strong sourced class identifier tied to issuer; ticker/name/CIK not permanent Security",
+    "listing": "instrument/permanent listing basis, dated official venue and independently reviewed operating/segment MIC relation",
+    "intervals": "explicitly bounded continuous half-open segments through every elapsed event-to-exit session, justified transitions/terminal treatment; unknown is not unbounded",
+    "clocks": "valid, public/known, collector-observed and derived/review time separate; no actual decision/possession backdating",
+    "use_modes": "retrospective price-label identity repair is distinct from historical predictive eligibility and actual prospective receipt/decision availability",
+    "architecture_amended": false
+  },
+  "Alpaca": {
+    "assets": "documentation index advertises available-for-trade/data master list; full asset schema/permanence/version history unavailable here. Even a provider assetUUID/current exchange/symbol is not automatically the canonical class/Listing/MIC/interval contract",
+    "bars": "asof maps a historical symbol reference and may relabel predecessor-symbol bars; adjustment selects return-label normalization. Neither proves class identity, original historical knowledge, terminal completeness or per-venue Listing validity",
+    "corporate_actions": "action dates/identifiers could support later reviewed transition evidence; process_date queries and delayed/incomplete records mean absence cannot certify no transition, publication time or exhaustive terminal coverage",
+    "advertised_plan": "Basic Trading API equities: IEX real-time; history since2016. Actual account/feed/retention rights and historical completeness unverified; no upgrade proposed",
+    "existing_adapter": "AlpacaHistoricalBarsAdapter retrieves paginated1Day bars; DailyBarRequest requires existing canonical Security/Listing UUIDs and one bounded historical-symbol segment/provider_asof/feed/adjustment. No assets/corporate-action importer or identity authority",
+    "complete_missing_historical_reference_chain": "not_established_by_reviewed_documentation"
+  },
+  "Quiver": {
+    "existing_adapter_subset": [
+      {
+        "adapter_selector": "congress_v1",
+        "documented_GET_path": "/beta/live/congresstrading",
+        "response_schema_pointer": "#/components/schemas/CongressionalTrade",
+        "schema_field_names": [
+          "Representative",
+          "BioGuideID",
+          "ReportDate",
+          "TransactionDate",
+          "Ticker",
+          "Transaction",
+          "Range",
+          "District",
+          "House",
+          "Amount",
+          "Party",
+          "last_modified",
+          "TickerType",
+          "Description",
+          "ExcessReturn",
+          "PriceChange",
+          "SPYChange"
+        ],
+        "schema_required_fields": [
+          "Representative",
+          "Party"
+        ],
+        "retained_schema_tags": [
+          "Tier 1",
+          "public"
+        ],
+        "accepted_code_query_contract": "no query accepted; local maximum500rows",
+        "time_fields": {
+          "occurrence": "TransactionDate",
+          "reported_day": "ReportDate",
+          "curation_audit": "last_modified"
+        },
+        "fact_boundary": "Amount lower bound; supplied Range preserved; no midpoint or missing upper bound invented",
+        "native_economic_event_id_or_primary_document_URL_in_this_row_schema": false,
+        "historical_class_listing_valid_known_intervals_in_this_row_schema": false
+      },
+      {
+        "adapter_selector": "congress_v2",
+        "documented_GET_path": "/beta/bulk/congresstrading",
+        "response_schema_pointer": "#/components/schemas/CongressionalTradeV2",
+        "schema_field_names": [
+          "Ticker",
+          "TickerType",
+          "Company",
+          "Traded",
+          "Transaction",
+          "Trade_Size_USD",
+          "Status",
+          "Subholding",
+          "Description",
+          "Name",
+          "BioGuideID",
+          "Filed",
+          "Party",
+          "District",
+          "Chamber",
+          "Comments",
+          "Quiver_Upload_Time",
+          "excess_return",
+          "State",
+          "last_modified"
+        ],
+        "schema_required_fields": [
+          "Traded",
+          "Name",
+          "BioGuideID",
+          "Filed",
+          "Party",
+          "Chamber"
+        ],
+        "retained_schema_tags": [
+          "Tier 1",
+          "public"
+        ],
+        "accepted_code_query_contract": "exact version=V2; explicit page>=1/page_size1..100; no auto pagination",
+        "time_fields": {
+          "occurrence": "Traded",
+          "reported_day": "Filed",
+          "upload_audit": "Quiver_Upload_Time",
+          "curation_audit": "last_modified"
+        },
+        "fact_boundary": "Trade_Size_USD lower bound; verbatim Subholding is vendor assertion, economic ownership unknown",
+        "native_economic_event_id_or_primary_document_URL_in_this_row_schema": false,
+        "historical_class_listing_valid_known_intervals_in_this_row_schema": false
+      },
+      {
+        "adapter_selector": "contracts",
+        "documented_GET_path": "/beta/live/govcontractsall",
+        "response_schema_pointer": "#/components/schemas/GovContractAll",
+        "schema_field_names": [
+          "Ticker",
+          "Date",
+          "Description",
+          "Agency",
+          "Amount",
+          "action_date"
+        ],
+        "schema_required_fields": [
+          "Ticker",
+          "Date",
+          "action_date"
+        ],
+        "retained_schema_tags": [
+          "Tier 1",
+          "public"
+        ],
+        "accepted_code_query_contract": "explicit page>=1/page_size1..100; no other query keys or auto pagination",
+        "time_fields": {
+          "occurrence_day": "action_date",
+          "reported_announcement_day": "Date"
+        },
+        "fact_boundary": "Amount obligated dollars, not a return; Agency/Description source facts",
+        "native_economic_event_id_or_primary_document_URL_in_this_row_schema": false,
+        "historical_class_listing_valid_known_intervals_in_this_row_schema": false
+      },
+      {
+        "adapter_selector": "lobbying",
+        "documented_GET_path": "/beta/live/lobbying",
+        "response_schema_pointer": "#/components/schemas/LobbyingRecord",
+        "schema_field_names": [
+          "Date",
+          "Amount",
+          "Client",
+          "Issue",
+          "Specific_Issue",
+          "Registrant",
+          "Ticker"
+        ],
+        "schema_required_fields": [
+          "Date",
+          "Registrant",
+          "Ticker"
+        ],
+        "retained_schema_tags": [
+          "Tier 1",
+          "public"
+        ],
+        "accepted_code_query_contract": "explicit page>=1/page_size1..100; no other query keys or auto pagination",
+        "time_fields": {
+          "reported_day": "Date",
+          "underlying_activity_period": null
+        },
+        "fact_boundary": "Amount reported spending; Issue/Specific_Issue vendor classifications, not system conclusions",
+        "native_economic_event_id_or_primary_document_URL_in_this_row_schema": false,
+        "historical_class_listing_valid_known_intervals_in_this_row_schema": false
+      }
+    ],
+    "broader_schema_reference_candidates": [
+      {
+        "path": "/beta/historical/dailyprices/{ticker}",
+        "component": "DailyPrice",
+        "fields": [
+          "Date",
+          "Ticker",
+          "CompositeFIGI",
+          "ShareClassFIGI",
+          "CorporateAction",
+          "CorporateActionValue"
+        ],
+        "required": [
+          "Date",
+          "Ticker"
+        ],
+        "tags": [
+          "Tier 1",
+          "public"
+        ],
+        "limit": "FIGIs are optional by this schema; date-linked class/composite assertions and action labels are useful candidate metadata, not issuer authentication/permanent venue Listing/MIC/known-time/continuous validity or delisted completeness. No payload or prices requested; outside current four-endpoint adapter"
+      },
+      {
+        "path": "/beta/live/earningsdistortionscores/{ticker}",
+        "component": "EarningsDistortionScore",
+        "fields": [
+          "cik_current",
+          "cik_on_event_date",
+          "stock_exchange_current",
+          "stock_exchange_on_event_date",
+          "market_identifier_code_current",
+          "market_identifier_code_on_event_date",
+          "figi",
+          "perm_id",
+          "event_date",
+          "nc_publish_date_actual"
+        ],
+        "tags": [
+          "Tier New Constructs Ratings",
+          "public"
+        ],
+        "limit": "Separate ratings-product schema with event-date assertions/client-publication text; generic figi/perm_id layer and interval semantics not authenticated. These are not a documented exhaustive venue/terminal master or permissions for this user; no ratings/provider data fetched"
+      },
+      {
+        "component": "SEC13FEntry",
+        "fields": [
+          "CUSIP",
+          "ReportPeriod",
+          "Class"
+        ],
+        "limit": "discrete holdings/class assertions, not continuous class/listing/known intervals; outside adapter subset"
+      },
+      {
+        "path": "/beta/tickerdata",
+        "limit": "x-internal=true/WebPlatformTokenAuth; not an entitled public source or access workaround"
+      }
+    ],
+    "complete_missing_historical_reference_chain": "not_established; do not claim no reference fields exist",
+    "dates": "retain exact source text and documented calendar-day meaning for occurrence/disclosure/announcement/report fields despite date-time schema labels; upload/curation are vendor audit clocks, not original publication. Unknown public_time/known_from/actionability stay null; primary timing never overwritten",
+    "lineage": "response request+raw hash gives SourceObservation; row index is capture coordinate and fact hash comparison only. No native economic-row ID/primary URL in the four schemas; default rows unresolved/no canonical Event. ReviewedRowLink requires exact raw/row, existing primary Event/observation/evidence/provenance/review reference; copies add no independent primary family",
+    "ownership": "BioGuideID identifies reported lawmaker only; Subholding retained verbatim where supplied, not spouse/self/household/economic-owner identity. No documented Owner field in subset",
+    "quarantine": "allowlisted facts only; ExcessReturn, PriceChange, SPYChange, excess_return and every unknown/nested future field stay raw/restricted quarantine, never features. Unknown extra ID/URL fields have no guessed semantics",
+    "REST_vs_MCP": "REST schema/endpoint entitlement does not establish MCP fields/tools/rights; advertised10of18tools is not authenticated access",
+    "rights": "public website terms and pricing are not the applicable purchased API license; local raw/derived retention, third-party/cloud sharing and actual entitlement remain unverified"
+  },
+  "human_and_local_state": {
+    "confirmed_signed_in": [
+      "Alpaca",
+      "Cloudflare",
+      "Quiver"
+    ],
+    "confirmed_paid_service": "Quiver only",
+    "exact_product_plan_API_agreement_entitlement": "unverified",
+    "Quiver_credential_readiness": "unverified; not searched or read",
+    "Alpaca_credential_readiness": "unverified; one authorized file absent does not establish absence elsewhere",
+    "authorized_existence_check": {
+      "checked_at": "2026-10-25T00:37:06.440689+00:00",
+      "checks": [
+        {
+          "authorized_file": "alpaca.env",
+          "exists": false,
+          "file_type": "absent"
+        },
+        {
+          "authorized_file": "alpaca.env.example",
+          "exists": true,
+          "file_type": "regular_file"
+        }
+      ],
+      "contents_read": false,
+      "directory_searches": 0,
+      "other_paths_checked": 0,
+      "global_credential_readiness": "unverified"
+    },
+    "existence_record_sha256": "387a5287cc0ffd08f10fd7193815a4ba3ffad06f4d9a5b1caa82e52dc103307d",
+    "old_doc17_no_account_sentence": "superseded by direct human facts; preserved as history",
+    "no_new_setup_beyond_signin_payment_confirmed": true
+  },
+  "access_review_prerequisites": {
+    "model": "QuiverAccessReview",
+    "actual_agreement_sha256": null,
+    "actual_reviewed_at": null,
+    "actual_entitled_endpoints": null,
+    "local_raw_retention_permitted": null,
+    "local_derived_retention_permitted": null,
+    "root_is_not_synced_or_shared": null,
+    "credentials_locally_ready": null,
+    "explicit_live_authorization": false,
+    "explanation": "These are unknown evidence prerequisites, not a fabricated review object. Actual applicable agreement/entitlement must be reviewed before the code literal-True attestations can be populated. Valid software JSON grants no permission."
+  },
+  "one_next_action": {
+    "type": "supervisor_review_then_request_secret_free_existing_Quiver_API_contract_entitlement_confirmation",
+    "status": "blocked_on_genuine_user_specific_fact",
+    "target_existing_adapter_selector": "contracts",
+    "target_entitlement_path_only": "/beta/live/govcontractsall",
+    "minimum_missing_fact": "Does the already-paid Quiver product actually include REST API access for this endpoint, and which applicable API license governs local raw and derived retention? Consumer subscription/payment alone is insufficient. No credential values/account identifiers requested.",
+    "evidence_value": "decide whether a later separately authorized #9 adapter-contract validation is permitted; not historical identity, prices, primary independence, signal or funding validation",
+    "secret_free_setup_for_supervisor_review": [
+      "Using the existing service only, human checks product/plan label and explicit REST entitlement through the official Quiver API setup/service links; no new enrollment, upgrade, checkout or charge. If consumer-only/no included API access, record blocked and stop.",
+      "Human makes applicable API license/retention clauses available for private review outside Git/OneDrive, without account identifiers or credentials; reviewer must establish actual local raw/derived permission, exact endpoint and permitted scope. Website advertising is not evidence of agreement acceptance.",
+      "Only after that review and a separately approved credential-setup scope: keep an existing API key locally outside Git/OneDrive in an approved secret store/process environment (existing code expects QUIVER_API_TOKEN), confirm readiness without posting its value. No key generation/rotation, credential template or review JSON is created now.",
+      "Reviewer then records actual agreement fingerprint/time/entitlement and justified raw/derived/non-sync attestations in the existing model under separate authority; do not tick booleans from a pricing page or run the live smoke."
+    ],
+    "official_setup_url": "https://www.quiverquant.com/api-setup/",
+    "official_API_plan_url": "https://api.quiverquant.com/pricing/",
+    "human_question_asked_in_this_assignment": false
+  },
+  "later_data_probe": null,
+  "later_data_probe_decision": "not justified or specified now: actual agreement/entitlement/credential readiness are unresolved. No automatic request, pagination, fallback or inherited SEC/BAC scope. Any later probe needs a new exact bounded declaration and authorization; existing helper has post-buffer5MB checking and no stage/header/global budget contract to reuse blindly.",
+  "preserved_scope_and_gates": {
+    "PR34_SEC_four_GET_chain": "documentation accepted, execution declined; do not implement/acquire",
+    "BAC_remaining_requests": 0,
+    "BAC_candidate_counts": {
+      "primary": 444,
+      "nonnull_shareclass": 1,
+      "composite": 120
+    },
+    "separate_BAC_events": 3,
+    "new_slice": "9sales/0purchases,3event issuers; Powell valid zero;3exclusions;9unresolved Security/Listing;4unresolved owner occurrences;486uncollected groups/second index unknown",
+    "SPY": "independent unresolved identity/benchmark prerequisite",
+    "current_canonical_or_research_changes": 0,
+    "scientific_untouched_validation_coverage_elapsed_forward_operational_pilot_funding": "unmet",
+    "issues_9_10_15": "remain_OPEN",
+    "new_data_requests": 0,
+    "account_credential_contact_config_content_reads": 0,
+    "no_orders_funds_charges_registration_prices_outcomes_inference_calibration_paper_forward_cloud_runtime_schedule": true,
+    "November_capital_timing": "planning, not readiness/deployment authority"
+  }
+}
