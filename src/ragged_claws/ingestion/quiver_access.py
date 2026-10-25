@@ -1,6 +1,8 @@
 """Explicit future access/retention boundary; no entitlement is assumed by this project."""
 
+import json
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 from urllib.parse import parse_qsl, urlencode, urlsplit
@@ -23,6 +25,62 @@ class QuiverAccessReview(CanonicalModel):
     local_raw_retention_permitted: Literal[True]
     local_derived_retention_permitted: Literal[True]
     root_is_not_synced_or_shared: Literal[True]
+
+
+MAX_BODY_BYTES = 5_000_000
+MAX_HEADER_BYTES = 65_536
+
+
+def _response_length(response: httpx.Response, cap: int) -> int | None:
+    raw = response.headers.raw
+    if sum(len(name) + len(value) for name, value in raw) > MAX_HEADER_BYTES:
+        raise QuiverError("response headers exceed bounded capture size")
+    lengths = [v.strip(b" \t") for k, v in raw if k.lower() == b"content-length"]
+    if len(lengths) > 1 or (lengths and "transfer-encoding" in response.headers):
+        raise QuiverError("ambiguous response length")
+    if not lengths:
+        return None
+    value = lengths[0]
+    if not value or not value.isdigit():
+        raise QuiverError("invalid response length")
+    significant = value.lstrip(b"0") or b"0"
+    if len(significant) > 7 or int(significant) > cap:
+        raise QuiverError("response exceeds bounded capture size")
+    return int(significant)
+
+
+def _decoded_token_echo(content: bytes, secret: str) -> bool:
+    # Preserve duplicate keys/values for privacy inspection; canonical parsing is separate.
+    def pairs(values: list[tuple[str, object]]) -> list[tuple[str, object]]:
+        return values
+
+    def constant(_: str) -> None:
+        raise QuiverError("invalid JSON response")
+
+    try:
+        # Use the same encoding detection as json.loads(bytes), before numeric conversion.
+        # Scalar lexemes must not disappear through Decimal/bool/null normalization.
+        text = content.decode(json.detect_encoding(content), errors="surrogatepass")
+        if secret in text:
+            return True
+        pending = [
+            json.loads(
+                text,
+                object_pairs_hook=pairs,
+                parse_int=Decimal,
+                parse_float=Decimal,
+                parse_constant=constant,
+            )
+        ]
+        while pending:
+            value = pending.pop()
+            if isinstance(value, str) and secret in value:
+                return True
+            if isinstance(value, (list, tuple)):
+                pending.extend(value)
+    except (ValueError, UnicodeError, RecursionError):
+        raise QuiverError("invalid JSON response") from None
+    return False
 
 
 def request_identity(url: str, endpoint: Endpoint) -> tuple[str, int]:
@@ -92,30 +150,65 @@ def retrieve_quiver(
     storage_root: Path,
     at: datetime,
     opt_in: bool = False,
+    max_body_bytes: int = MAX_BODY_BYTES,
 ) -> bytes:
-    request_identity(url, endpoint)
+    try:
+        request_identity(url, endpoint)
+    except (ValueError, KeyError):
+        raise QuiverError("unsupported source locator") from None
     require_restricted_storage(storage_root, review, endpoint, at)
     if not opt_in or not token.get_secret_value().strip():
         raise QuiverError("explicit live opt-in and configured credentials required")
+    if type(max_body_bytes) is not int or not 0 < max_body_bytes <= MAX_BODY_BYTES:
+        raise QuiverError("invalid bounded capture size")
+    if client.params:
+        raise QuiverError("client default query parameters are not permitted")
+    secret = token.get_secret_value()
     try:
-        response = client.get(
+        secret_bytes = secret.encode("utf8")
+        with client.stream(
+            "GET",
             url,
             headers={
-                "Authorization": "Bearer " + token.get_secret_value(),
+                "Authorization": "Bearer " + secret,
                 "Accept": "application/json",
+                "Accept-Encoding": "identity",
                 "User-Agent": "RaggedClaws-Quiver/0.1",
             },
             follow_redirects=False,
-        )
-    except httpx.HTTPError:
+            auth=None,
+            timeout=httpx.Timeout(30.0),
+        ) as response:
+            declared = _response_length(response, max_body_bytes)
+            if (
+                response.status_code != 200
+                or response.headers.get("content-type", "").split(";")[0].strip(" \t").lower()
+                != "application/json"
+                or len(response.headers.get_list("content-type")) != 1
+                or response.headers.get("content-encoding", "identity").strip(" \t").lower()
+                != "identity"
+                or len(response.headers.get_list("content-encoding")) > 1
+            ):
+                raise QuiverError("Quiver access unavailable; no retry or challenge handling")
+            body = bytearray()
+            tail = b""
+            for chunk in response.iter_bytes():
+                size = len(body) + len(chunk)
+                if size > max_body_bytes:
+                    raise QuiverError("response exceeds bounded capture size")
+                if declared is not None and size > declared:
+                    raise QuiverError("response length mismatch")
+                if secret_bytes in tail + chunk:
+                    raise QuiverError("credential echo rejected before capture")
+                tail = (tail + chunk)[-(len(secret_bytes) - 1) :] if len(secret_bytes) > 1 else b""
+                body.extend(chunk)
+            if declared is not None and len(body) != declared:
+                raise QuiverError("response length mismatch")
+            content = bytes(body)
+            if _decoded_token_echo(content, secret):
+                raise QuiverError("credential echo rejected before capture")
+        return content
+    except QuiverError:
+        raise QuiverError("Quiver response rejected before capture") from None
+    except Exception:
         raise QuiverError("Quiver request failed; details withheld") from None
-    if (
-        response.status_code != 200
-        or response.headers.get("content-type", "").split(";")[0] != "application/json"
-    ):
-        raise QuiverError("Quiver access unavailable; no retry or challenge handling")
-    if len(response.content) > 5_000_000:
-        raise QuiverError("response exceeds bounded capture size")
-    if token.get_secret_value().encode() in response.content:
-        raise QuiverError("credential echo rejected before capture")
-    return response.content
