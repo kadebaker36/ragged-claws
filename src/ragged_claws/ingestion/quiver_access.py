@@ -58,9 +58,14 @@ def _decoded_token_echo(content: bytes, secret: str) -> bool:
         raise QuiverError("invalid JSON response")
 
     try:
+        # Use the same encoding detection as json.loads(bytes), before numeric conversion.
+        # Scalar lexemes must not disappear through Decimal/bool/null normalization.
+        text = content.decode(json.detect_encoding(content), errors="surrogatepass")
+        if secret in text:
+            return True
         pending = [
             json.loads(
-                content,
+                text,
                 object_pairs_hook=pairs,
                 parse_int=Decimal,
                 parse_float=Decimal,

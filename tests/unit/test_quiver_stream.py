@@ -235,6 +235,71 @@ def test_json_escaped_token_rejected_after_eof(rig: Rig, kind: str) -> None:
     rig.rejected(2, cap=1000)
 
 
+@pytest.mark.parametrize("encoding", ["utf-16", "utf-32"])
+@pytest.mark.parametrize(
+    "invented_token", ["12345678901234567890123456789012", "1e+030", "true", "null"]
+)
+def test_encoded_scalar_token_text_cannot_disappear_through_json_types(
+    tmp_path: Path,
+    encoding: str,
+    invented_token: str,
+) -> None:
+    body = ("[" + invented_token + "]").encode(encoding)
+    stream = TrackedStream([body[:7], body[7:]])
+    calls = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, headers={"Content-Type": "application/json"}, stream=stream)
+
+    with httpx.Client(transport=httpx.MockTransport(respond)) as client:
+        with pytest.raises(QuiverError) as error:
+            retrieve_quiver(
+                client,
+                URL,
+                endpoint="contracts",
+                token=SecretStr(invented_token),
+                review=synthetic_review(),
+                storage_root=tmp_path,
+                at=NOW,
+                opt_in=True,
+                max_body_bytes=1000,
+            )
+        assert invented_token not in str(error.value)
+    assert len(calls) == 1 and stream.consumed == 2 and stream.closed == 1
+    assert not list(tmp_path.rglob("*"))
+
+
+@pytest.mark.parametrize("encoding", ["utf-16", "utf-32"])
+def test_safe_encoded_numeric_text_is_preserved_without_normalizing_token(
+    tmp_path: Path,
+    encoding: str,
+) -> None:
+    # A different numeric spelling is not the credential's original opaque text.
+    body = '[1e30, true, null, {"safe":"invented"}]'.encode(encoding)
+    stream = TrackedStream([body[:3], body[3:]])
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, headers={"Content-Type": "application/json"}, stream=stream)
+
+    with httpx.Client(transport=httpx.MockTransport(respond)) as client:
+        assert (
+            retrieve_quiver(
+                client,
+                URL,
+                endpoint="contracts",
+                token=SecretStr("1e+030"),
+                review=synthetic_review(),
+                storage_root=tmp_path,
+                at=NOW,
+                opt_in=True,
+                max_body_bytes=1000,
+            )
+            == body
+        )
+    assert stream.consumed == 2 and stream.closed == 1 and not list(tmp_path.rglob("*"))
+
+
 @pytest.mark.parametrize("body", [b"<html>challenge</html>", b"[{", b"NaN", b"[" * 2000])
 def test_invalid_or_deep_json_never_returned(rig: Rig, body: bytes) -> None:
     rig.stream = TrackedStream([body])

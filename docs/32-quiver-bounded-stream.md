@@ -48,6 +48,12 @@ A rolling overlap detects literal credential echoes across chunk boundaries and 
 remaining tail. After EOF a bounded JSON syntax/privacy pass inspects decoded keys and strings,
 including Unicode escapes, UTF16/32 JSON representations and duplicate object members without
 discarding earlier values. Escaped echoes reject before bytes can be returned for capture.
+Independent review exposed a gap for numeric-only tokens in UTF16/32 JSON: conversion to Decimal
+hid the original token text from string-only inspection. A bounded encoding-aware scan now checks
+the decoded entity text before JSON scalar conversion, using the same encoding detection as
+`json.loads(bytes)`. It catches original numeric/exponent/boolean/null lexemes without trying to
+reconstruct their spelling from parsed values. Safe response bytes are returned unchanged; the
+existing escaped-string/key inspection remains. Original failing probes and handoff stay immutable.
 Malformed/nonfinite/deep JSON fails closed. This is not a canonical row parser: existing schema,
 duplicate-key and normalization rules remain in the adapter/parser. No partial/failed response
 is returned or persisted. Retrieval writes no raw, Parquet or canonical files.
