@@ -1,0 +1,351 @@
+{
+  "format_version": "historical-identity-acquisition-proposal/1.0.0",
+  "proposal_id": "fifth-third-sec-historical-identity-v1",
+  "status": "proposal_for_review_insufficient_for_historical_binding",
+  "acquisition_authorized": false,
+  "current_data_request_budget": 0,
+  "base_commit": "35727aed42fad59a5f1c7e4c14d0734a534b5f94",
+  "work_order_sha256": "73b8803fd04c65d3eb25dae7101c8daad96115c616d0338881b7ab9337eba992",
+  "review_date_utc": "2026-10-24",
+  "input_paths_sha256": {
+    "research/audits/four-body-v1.json": "c7a9025b8560d3119c95fae6068ccd0b909e3fb49e467018f416292f51825890",
+    "research/audits/four-body-reference-context-v1.json": "1ef82fe5a603d78e61b0bed1a1b31ebdedfbb1b2b40978f247ce51f80a016c81",
+    "tests/fixtures/sec-four-body/manifest.json": "b700daf143b15ba31082bfe8e405672d13f07f542f37645cc19a94bc25017b95",
+    "tests/fixtures/sec-four-body/objects/201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523": "201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+    "research/identity/historical-coverage-v1.json": "da5ea06cd48584af0416faacb8f932dfa53226ba36f7b0c685cb780481b24145"
+  },
+  "retained_report": {
+    "artifact": "order16-corrected-report.json",
+    "sha256": "d0d51eeff4a6b718ff560f7e2aa5afe21682d74679d568b8c7b812ace02c01ca",
+    "inventory_sha256": "339f1a90d14aec033eb72a1802f1e60dfbfeeafa771a3590e64f26983c437c5a",
+    "original_head": "28ad8ea8653c94bc9cf4d01d83dbe43c1e80c294",
+    "supervisor_acceptance_sha256": "179f59a1c3b002a89f7bf4da8eb3b6dc7abfa4ee8ec781a506a26601cc090a93"
+  },
+  "case": {
+    "selection": "first source-ordered nonzero event issuer in accepted four-body capture; fixed before new retrieval; no substitution",
+    "issuer_cik": "0000035527",
+    "issuer_entity_id": "271534d6-e26a-562d-9e64-c15b168a60e8",
+    "issuer_name_raw": "FIFTH THIRD BANCORP",
+    "accession": "0000035527-24-000224",
+    "raw_path": "tests/fixtures/sec-four-body/objects/201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+    "raw_sha256": "201da8f67532cb538c386bf6172dc6eb4cb77ff1b8a3603b7384e314aee12523",
+    "raw_bytes": 7359,
+    "source_observation_id": "1ba4b1c8-d002-5821-87d9-49b6ad0a5c70",
+    "provenance_id": "7fd35c44-8bcd-5683-9393-8cb4a25af7e6",
+    "source_document": "wk-form4_1725999144.xml",
+    "public_time": {
+      "partial_date": null,
+      "precision": "second",
+      "raw_value": "20240910161231",
+      "source_timezone": "America/New_York",
+      "timestamp": "2024-09-10T20:12:31Z"
+    },
+    "official_filing_date": "2024-09-10",
+    "observed_at": "2026-10-24T09:51:40.342160Z",
+    "availability_policy": {
+      "delay": "PT5M",
+      "policy_id": "sec_acceptance_plus_five_minutes",
+      "policy_version": "1.0.0",
+      "rationale": "EDGAR acceptance plus an explicit five-minute research delay; SEC does not guarantee dissemination latency. This assumption does not measure first availability.",
+      "source_family": "sec.ownership"
+    },
+    "effective_availability_at": "2024-09-10T20:17:31Z",
+    "source_label_actionable_at": "2024-09-11T13:30:00Z",
+    "events": [
+      {
+        "event_id": "5107e231-7210-502d-b1cb-7f5a88a3c9d6",
+        "event_evidence_ids": [
+          "de31967e-477f-5f4b-afdd-0cc972de9864"
+        ],
+        "source_row": "nonDerivativeTable/nonDerivativeTransaction[1]",
+        "transaction_code": "S",
+        "occurrence_date": "2024-09-09",
+        "security_title_raw": "Common Stock"
+      },
+      {
+        "event_id": "8814055a-cfed-5d5c-bc30-b98205cbd1ea",
+        "event_evidence_ids": [
+          "e47bbe96-bbbe-5f7d-9e0e-9a69ceb596e9"
+        ],
+        "source_row": "nonDerivativeTable/nonDerivativeTransaction[2]",
+        "transaction_code": "S",
+        "occurrence_date": "2024-09-09",
+        "security_title_raw": "Common Stock"
+      }
+    ],
+    "excluded_row": {
+      "coordinate": "nonDerivativeTable/nonDerivativeTransaction[3]",
+      "kind": "nonDerivativeTransaction",
+      "code": "G",
+      "transaction_date": "2024-09-09",
+      "security_title": "Common Stock",
+      "exclusion_reason": "unsupported_code:G"
+    },
+    "security_id": null,
+    "listing_id": null,
+    "class_valid_from": null,
+    "class_valid_to": null,
+    "class_known_from": null,
+    "historical_first_collector_receipt": null,
+    "actual_decision": null,
+    "actual_policy_entry": null
+  },
+  "required_supports": {
+    "basis": "unchanged supports-v1; entry session0, exit Nth session AFTER entry; hypothetical requirements only",
+    "windows": [
+      {
+        "horizon": 20,
+        "entry_open_utc": "2024-09-11T13:30:00+00:00",
+        "exit_close_utc": "2024-10-09T20:00:00+00:00",
+        "required_half_open_date_coverage": {
+          "start_inclusive": "2024-09-11",
+          "end_exclusive": "2024-10-10"
+        }
+      },
+      {
+        "horizon": 60,
+        "entry_open_utc": "2024-09-11T13:30:00+00:00",
+        "exit_close_utc": "2024-12-05T21:00:00+00:00",
+        "required_half_open_date_coverage": {
+          "start_inclusive": "2024-09-11",
+          "end_exclusive": "2024-12-06"
+        }
+      },
+      {
+        "horizon": 90,
+        "entry_open_utc": "2024-09-11T13:30:00+00:00",
+        "exit_close_utc": "2025-01-22T21:00:00+00:00",
+        "required_half_open_date_coverage": {
+          "start_inclusive": "2024-09-11",
+          "end_exclusive": "2025-01-23"
+        }
+      }
+    ]
+  },
+  "claim_contract": {
+    "issuer": "typed CIK authenticates issuer only; neither accession prefix, title nor FITB creates class/listing identity",
+    "security": "strong sourced class identifier with explicit issuer/class association and validity; no permanent ID from ticker/name/CIK",
+    "listing": "instrument identifier or separately reviewed permanent creation basis, dated official venue assertion and independently reviewed operating/segment MIC relation; no bare unbounded Listing",
+    "intervals": "explicit half-open bounded segments cover every elapsed session from entry through each exit; dated transition/terminal evidence and justified endpoints; gaps/overlaps/conflicts unresolved; two matching covers do not bridge",
+    "clocks": "source-public/precision, valid bounds, collector-observed and later-derived/review time separate; no current metadata or retrieval date backdates public knowledge or actual decisions",
+    "eligibility": "retrospective identity repair is not a historical predictive feature; historical known-time and actual collector/decision possession must be independently defensible",
+    "terminal": "missing symbol/bar is not merger/delisting/successor evidence; no invented terminal returns",
+    "unsupported_now": [
+      "strong class identity",
+      "permanent Listing identity",
+      "reviewed MIC",
+      "continuous 2024-09-11 through 2025-01-23 validity",
+      "historical public/known time for identity",
+      "SPY identity",
+      "price/terminal coverage",
+      "execution rights"
+    ]
+  },
+  "documentation": [
+    {
+      "url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
+      "sections": [
+        "introductory API access/authentication paragraphs",
+        "data.sec.gov/submissions/",
+        "Update Schedule"
+      ],
+      "read_date_utc": "2026-10-24",
+      "support": "fixed ten-digit CIK URL, current metadata, compact recent columnar history and files/date ranges; not a complete formal field schema or historical identity certificate"
+    },
+    {
+      "url": "https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data",
+      "sections": [
+        "Fair access",
+        "Business hours and dissemination",
+        "Post-acceptance corrections and deletions",
+        "CIK",
+        "Paths and directory structure"
+      ],
+      "read_date_utc": "2026-10-24",
+      "support": "declared contact and moderation; dated filings may change; CIK is filer identity; accession prefix can be an agent; official archive and document-index path construction"
+    }
+  ],
+  "future_authority": {
+    "required": "new supervisor-accepted declaration and implementation review committed before any request, binding this proposal hash, input/code/lock/runtime pins, exact selector/caps, approved private root and separate SEC contact-use authority",
+    "reuse_old_budgets": false,
+    "old_BAC_remaining_requests": 0,
+    "planning_card_is_executable_declaration": false,
+    "current_contact_lookup_authorized": false
+  },
+  "proposed_future_chain": {
+    "initial_url": "https://data.sec.gov/submissions/CIK0000035527.json",
+    "method": "GET",
+    "request_body_bytes": 0,
+    "metadata_schema_guard": "Proposed acceptance contract, not a SEC guarantee: root cik normalizes exactly to 0000035527; filings.recent is a columnar object; filings.files an array. Required accessionNumber/form/filingDate/reportDate/primaryDocument arrays have equal lengths; dates ISO day precision, accessions exact ASCII format, order nonincreasing filingDate, no duplicate keys or conflicting duplicate accessions. Missing/changed shape stops; no heuristic alternate layout. JSON depth<=64; do not coerce nulls or nested values into strings.",
+    "filing_selector": {
+      "form_exact": "10-K",
+      "exclude_forms": [
+        "10-K/A",
+        "10-Q",
+        "8-K",
+        "SC 13G",
+        "SC 13G/A"
+      ],
+      "filing_date_start_inclusive": "2024-01-01",
+      "filing_date_end_inclusive": "2024-03-31",
+      "report_date_exact": "2023-12-31",
+      "issuer_cik_exact": "0000035527",
+      "cardinality": "exactly one distinct matching accession from one complete declared-window metadata source; zero=no_result, >1=ambiguous_stop; no latest/first/result-rank fallback",
+      "rationale": "one pre-event annual filing may test a discrete issuer/common-class/venue assertion; no post-event annual cover or second filing to imply continuity"
+    },
+    "recent_selection": "Use recent only if min filingDate <= window start and max >= window end, with complete usable arrays. If any files date range overlaps the window despite recent covering it, stop ambiguous coverage. Otherwise exactly one matching accession is required.",
+    "archive_selection": {
+      "when": "Only when recent contains zero rows in the fixed window and its earliest filingDate is later than the window end. Partial recent-window coverage stops; do not merge sources.",
+      "required_fields": [
+        "name",
+        "filingCount",
+        "filingFrom",
+        "filingTo"
+      ],
+      "conditions": "Validate every descriptor: unique safe name, positive integer filingCount, ISO day filingFrom<=filingTo. Select only if exactly one descriptor intersects the window AND fully encloses both bounds. Zero intersections=no_result; multiple intersections, partial enclosure, malformed descriptor or duplicate name=ambiguous/invalid stop before GET.",
+      "name_regex": "CIK0000035527-submissions-[0-9]{3}\\.json",
+      "url_construction": "https://data.sec.gov/submissions/ + exact returned name; fullmatch regex; no slash, percent, query, fragment, scheme or traversal; never invent ordinal",
+      "maximum_files": 1,
+      "response_shape": "top-level columnar arrays with same required names/types/lengths as recent; count equals descriptor filingCount; every date within inclusive descriptor bounds; contains enclosing window support; no nested files/recursive follow-up; count/range contradictions stop"
+    },
+    "index": {
+      "url_construction": "https://www.sec.gov/Archives/edgar/data/35527/ + selected accession + -index.html; accession is validated returned value, never guessed; its prefix need not equal issuer CIK",
+      "verify": "one index, matching accession, form10-K, issuer/filer CIK35527, filed date and report period matching metadata; exact unique document-table row Type10-K and safe primaryDocument basename matching metadata; no exhibit, alternate primary, amendment or link-ranking fallback Primary basename length<=255; document index acceptance text is source-public evidence, not guaranteed first dissemination. Missing/malformed acceptance is preserved as unknown; no exact timestamp fabricated from filing date."
+    },
+    "primary": {
+      "url_construction": "https://www.sec.gov/Archives/edgar/data/35527/ + selected accession with dashes removed + / + exact primaryDocument confirmed by index; full basename [A-Za-z0-9][A-Za-z0-9._-]* ending .htm or .html; no percent/slash/traversal/query/fragment; resolve index link and require exactly this HTTPS host/path",
+      "verify": "Same filer CIK, document form and report period. Capture exact bytes before interpretation. Select precisely one cover registration row whose inline Security12bTitle value, after whitespace collapse and ASCII case folding only, equals common stock, the retained Form4 title. A qualifier, absent inline fact, inconsistent context or extra matching row stops as unsupported/ambiguous; no substring, fuzzy or par-value stripping fallback. This is candidate row selection only, not class identity. Retain other-class counts privately. Record exact byte spans for issuer/class/symbol/exchange and any explicit strong identifier/validity claim without inferring it; no prices/outcomes or financial-analysis extraction."
+    },
+    "end": "Stop after the one primary document. No attachments, second annual report, extra header/document/index, archive enumeration, ticker assets, companyfacts, search, provider or price fallback. If strong class/permanent Listing/MIC/bounded continuity is absent or unsupported, report insufficient and leave all canonical identity/event bindings untouched."
+  },
+  "proposed_future_budget": {
+    "maximum_total_requests": 4,
+    "maximum_GETs": 4,
+    "maximum_POSTs": 0,
+    "attempts_per_resource": 1,
+    "stages": [
+      {
+        "stage": "current_submissions",
+        "maximum_requests": 1,
+        "maximum_entity_bytes": 1048576,
+        "maximum_parsed_header_field_bytes": 16384,
+        "maximum_receipt_checkpoint_manifest_bytes": 65536,
+        "maximum_retained_raw_plus_metadata_bytes": 1114112,
+        "maximum_elapsed_seconds": 45,
+        "maximum_report_bytes_if_this_is_final_stage": 1048576
+      },
+      {
+        "stage": "one_optional_historical_metadata",
+        "maximum_requests": 1,
+        "maximum_entity_bytes": 2097152,
+        "maximum_parsed_header_field_bytes": 16384,
+        "maximum_receipt_checkpoint_manifest_bytes": 65536,
+        "maximum_retained_raw_plus_metadata_bytes": 2162688,
+        "maximum_elapsed_seconds": 45,
+        "maximum_report_bytes_if_this_is_final_stage": 1048576
+      },
+      {
+        "stage": "selected_filing_index",
+        "maximum_requests": 1,
+        "maximum_entity_bytes": 262144,
+        "maximum_parsed_header_field_bytes": 16384,
+        "maximum_receipt_checkpoint_manifest_bytes": 65536,
+        "maximum_retained_raw_plus_metadata_bytes": 327680,
+        "maximum_elapsed_seconds": 45,
+        "maximum_report_bytes_if_this_is_final_stage": 1048576
+      },
+      {
+        "stage": "one_primary_annual_document",
+        "maximum_requests": 1,
+        "maximum_entity_bytes": 16777216,
+        "maximum_parsed_header_field_bytes": 16384,
+        "maximum_receipt_checkpoint_manifest_bytes": 65536,
+        "maximum_retained_raw_plus_metadata_bytes": 16842752,
+        "maximum_elapsed_seconds": 45,
+        "maximum_report_bytes_if_this_is_final_stage": 1048576
+      }
+    ],
+    "maximum_entity_bytes_total": 20185088,
+    "maximum_parsed_header_field_bytes_per_response": 16384,
+    "maximum_parsed_header_field_bytes_total": 65536,
+    "maximum_receipt_checkpoint_manifest_bytes_total": 262144,
+    "maximum_report_bytes_total": 1048576,
+    "maximum_retained_raw_plus_metadata_bytes": 20447232,
+    "maximum_all_retained_including_report_bytes": 21495808,
+    "maximum_request_body_bytes_total": 0,
+    "maximum_application_request_header_field_bytes_each": 2048,
+    "maximum_elapsed_seconds_per_stage": 45,
+    "http_io_timeout_seconds": 15,
+    "maximum_report_elapsed_seconds": 30,
+    "maximum_run_elapsed_seconds": 240,
+    "time_enforcement": "Future implementation must enforce monotonic stage/run deadlines including throttle and interpretation, plus bounded report processing, before authority; I/O timeout alone is insufficient. These are application elapsed/entity/parsed-header limits, not a claim about total TLS/wire bytes or force-kill latency.",
+    "serial_response_finish_before_next_start": true,
+    "minimum_start_interval_seconds": 1,
+    "redirects": false,
+    "retries": false,
+    "substitutions": false,
+    "unused_stage_budget": "not transferable or renewable; skipped archive means at most3GETs; every attempted denial/partial/no-result/ambiguous stage consumes its attempt and ends the chain"
+  },
+  "evidence_and_stop": {
+    "context": "Verify every input hash, typed issuer and exact event/row/source/time relations before any future request. Recheck prior response hashes, selectors and validated URL at each stage. Pins or current context mismatch stops before network/output.",
+    "transport": "Future standalone SEC declared-contact headers only under separate explicit authority; no account/key/cookie/client-default/proxy/config discovery. HTTPS allowlisted hosts only; no auth, browser or URL substitution. No user contact read in this planning slice.",
+    "stops": [
+      "401/403/429 or other non200",
+      "redirect",
+      "transport/timeout/deadline",
+      "challenge or nonexpected content",
+      "parsed header/body/cumulative/report cap",
+      "incomplete body without EOF",
+      "privacy/contact/secret in raw or decoded strings/keys",
+      "invalid JSON/HTML shape, duplicate keys, inconsistent dates/counts/CIK/accession",
+      "no-result, ambiguity or missing claim support"
+    ],
+    "accounting": "Append immutable unattempted/attempted/interrupted/finished states with exact requested URL/stage/selector evidence, input/code/declaration hashes, aware actual clocks, status/byte counts/hash/completeness, fixed nonsensitive failure code. Preserve bounded exact raw prefixes on denial/oversize, never treat as a completed empty dataset. Header count sums name+value bytes including duplicate fields; no header values/contact/raw exception text in receipt.",
+    "retention": "fresh private non-sync local AppData root outside Git/cloud/shared locations, content-addressed raw and manifests; cumulative metadata includes all checkpoints/receipts/manifests, excludes raw entities already separately bounded; original evidence append-only, no overwrite/resume. Exact selected metadata rows/descriptors and byte spans remain private lineage. Only hashes/counts/fixed statuses in public handoff.",
+    "privacy": "Existing bounded raw and decoded string/key privacy checks may inform future handling; blocked evidence remains private and replay rejects before output without rewriting prior receipts. Privacy/redirection/cap errors globally stop; no public derivative export."
+  },
+  "reuse_and_gap": {
+    "reuse": [
+      "capture_raw_bytes / RawCaptureManifest content-addressed exact byte retention",
+      "SourceObservation deterministic IDs and provenance/evidence links",
+      "SecThrottle serial moderation",
+      "SecForm4Adapter and pure sec_parser retained-event extraction for context only",
+      "reviewed byte-span/parent hash extraction convention from recorded identity dossier"
+    ],
+    "not_reusable_as_is": [
+      "BAC one-POST authority/operator or receipt selector",
+      "four-body hard-pinned Form4 declaration/loader",
+      "fixed BAC recorded-identity fixture importer for new issuer",
+      "SecFilingClient default retries and its text/XML-only URL validator"
+    ],
+    "implementation_gap": "No submissions-history/conditional-archive/10-K index+cover capture verifier exists under this contract. Later separately reviewed bounded implementation must validate those shapes and safe paths, enforce cumulative entity/metadata/report/time bounds and decoded privacy, and emit only unresolved candidate diagnostics. No production importer or canonical/schema change now."
+  },
+  "decision": {
+    "historical_identity": "insufficient",
+    "new_canonical_records_or_bindings": 0,
+    "price_outcome_requests": 0,
+    "investment_validation": false,
+    "funding_ready": false,
+    "reason": "A bounded SEC locator and a discrete annual assertion cannot establish strong class/permanent Listing plus dated MIC and continuous bounded event-to-exit segments. Even an identifier in one filing is not continuity. Independent evidence and a new reviewed scope would be required; no automatic expansion."
+  },
+  "user_facts": {
+    "signed_in": [
+      "Alpaca",
+      "Cloudflare",
+      "Quiver"
+    ],
+    "paid_subscription_confirmed": "Quiver only",
+    "exact_API_plan_agreement_key_readiness_retention_derivative_cloud_permissions": "unverified",
+    "new_account_purchase_or_user_fact_needed_for_this_SEC_only_plan": false,
+    "capital_and_November_timing": "planning only; no readiness or deployment authority"
+  },
+  "boundaries": {
+    "data_requests_made_in_order19": 0,
+    "documentation_only": true,
+    "BAC_three_events_separate": true,
+    "new_slice": "9sales/0purchases,3issuers,4unresolved owner occurrences,9unresolved Security/Listing,486uncollected groups and second index unknown; Powell valid zeroP/S",
+    "SPY": "independent unresolved prerequisite",
+    "no_forward_registration_inference_calibration_price_cloud_runtime_schedule_charges_funds_orders": true,
+    "issues_9_10_15": "remain_open"
+  }
+}
