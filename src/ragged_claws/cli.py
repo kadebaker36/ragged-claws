@@ -439,3 +439,141 @@ def ingest_sec_form4(
             sort_keys=True,
         )
     )
+
+
+@app.command("watch-insider-purchases")
+def watch_insider_purchases(
+    as_of: Annotated[str, typer.Option(help="Aware ISO timestamp; required for reproducibility.")],
+    output: Annotated[Path, typer.Option()],
+    data_dir: Annotated[Path, typer.Option()] = Path("data"),
+    lookback_sessions: Annotated[int, typer.Option(min=1, max=252)] = 5,
+    scan: Annotated[Path | None, typer.Option(help="Optional discovery checkpoint.")] = None,
+) -> None:
+    """Write deterministic JSON/Markdown from canonical Parquet; always offline."""
+    from ragged_claws.storage import DataLayout
+    from ragged_claws.watch.discovery import load_scan
+    from ragged_claws.watch.ledger import build_report, write_report
+
+    try:
+        instant = datetime.fromisoformat(as_of)
+        layout = DataLayout(data_dir)
+        completeness = (
+            () if scan is None else (load_scan(layout, scan).completeness(layout, as_of=instant),)
+        )
+        report = build_report(
+            layout, as_of=instant, lookback_sessions=lookback_sessions, discovery=completeness
+        )
+        write_report(report, output)
+    except (ValueError, OSError, PersistenceError):
+        typer.echo("Watch rejected: invalid canonical inputs, aware timestamp, or output conflict.")
+        raise typer.Exit(2) from None
+    typer.echo(
+        f"{len(report.candidates)} visible purchase rows; "
+        f"{sum(c.status == 'qualifying_common_stock' for c in report.candidates)} "
+        "confirmed common-stock Events. Market coverage unknown."
+    )
+
+
+@app.command("discover-sec-purchases")
+def discover_sec_purchases(
+    index_day: Annotated[str, typer.Option(help="Official daily master index day YYYY-MM-DD.")],
+    checkpoint: Annotated[Path, typer.Option()],
+    data_dir: Annotated[Path, typer.Option()] = Path("data"),
+    index_file: Annotated[Path | None, typer.Option()] = None,
+    filings_dir: Annotated[Path | None, typer.Option()] = None,
+    retrieved_at: Annotated[
+        str | None, typer.Option(help="Aware clock for local index capture.")
+    ] = None,
+    max_filings: Annotated[int, typer.Option(min=1, max=1000)] = 10,
+    live: Annotated[
+        bool, typer.Option(help="Explicit opt-in; also requires environment flag.")
+    ] = False,
+    acceptance_timezone: Annotated[str | None, typer.Option()] = None,
+) -> None:
+    """Discover/ingest a bounded batch; resume the same captured index by checkpoint."""
+    import os
+    from datetime import date
+
+    from ragged_claws.ingestion.sec_http import (
+        SecAccessError,
+        SecFilingClient,
+        SecThrottle,
+        fetch_watch_resource,
+    )
+    from ragged_claws.storage import DataLayout
+    from ragged_claws.temporal import normalize_utc
+    from ragged_claws.watch.discovery import (
+        capture_index,
+        fetch_index,
+        load_scan,
+        process_scan,
+        save_scan,
+    )
+
+    layout = DataLayout(data_dir)
+    client = None
+    try:
+        day = date.fromisoformat(index_day)
+        if live:
+            if index_file is not None or filings_dir is not None or retrieved_at is not None:
+                raise ValueError("live and fixture arguments conflict")
+            if os.environ.get("RAGGED_CLAWS_SEC_LIVE") != "1" or not os.environ.get(
+                "SEC_USER_AGENT"
+            ):
+                typer.echo("Live acquisition skipped: explicit live flag/contact absent.")
+                return
+            client = SecFilingClient(
+                user_agent=os.environ["SEC_USER_AGENT"],
+                throttle=SecThrottle(interval=1),
+                max_attempts=1,
+            )
+        if checkpoint.exists():
+            state = load_scan(layout, checkpoint)
+            if state.index_day != day:
+                raise ValueError("checkpoint day mismatch")
+        elif live:
+            assert client is not None
+            state = fetch_index(layout, client, day=day)
+        else:
+            if index_file is None or retrieved_at is None:
+                raise ValueError("local discovery needs index file and retrieval clock")
+            state = capture_index(
+                layout,
+                index_file.read_bytes(),
+                day=day,
+                retrieved_at=normalize_utc(datetime.fromisoformat(retrieved_at)),
+            )
+        save_scan(state, checkpoint)
+        active_client = client
+
+        def fetch(url: str) -> bytes:
+            if active_client is not None:
+                return fetch_watch_resource(active_client, url, max_bytes=5_000_000)
+            if filings_dir is None:
+                raise ValueError("local processing needs filings directory")
+            # Only a validated basename from the discovered literal archive reference.
+            return (filings_dir / url.rsplit("/", 1)[-1]).read_bytes()
+
+        state = process_scan(
+            layout,
+            state,
+            checkpoint=checkpoint,
+            fetch=fetch,
+            limit=max_filings,
+            acceptance_timezone=acceptance_timezone,
+        )
+        typer.echo(
+            json.dumps(
+                state.completeness(layout, as_of=datetime.now(UTC)).model_dump(mode="json"),
+                sort_keys=True,
+            )
+        )
+    except (ValueError, OSError, PersistenceError, SecAccessError):
+        typer.echo(
+            "Discovery stopped; any saved checkpoint retains unprocessed work. "
+            "No complete-market claim. Check input/configuration or retained raw evidence."
+        )
+        raise typer.Exit(2) from None
+    finally:
+        if client is not None:
+            client.close()
