@@ -533,3 +533,44 @@ def test_long_exact_price_product_ignores_ambient_decimal_precision(tmp_path: Pa
     with localcontext() as context:
         context.prec = 100
         assert candidate.exact_transaction_value == candidate.shares * price
+
+
+def test_entire_later_filing_cannot_change_any_earlier_report_bytes(tmp_path: Path) -> None:
+    layout = DataLayout(tmp_path)
+    ingest(layout)
+    before = build_report(layout, as_of=AS_OF)
+    second = "0000950170-24-105264"
+    ingest(
+        layout,
+        raw=purchase_bytes(accession=second),
+        accession=second,
+        observed=OBSERVED + timedelta(days=1),
+    )
+    assert encoded(build_report(layout, as_of=AS_OF)) == encoded(before)
+    assert render_markdown(build_report(layout, as_of=AS_OF)) == render_markdown(before)
+
+
+def test_later_identity_record_is_indistinguishable_from_absence_as_of_t(tmp_path: Path) -> None:
+    layout = DataLayout(tmp_path)
+    ingest(layout)
+    store = bind(layout)
+    securities = store.load(Security)
+    listings = store.load(Listing)
+    store.path_for(Security).unlink()
+    store.path_for(Listing).unlink()
+    before = build_report(layout, as_of=AS_OF)
+    late = store.load(Provenance)[0].model_copy(
+        update={
+            "provenance_id": UUID(int=999),
+            "derived_at": AS_OF + timedelta(days=1),
+        }
+    )
+    store.persist(Provenance, (late,))
+    store.persist(
+        Security,
+        tuple(s.model_copy(update={"provenance_id": late.provenance_id}) for s in securities),
+    )
+    store.persist(
+        Listing, tuple(s.model_copy(update={"provenance_id": late.provenance_id}) for s in listings)
+    )
+    assert encoded(build_report(layout, as_of=AS_OF)) == encoded(before)

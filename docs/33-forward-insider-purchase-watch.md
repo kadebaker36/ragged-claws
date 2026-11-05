@@ -51,6 +51,8 @@ not derive any of them from index/filing dates. Public time must be eligible und
 precision-aware PIT rules, and `actionable_at <= as_of`. Event mapping provenance, parent provenance
 and supporting evidence/observations must also have been derived/observed/retrieved by `as_of`.
 Later evidence is omitted until observed; later collection never creates earlier collector knowledge.
+Unseen Events contribute no exclusion counts, and later identity records behave like absent records
+in an earlier report; both JSON and Markdown remain byte-identical for those later additions.
 Identity records need visible provenance too. A later observed identity cannot qualify a prior report.
 A missing public/actionable time is counted as withheld, never fabricated. Reports use explicit aware
 ISO timestamps, normalized to UTC, independently of desktop timezone.

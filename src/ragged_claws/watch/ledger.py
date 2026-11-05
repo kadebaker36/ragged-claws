@@ -114,6 +114,11 @@ class CanonicalWatch:
         contract = supported[0][0]
         security = self.securities.get(event.security_id) if event.security_id else None
         listing = self.listings.get(event.listing_id) if event.listing_id else None
+        # Later catalog records must behave exactly like absent records in an earlier report.
+        if security is not None and not self.provenance_visible(security.provenance_id, as_of):
+            security = None
+        if listing is not None and not self.provenance_visible(listing.provenance_id, as_of):
+            listing = None
         if security and security.issuer_entity_id != event.issuer_entity_id:
             raise ValueError("event/security issuer contradiction")
         if listing and listing.security_id != event.security_id:
@@ -121,14 +126,10 @@ class CanonicalWatch:
         reasons = []
         if security is None:
             reasons.append("unresolved_security")
-        elif not self.provenance_visible(security.provenance_id, as_of):
-            reasons.append("security_evidence_not_observed_as_of")
         elif security.security_type is not SecurityType.COMMON_STOCK:
             return None, "resolved_non_common_stock"
         if listing is None:
             reasons.append("unresolved_listing")
-        elif not self.provenance_visible(listing.provenance_id, as_of):
-            reasons.append("listing_evidence_not_observed_as_of")
         else:
             try:
                 lower, upper = listing_bounds(listing)
@@ -263,6 +264,9 @@ def build_report(
     candidates = []
     counts: Counter[str] = Counter()
     for event in watch.events:
+        # An unseen Event cannot contribute even an exclusion-count fact to an earlier report.
+        if not watch.provenance_visible(event.provenance_id, as_of):
+            continue
         candidate, reason = watch.candidate(event, as_of)
         if candidate is not None and candidate.actionable_at < window_start:
             candidate, reason = None, "outside_recent_session_window"
