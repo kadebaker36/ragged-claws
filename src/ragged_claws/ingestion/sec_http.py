@@ -123,3 +123,64 @@ class SecFilingClient:
                 raise SecAccessError("SEC Retry-After exceeds bounded wait; retry later")
             self.sleep(delay)
         raise SecAccessError("SEC retry limit reached")
+
+
+class SecBoundedAccessError(SecAccessError):
+    """Safe status with bounded response bytes for raw capture, never header/contact text."""
+
+    def __init__(self, reason: str, content: bytes = b"", status: int | None = None) -> None:
+        super().__init__(reason)
+        self.content = content
+        self.status = status
+
+
+def fetch_watch_resource(client: SecFilingClient, url: str, *, max_bytes: int) -> bytes:
+    """Narrow one-attempt watch boundary using the existing client/contact/throttle.
+
+    The historical client's fetch/retry contract is unchanged. Only daily master indexes and
+    literal complete-submission index paths are allowed here. No fallback or redirect.
+    """
+    parsed = urlsplit(url)
+    if (
+        parsed.scheme != "https"
+        or parsed.netloc != "www.sec.gov"
+        or parsed.query
+        or parsed.fragment
+        or re.fullmatch(
+            r"/Archives/edgar/(?:daily-index/[0-9]{4}/QTR[1-4]/master\.[0-9]{8}\.idx"
+            r"|data/[0-9]{1,10}/[0-9]{10}-[0-9]{2}-[0-9]{6}\.txt)",
+            parsed.path,
+        )
+        is None
+    ):
+        raise ValueError("unsupported explicit SEC watch resource")
+    if not 1 <= max_bytes <= 5_000_000:
+        raise ValueError("invalid SEC watch response bound")
+    if client.throttle.interval < 1:
+        raise ValueError("watch requires serial cadence of at least one second")
+    client.throttle.acquire()
+    started = time.monotonic()
+    content = bytearray()
+    status = None
+    try:
+        with client.client.stream(
+            "GET",
+            url,
+            headers={"User-Agent": client.user_agent, "Accept-Encoding": "identity"},
+            follow_redirects=False,
+            timeout=10,
+        ) as response:
+            status = response.status_code
+            if response.headers.get("Content-Encoding", "identity").lower() != "identity":
+                raise SecBoundedAccessError("unsupported_content_encoding", status=status)
+            for chunk in response.iter_bytes():
+                content.extend(chunk[: max_bytes + 1 - len(content)])
+                if len(content) > max_bytes:
+                    raise SecBoundedAccessError("response_size_bound", bytes(content), status)
+                if time.monotonic() - started > 30:
+                    raise SecBoundedAccessError("response_deadline", bytes(content), status)
+            if status != 200:
+                raise SecBoundedAccessError("non200_response", bytes(content), status)
+    except httpx.TransportError:
+        raise SecBoundedAccessError("transport_failure", bytes(content), status) from None
+    return bytes(content)
