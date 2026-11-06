@@ -25,6 +25,8 @@ from ragged_claws.models import (
     SecurityType,
     SourceLineage,
     SourceObservation,
+    TemporalPrecision,
+    TemporalValue,
 )
 from ragged_claws.models.identity import Listing
 from ragged_claws.resolution import day_value
@@ -477,6 +479,9 @@ def test_actor_entities_are_exposed_only_from_canonical_reporting_roles(tmp_path
         source_observation_id=store.load(SourceObservation)[0].source_observation_id,
         provenance_id=event.provenance_id,
         observed_at=OBSERVED,
+        known_from=TemporalValue(
+            raw_value=OBSERVED.isoformat(), precision=TemporalPrecision.SECOND, timestamp=OBSERVED
+        ),
     )
     store.persist(Entity, (entity,))
     store.persist(ExternalIdentifier, (claim,))
@@ -552,20 +557,19 @@ def test_entire_later_filing_cannot_change_any_earlier_report_bytes(tmp_path: Pa
 
 def test_later_identity_record_is_indistinguishable_from_absence_as_of_t(tmp_path: Path) -> None:
     layout = DataLayout(tmp_path)
-    ingest(layout)
-    store = bind(layout)
+    store = ingest(layout)
+    # The baseline Event is truly unbound, not a current foreign key with a missing object.
+    before = build_report(layout, as_of=AS_OF)
+    assert all(c.security_id is None and c.listing_id is None for c in before.candidates)
+    bind(layout)
     securities = store.load(Security)
     listings = store.load(Listing)
-    store.path_for(Security).unlink()
-    store.path_for(Listing).unlink()
-    before = build_report(layout, as_of=AS_OF)
     late = store.load(Provenance)[0].model_copy(
-        update={
-            "provenance_id": UUID(int=999),
-            "derived_at": AS_OF + timedelta(days=1),
-        }
+        update={"provenance_id": UUID(int=999), "derived_at": AS_OF + timedelta(days=1)}
     )
     store.persist(Provenance, (late,))
+    store.path_for(Security).unlink()
+    store.path_for(Listing).unlink()
     store.persist(
         Security,
         tuple(s.model_copy(update={"provenance_id": late.provenance_id}) for s in securities),
@@ -573,4 +577,15 @@ def test_later_identity_record_is_indistinguishable_from_absence_as_of_t(tmp_pat
     store.persist(
         Listing, tuple(s.model_copy(update={"provenance_id": late.provenance_id}) for s in listings)
     )
-    assert encoded(build_report(layout, as_of=AS_OF)) == encoded(before)
+    canonical_before = store.load(Event)
+    after = build_report(layout, as_of=AS_OF)
+    assert encoded(after) == encoded(before)
+    assert render_markdown(after) == render_markdown(before)
+    assert all(
+        c.security_id is None
+        and c.listing_id is None
+        and c.identity_status == c.listing_status == "unresolved"
+        and c.unresolved_reasons == ("unresolved_security", "unresolved_listing")
+        for c in after.candidates
+    )
+    assert store.load(Event) == canonical_before

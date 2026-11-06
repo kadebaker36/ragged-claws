@@ -283,7 +283,11 @@ def test_offline_discovery_cli_and_missing_live_configuration(
         str(tmp_path / "data"),
     ]
     result = runner.invoke(app, [*args, "--live"])
-    assert result.exit_code == 0 and "skipped" in result.output
+    assert result.exit_code == 2
+    assert json.loads(result.output) == {
+        "status": "rejected",
+        "reason": "live_sec_configuration_missing",
+    }
     assert not checkpoint.exists()
     index = tmp_path / "master.idx"
     index.write_bytes(index_bytes())
@@ -399,3 +403,127 @@ def test_crash_after_ingestion_before_checkpoint_replays_without_duplicates(
     )
     assert replay.cursor == 1
     assert CanonicalParquetStore(layout).load(Event) == first
+
+
+@pytest.mark.parametrize(
+    "opt_in,agent",
+    [
+        (None, None),
+        (None, AGENT),
+        ("0", AGENT),
+        ("1", None),
+        ("1", ""),
+    ],
+)
+def test_explicit_live_missing_configuration_rejects_without_requests_or_secrets(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    opt_in: str | None,
+    agent: str | None,
+) -> None:
+    def forbidden(*args: object, **kwargs: object) -> httpx.Response:
+        pytest.fail("misconfigured live invocation must not issue any request")
+
+    monkeypatch.setattr(httpx.Client, "send", forbidden)
+    monkeypatch.setenv("INVENTED_PRIVATE_TEST_VALUE", "DO_NOT_EXPOSE_TEST_VALUE")
+    for key, value in (("RAGGED_CLAWS_SEC_LIVE", opt_in), ("SEC_USER_AGENT", agent)):
+        if value is None:
+            monkeypatch.delenv(key, raising=False)
+        else:
+            monkeypatch.setenv(key, value)
+    checkpoint = tmp_path / "private-checkpoint.json"
+    result = CliRunner().invoke(
+        app,
+        [
+            "discover-sec-purchases",
+            "--live",
+            "--index-day",
+            "2024-09-11",
+            "--checkpoint",
+            str(checkpoint),
+            "--data-dir",
+            str(tmp_path / "data"),
+        ],
+    )
+    assert result.exit_code == 2
+    assert json.loads(result.output) == {
+        "status": "rejected",
+        "reason": "live_sec_configuration_missing",
+    }
+    assert AGENT not in result.output and "DO_NOT_EXPOSE_TEST_VALUE" not in result.output
+    assert str(tmp_path) not in result.output
+    assert not checkpoint.exists() and not (tmp_path / "data").exists()
+
+
+@pytest.mark.parametrize("agent", ["bad-header-DO_NOT_EXPOSE", AGENT])
+def test_invalid_live_configuration_is_nonzero_safe_and_network_free(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    agent: str,
+) -> None:
+    def forbidden(*args: object, **kwargs: object) -> httpx.Response:
+        pytest.fail("invalid live configuration must not issue any request")
+
+    monkeypatch.setattr(httpx.Client, "send", forbidden)
+    monkeypatch.setenv("RAGGED_CLAWS_SEC_LIVE", "1")
+    monkeypatch.setenv("SEC_USER_AGENT", agent)
+    result = CliRunner().invoke(
+        app,
+        [
+            "discover-sec-purchases",
+            "--live",
+            "--index-day",
+            "2024-09-11",
+            "--checkpoint",
+            str(tmp_path / "checkpoint.json"),
+            "--data-dir",
+            str(tmp_path / "data"),
+        ],
+    )
+    assert result.exit_code == 2
+    assert agent not in result.output and str(tmp_path) not in result.output
+    assert not (tmp_path / "checkpoint.json").exists()
+
+
+def test_denied_live_request_is_nonzero_with_no_retry_or_contact_output(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ragged_claws.ingestion.sec_http as sec_http
+
+    calls = []
+
+    def denied(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url)
+        return httpx.Response(403, content=b"invented access denial")
+
+    constructor = sec_http.SecFilingClient
+    with httpx.Client(transport=httpx.MockTransport(denied)) as http:
+
+        def mock_client(
+            *, user_agent: str, throttle: SecThrottle, max_attempts: int
+        ) -> SecFilingClient:
+            return constructor(
+                user_agent=user_agent, throttle=throttle, max_attempts=max_attempts, client=http
+            )
+
+        monkeypatch.setattr(sec_http, "SecFilingClient", mock_client)
+        monkeypatch.setenv("RAGGED_CLAWS_SEC_LIVE", "1")
+        monkeypatch.setenv("SEC_USER_AGENT", AGENT)
+        result = CliRunner().invoke(
+            app,
+            [
+                "discover-sec-purchases",
+                "--live",
+                "--index-day",
+                "2024-09-11",
+                "--checkpoint",
+                str(tmp_path / "checkpoint.json"),
+                "--data-dir",
+                str(tmp_path / "data"),
+            ],
+        )
+    assert result.exit_code == 2
+    assert len(calls) == 1
+    assert AGENT not in result.output and str(tmp_path) not in result.output
+    assert not (tmp_path / "checkpoint.json").exists()

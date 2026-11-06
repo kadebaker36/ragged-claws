@@ -17,6 +17,7 @@ from ragged_claws.models import (
     Event,
     EventEvidence,
     ExternalIdentifier,
+    IdentifierSubjectType,
     Listing,
     Provenance,
     Security,
@@ -52,6 +53,10 @@ class CanonicalWatch:
         self.securities = {s.security_id: s for s in store.load(Security)}
         self.listings = {s.listing_id: s for s in store.load(Listing)}
 
+    def observation_visible(self, identity: UUID, as_of: datetime) -> bool:
+        item = self.observations.get(identity)
+        return item is not None and max(item.observed_at, item.retrieved_at) <= as_of
+
     def provenance_visible(
         self, identity: UUID, as_of: datetime, visiting: frozenset[UUID] = frozenset()
     ) -> bool:
@@ -61,11 +66,7 @@ class CanonicalWatch:
         return bool(
             item is not None
             and item.derived_at <= as_of
-            and all(
-                (obs := self.observations.get(oid)) is not None
-                and max(obs.observed_at, obs.retrieved_at) <= as_of
-                for oid in item.source_observation_ids
-            )
+            and all(self.observation_visible(oid, as_of) for oid in item.source_observation_ids)
             and all(
                 self.provenance_visible(p, as_of, visiting | {identity})
                 for p in item.parent_provenance_ids
@@ -89,15 +90,15 @@ class CanonicalWatch:
             link = self.evidence.get(eid)
             if link is None or link.event_id != event.event_id:
                 raise ValueError("missing or contradictory event evidence")
-            if self.provenance_visible(link.provenance_id, as_of):
+            if self.provenance_visible(link.provenance_id, as_of) and all(
+                self.observation_visible(oid, as_of) for oid in link.source_observation_ids
+            ):
                 links.append(link)
         observations = {
             oid: self.observations[oid]
             for link in links
             for oid in link.source_observation_ids
-            if oid in self.observations
-            and max(self.observations[oid].observed_at, self.observations[oid].retrieved_at)
-            <= as_of
+            if self.observation_visible(oid, as_of)
         }
         supported = [
             (contract, [o for o in observations.values() if contract.supports_observation(o)])
@@ -123,6 +124,8 @@ class CanonicalWatch:
             raise ValueError("event/security issuer contradiction")
         if listing and listing.security_id != event.security_id:
             raise ValueError("event/listing security contradiction")
+        if security is None:
+            listing = None
         reasons = []
         if security is None:
             reasons.append("unresolved_security")
@@ -157,19 +160,16 @@ class CanonicalWatch:
                 context.prec = max(28, len(shares.as_tuple().digits) + len(price.as_tuple().digits))
                 value = shares * price
         issuer = self.entities.get(event.issuer_entity_id) if event.issuer_entity_id else None
-        issuer_name = (
-            issuer.display_name
-            if issuer and self.provenance_visible(issuer.provenance_id, as_of)
-            else None
-        )
+        if issuer is not None and not self.provenance_visible(issuer.provenance_id, as_of):
+            issuer = None
         security_ok = not any(r.startswith(("unresolved_security", "security_")) for r in reasons)
         listing_ok = not any(r.startswith(("unresolved_listing", "listing_")) for r in reasons)
         return PurchaseCandidate(
             event_id=event.event_id,
-            issuer_entity_id=event.issuer_entity_id,
-            issuer_name=issuer_name,
-            security_id=event.security_id,
-            listing_id=event.listing_id,
+            issuer_entity_id=issuer.entity_id if issuer else None,
+            issuer_name=issuer.display_name if issuer else None,
+            security_id=security.security_id if security_ok and security else None,
+            listing_id=listing.listing_id if listing_ok and listing else None,
             actors=owners,
             occurrence_time=event.occurrence_time,
             public_time=event.public_time,
@@ -224,9 +224,14 @@ class CanonicalWatch:
                 if any(
                     f"{c.identifier_type.value}:{c.value}" == actor.reference
                     for c in (*entity.external_identifiers, *self.identifiers)
-                    if c.subject_id == entity.entity_id
+                    if c.subject_type is IdentifierSubjectType.ENTITY
+                    and c.subject_id == entity.entity_id
                     and c.observed_at <= as_of
+                    and self.observation_visible(c.source_observation_id, as_of)
                     and self.provenance_visible(c.provenance_id, as_of)
+                    and evaluate_eligibility(
+                        snapshot_at=as_of, known_from=c.known_from, observed_at=c.observed_at
+                    ).eligible
                 ):
                     ids.add(entity.entity_id)
             if len(ids) > 1:

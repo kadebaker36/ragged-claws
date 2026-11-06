@@ -37,8 +37,10 @@ officer/director/10% flags and title remain source facts. No subjective elite ti
 spouse/household, independent executor or economic-owner allocation is added. All filing owners
 may support the same row; their presence does not mean each independently spent personal cash.
 Canonical owner IDs are exposed only when already present in Event reporting-owner roles and
-supported by a visible exact CIK claim. Otherwise the source CIK reference remains useful and
-explicitly unresolved as a typed Entity.
+supported by a visible exact CIK claim whose `known_from` is eligible under the existing temporal
+helper. Missing, future or not-yet-eligible coarse knowledge fails closed; observed time alone is
+insufficient. The claim's own observation and provenance must also be visible. Otherwise the source
+CIK reference remains useful and explicitly unresolved as a typed Entity.
 
 SEC code P means open-market **or private** purchase under Form 4 instructions. V0 cannot prove
 execution venue, absence of financing or whose personal capital funded every jointly reported row.
@@ -53,7 +55,11 @@ and supporting evidence/observations must also have been derived/observed/retrie
 Later evidence is omitted until observed; later collection never creates earlier collector knowledge.
 Unseen Events contribute no exclusion counts, and later identity records behave like absent records
 in an earlier report; both JSON and Markdown remain byte-identical for those later additions.
-Identity records need visible provenance too. A later observed identity cannot qualify a prior report.
+Watch-level Entity/Security/Listing IDs are projected only from historically visible records;
+current Event foreign keys do not establish historical visibility. A Listing also requires its
+Security to be historically visible and its validity supported at actionability. Otherwise its ID
+is null and its status unresolved. Canonical Events remain unchanged. A later identity cannot
+qualify a prior report; late evidence observations cannot expose evidence/provenance references.
 A missing public/actionable time is counted as withheld, never fabricated. Reports use explicit aware
 ISO timestamps, normalized to UTC, independently of desktop timezone.
 
@@ -147,9 +153,11 @@ not TLS/wire-byte or cross-process global limits. Run one writer/process at a ti
 
 Live discovery requires **all three**: command `--live`, `RAGGED_CLAWS_SEC_LIVE=1` and an externally
 supplied declared `SEC_USER_AGENT` with a real contact. Contacts are never invented, loaded from
-random files, printed or committed. Missing configuration skips live acquisition. Default tests are
-network-free; this slice adds no live smoke test. No desktop, OneDrive or Windows-local dependency
-exists. Live access, if used, is solely public SEC acquisition; no vendor payloads or keys are needed.
+random files, printed or committed. Explicit `--live` with missing configuration makes no requests,
+emits `{"status":"rejected","reason":"live_sec_configuration_missing"}` and exits 2.
+Invalid configuration and rejected SEC access also fail nonzero without exposing contact values.
+Offline operation remains usable without private configuration. Default tests are network-free;
+this slice adds no live smoke test. No desktop, OneDrive or Windows-local dependency exists. Live access, if used, is solely public SEC acquisition; no vendor payloads or keys are needed.
 
 ## Regeneration and CLI examples
 

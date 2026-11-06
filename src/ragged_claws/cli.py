@@ -520,8 +520,13 @@ def discover_sec_purchases(
             if os.environ.get("RAGGED_CLAWS_SEC_LIVE") != "1" or not os.environ.get(
                 "SEC_USER_AGENT"
             ):
-                typer.echo("Live acquisition skipped: explicit live flag/contact absent.")
-                return
+                typer.echo(
+                    json.dumps(
+                        {"status": "rejected", "reason": "live_sec_configuration_missing"},
+                        sort_keys=True,
+                    )
+                )
+                raise typer.Exit(2)
             client = SecFilingClient(
                 user_agent=os.environ["SEC_USER_AGENT"],
                 throttle=SecThrottle(interval=1),
